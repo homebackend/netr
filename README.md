@@ -1,16 +1,21 @@
 # netr
 
-Netr
+Netr is a mobile App written in flutter for my personal use, to monitor my CCTV cameras both over intranet and internet (using SSH). It is not available at any app store. If you want to use it build and deploy to your mobile.
 
-## Getting Started
+## Features
+- Supports Android/Ios
+- Supports multiple CCTV streams both over local intranet and internet (using SSH).
+- Supports watching CCTV streams using VLC remote web interface.
+- Supports update over OTA from your local intranet (or apk hosted on some URL).
 
-This project is a starting point for a Flutter application.
+## Configuration
+All configuration information is stored in `lib/config.dart`. Edit it to your liking before build App.
 
-A few resources to get you started if this is your first Flutter project:
+## Building App
+To build app use `build.sh`. To build check steps in this shell script.
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+# Screenshots
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+# Main screen
+
+![Main Screen](/screenshots/main.png "Main Screen")
