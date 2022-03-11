@@ -18,4 +18,4 @@ To build app use `build.sh`. To build check steps in this shell script.
 
 # Main screen
 
-![Main Screen](/screenshots/main.png "Main Screen")
+![Main Screen](https://gitlab.com/slashblog/netr-app/-/raw/main/screenshots/main.png?inline=false "Main Screen")
