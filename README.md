@@ -16,6 +16,12 @@ To build app use `build.sh`. To build check steps in this shell script.
 
 # Screenshots
 
-# Main screen
+## Main screen
 
 ![Main Screen](https://gitlab.com/slashblog/netr-app/-/raw/main/screenshots/main.png?inline=false "Main Screen")
+
+## Live video screen
+![Live Video Screen](https://gitlab.com/slashblog/netr-app/-/raw/main/screenshots/video.png?inline=false "Live Video Screen")
+
+## Upgrade screen
+![Upgrade Screen](https://gitlab.com/slashblog/netr-app/-/raw/main/screenshots/upgrade.png?inline=false "Upgrade Screen")
