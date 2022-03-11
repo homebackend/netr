@@ -1,6 +1,6 @@
 # netr
 
-Netr is a mobile App written in flutter for my personal use, to monitor my CCTV cameras both over intranet and internet (using SSH). It is not available at any app store. If you want to use it build and deploy to your mobile.
+Netr is a mobile App written in flutter for my personal use, to monitor my CCTV cameras both over intranet and internet (using SSH). It is not available at any app store. If you want to use it, build and deploy to your mobile.
 
 ## Features
 - Supports Android/Ios
