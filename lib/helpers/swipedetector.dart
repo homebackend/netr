@@ -32,7 +32,7 @@ class SwipeDetector extends StatelessWidget {
   final Function() onTap;
   final SwipeConfiguration swipeConfiguration;
 
-  const SwipeDetector({
+  const SwipeDetector({Key? key, 
     required this.child,
     this.onSwipeUp = doNothing,
     this.onSwipeDown = doNothing,
@@ -40,7 +40,7 @@ class SwipeDetector extends StatelessWidget {
     this.onSwipeRight = doNothing,
     this.onTap = doNothing,
     this.swipeConfiguration = const SwipeConfiguration(),
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +54,6 @@ class SwipeDetector extends StatelessWidget {
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
-      child: child,
       onTap: onTap,
       onVerticalDragStart: (dragDetails) {
         startVerticalDragDetails = dragDetails;
@@ -119,6 +118,7 @@ class SwipeDetector extends StatelessWidget {
           onSwipeRight();
         }
       },
+      child: child,
     );
   }
 }

@@ -1,11 +1,13 @@
+import 'package:netr/config.dart';
 import 'package:netr/helpers/camera_helper.dart';
-
-import '../config.dart';
-import '../tool.dart';
+import 'package:netr/tool.dart';
 
 class StreamCameraHelper extends CameraHelper {
-  StreamCameraHelper(OnLoadHandler onLoadHandler, OnErrorHandler onErrorHandler)
+  StreamCameraHelper(this.videoStreamMode, OnLoadHandler onLoadHandler,
+      OnErrorHandler onErrorHandler)
       : super(onLoadHandler, onErrorHandler);
+
+  VideoStreamMode? videoStreamMode;
 
   @override
   Future<void> load() async {
@@ -19,10 +21,16 @@ class StreamCameraHelper extends CameraHelper {
   }
 
   @override
-  List<String> getCamerasInternal() {
+  List<String> getCamerasInternal(String? videoQuality) {
     List<String> cameras = [];
     properties['cameras'].keys.forEach((camera) {
-      cameras.add(camera);
+      if (videoQuality == null ||
+          properties['cameras'][camera]['streams']['paths']
+              .containsKey(videoQuality) ||
+          (videoQuality == 'archive' &&
+              properties['cameras'][camera].containsKey(videoQuality))) {
+        cameras.add(camera);
+      }
     });
     return cameras;
   }
@@ -36,11 +44,13 @@ class StreamCameraHelper extends CameraHelper {
     return types;
   }
 
+  @override
   String getDefaultLocation(String camera) {
     return properties['cameras'][camera]['default-access-point'];
   }
 
-  List<String> getLocations(String camera, VideoStreamMode videoStreamMode) {
+  @override
+  List<String> getLocations(String camera) {
     List<String> locations = [];
     properties['cameras'][camera]['streams']['access-points']
         .keys

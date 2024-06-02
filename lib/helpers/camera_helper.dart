@@ -14,12 +14,17 @@ abstract class CameraHelper {
 
   Future<void> load();
 
-  List<String> getCameras() {
+  List<String> getCameras(String? videoQuality) {
     if (isInitialized) {
-      return getCamerasInternal();
+      return getCamerasInternal(videoQuality);
     }
 
     throw "Not initialised";
+  }
+
+  bool doesCameraExist(String camera, String? videoQuality) {
+    List<String> cameras = getCameras(videoQuality);
+    return cameras.contains(camera);
   }
 
   List<String> getTypes(String camera) {
@@ -32,29 +37,11 @@ abstract class CameraHelper {
 
   String getDefaultType();
 
-  List<String> getCamerasInternal();
+  List<String> getCamerasInternal(String? videoQuality);
 
   List<String> getTypesInternal(String camera);
 
-  String? getPreviousCamera(camera) {
-    var cameras = getCameras();
-    for (int i = 1; i < cameras.length; i++) {
-      if (camera == cameras[i]) {
-        return cameras[i - 1];
-      }
-    }
+  String getDefaultLocation(String camera);
 
-    return null;
-  }
-
-  String? getNextCamera(camera) {
-    var cameras = getCameras();
-    for (int i = 0; i < cameras.length - 1; i++) {
-      if (camera == cameras[i]) {
-        return cameras[i + 1];
-      }
-    }
-
-    return null;
-  }
+  List<String> getLocations(String camera);
 }

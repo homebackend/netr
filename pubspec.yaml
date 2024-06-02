@@ -1,7 +1,12 @@
 name: netr
-description: Netr
+appName: &appName Netr App
+description: >-
+  Netr is a mobile App written in flutter for my personal use, to monitor
+  my CCTV cameras both over intranet and internet (using SSH). It is not
+  available at any app store. If you want to use it, build and deploy to
+  your mobile.
 
-# The following line prevents the package from being accidentally published to
+# The following line prevents the package from being accidentally published to2
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
@@ -15,7 +20,10 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 1.0.0+17
+version: 1.0.0+84
+
+homepage: https://gitlab.com/slashblog/netr-app
+repository: https://gitlab.com/slashblog/netr-app
 
 environment:
   sdk: ">=2.16.1 <3.0.0"
@@ -35,19 +43,25 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
   english_words: ^4.0.0
-  dropbox_client: ^0.8.0
   shared_preferences: ^2.0.13
   path_provider: ^2.0.9
   http: ^0.13.4
-  permission_handler: ^9.1.0
+  permission_handler: ^11.0.0
   flutter_vlc_player: ^7.0.1
   dartssh2: ^2.5.0
   wakelock: ^0.6.1+1
   date_time_picker: ^2.1.0
-  jinja: ^0.3.4
+  jinja: ^0.5.0
   intl: ^0.17.0
-  ota_update: ^4.0.1
-  package_info_plus: ^1.4.0
+  ota_update: ^5.1.0
+  package_info_plus: ^3.0.2
+  dart_vlc: ^0.4.0
+  window_manager: ^0.3.0
+  syncfusion_flutter_gauges: ^21.2.4
+  sporran: ^6.0.0
+  flutter_settings_screens: ^0.3.2-null-safety
+  vector_math: ^2.1.2
+  scrollable_positioned_list: ^0.3.2
 
 dev_dependencies:
   flutter_test:
@@ -58,7 +72,15 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^1.0.0
+  flutter_lints: ^2.0.1
+  msix: ^3.4.0
+
+platforms:
+  android:
+  ios:
+  linux:
+  macos:
+  windows:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -104,3 +126,11 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+msix_config:
+  display_name: *appName
+  publisher_display_name: Jakhar
+  identity_name: jakhar.neeraj.netr
+  msix_version: 1.0.0.0
+  logo_path: icons\eye.png
+  capabilities: internetClient

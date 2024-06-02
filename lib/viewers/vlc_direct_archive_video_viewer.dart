@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_vlc_player/flutter_vlc_player.dart';
+import 'package:netr/controllers/vlc_remote_controller.dart';
+import 'package:netr/helpers/stream_camera_helper.dart';
+import 'package:netr/viewers/direct_archive_video_viewer.dart';
 import 'package:netr/tool.dart';
-import '../controllers/vlc_remote_controller.dart';
-import '../helpers/stream_camera_helper.dart';
-import 'direct_archive_video_viewer.dart';
+
 
 class VlcDirectArchiveVideoViewerHome extends DirectArchiveVideoViewerHome {
   const VlcDirectArchiveVideoViewerHome(StreamCameraHelper streamCameraHelper,
@@ -41,9 +41,9 @@ class VlcDirectArchiveVideoViewerHomeState
   }
 
   @override
-  VlcPlayerController getVlcPlayerControllerInternal(String url) {
-    VlcRemoteController _vlcRemoteController = VlcRemoteController.network(url);
+  VlcRemoteController getVideoPlayerControllerInternal(String url) {
+    VlcRemoteController vlcRemoteController = VlcRemoteController.network(url);
 
-    return _vlcRemoteController;
+    return vlcRemoteController;
   }
 }

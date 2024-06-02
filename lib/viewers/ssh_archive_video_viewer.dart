@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:netr/config.dart';
+import 'package:netr/helpers/stream_camera_helper.dart';
 import 'package:netr/viewers/ssh_video_viewer.dart';
-
-import '../config.dart';
-import '../helpers/stream_camera_helper.dart';
 
 class SshArchiveVideoViewerHome extends SshVideoViewerHome {
   const SshArchiveVideoViewerHome(StreamCameraHelper streamCameraHelper,

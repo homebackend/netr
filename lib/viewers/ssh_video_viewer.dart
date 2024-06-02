@@ -1,12 +1,12 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
+import 'package:netr/config.dart';
+import 'package:netr/helpers/stream_camera_helper.dart';
+import 'package:netr/tool.dart';
 import 'package:netr/viewers/video_viewer.dart';
-
-import '../config.dart';
-import '../helpers/stream_camera_helper.dart';
-import '../tool.dart';
 
 class SshVideoViewerHome extends VideoViewerHome {
   const SshVideoViewerHome(StreamCameraHelper streamCameraHelper,
@@ -35,6 +35,19 @@ class SshVideoViewerHomeState<T extends SshVideoViewerHome>
   void initState() {
     super.initState();
     _initSsh();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+
+    if (_serverSocket != null) {
+      _serverSocket!.close();
+    }
+
+    if (_remoteSshClient != null) {
+      _remoteSshClient!.close();
+    }
   }
 
   void _initSsh() async {
@@ -83,10 +96,12 @@ class SshVideoViewerHomeState<T extends SshVideoViewerHome>
     String port = properties['ssh'][widget.location]['port'];
     String user = properties['ssh'][widget.location]['user'];
     String privateKey = properties['ssh'][widget.location]['privateKey'];
+    print('SSH connect to $user@$host:$port');
+    print(privateKey);
     _remoteSshClient = SSHClient(await SSHSocket.connect(host, int.parse(port)),
         username: user, identities: [...SSHKeyPair.fromPem(privateKey)],
         onUserauthBanner: (String banner) {
-      showSnackBar(context, banner);
+      log("SSH Banner: $banner");
     });
 
     return true;
@@ -98,7 +113,7 @@ class SshVideoViewerHomeState<T extends SshVideoViewerHome>
       return false;
     }
 
-    _serverSocket = await ServerSocket.bind('localhost', 0);
+    _serverSocket = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
     _serverSocketPort = _serverSocket?.port ?? 0;
     _processIncomingConnections(context, rHost, rPort);
     return true;
@@ -113,6 +128,7 @@ class SshVideoViewerHomeState<T extends SshVideoViewerHome>
     int port = int.parse(rPort);
 
     await for (final socket in _serverSocket!) {
+      print("Remote host:port == $rHost:$rPort");
       final SSHForwardChannel? forward =
           await _remoteSshClient?.forwardLocal(rHost, port);
       if (forward == null) {
@@ -148,17 +164,17 @@ class SshVideoViewerHomeState<T extends SshVideoViewerHome>
   }
 
   @override
-  Future<void> finishCameraConnection(context) async {
+  Future<void> finishCameraConnection() async {
     await _closeServerSocket();
     await Future.delayed(const Duration(seconds: 1));
   }
 
   @override
-  Future<void> initCameraConnection(context) async {
+  Future<void> initCameraConnection() async {
     if (!await _startSshConnectionAndForwardPort(context)) {
       showSnackBar(context, 'Failed in establishing remote connection');
     }
 
-    await super.initCameraConnection(context);
+    await super.initCameraConnection();
   }
 }

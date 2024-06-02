@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:netr/config.dart';
 import 'package:netr/helpers/stream_camera_helper.dart';
 import 'package:netr/viewers/video_viewer.dart';
-
-import '../config.dart';
 
 class DirectVideoViewerHome extends VideoViewerHome {
   const DirectVideoViewerHome(StreamCameraHelper streamCameraHelper,

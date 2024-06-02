@@ -1,10 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:netr/helpers/photo_camera_helper.dart';
+import 'package:netr/tool.dart';
+import 'package:netr/viewers/base_camera_viewer.dart';
+import 'package:window_manager/window_manager.dart';
 
-import '../tool.dart';
-import 'base_viewer.dart';
-
-class PictureViewerHome extends BaseViewer {
+class PictureViewerHome extends BaseCameraViewer {
   const PictureViewerHome(this.photoCameraHelper, selectedVideoCamera,
       selectedVideoQuality, location, callback, {Key? key})
       : super(selectedVideoCamera, selectedVideoQuality, location, callback,
@@ -13,36 +15,59 @@ class PictureViewerHome extends BaseViewer {
   final PhotoCameraHelper photoCameraHelper;
 
   @override
-  _PictureViewerHomeState createState() => _PictureViewerHomeState();
+  PictureViewerHomeState createState() => PictureViewerHomeState();
 }
 
-class _PictureViewerHomeState extends BaseViewerState<PictureViewerHome> {
+class PictureViewerHomeState<T extends PictureViewerHome>
+    extends BaseCameraViewerState<T> {
   String? _imageUrl;
 
   @override
   void initState() {
     super.initState();
-
+    if (isDesktopPlatform()) {
+      _initWindow();
+    }
     setImageUrl();
+    lockScreen();
+  }
+
+  Future<void> _initWindow() async {
+    await windowManager.setTitleBarStyle(TitleBarStyle.hidden);
+    await windowManager.maximize();
   }
 
   void setImageUrl() async {
     _imageUrl =
         await widget.photoCameraHelper.getImageUrl(selectedVideoCamera!);
+    log('Image url: $_imageUrl');
     setState(() {
       isInitialized = true;
     });
   }
 
   @override
-  Future<void> initCameraConnection(context) async {
+  void dispose() {
+    if (isDesktopPlatform()) {
+      windowManager.unmaximize();
+      windowManager.setTitleBarStyle(TitleBarStyle.normal);
+      windowManager.center();
+    }
+
+    unlockScreen();
+    super.dispose();
+  }
+
+  @override
+  Future<void> initCameraConnection() async {
     _imageUrl =
         await widget.photoCameraHelper.getImageUrl(selectedVideoCamera!);
     setState(() {});
   }
 
   Widget getRefreshButton(context) {
-    return createIconButton(Icons.refresh, () async {
+    return createNavigatorButton(Icons.refresh, () async {
+      Navigator.pop(context);
       showSnackBar(context, 'Trying to reload image data');
       await widget.photoCameraHelper.reload();
       setState(() {});
@@ -50,8 +75,8 @@ class _PictureViewerHomeState extends BaseViewerState<PictureViewerHome> {
   }
 
   @override
-  List<String> getVideoCameras() {
-    return widget.photoCameraHelper.getCameras();
+  List<String> getCameras() {
+    return widget.photoCameraHelper.getCameras(widget.selectedVideoQuality);
   }
 
   @override

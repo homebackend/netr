@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Netr App
+Exec=/usr/bin/netr
+Icon=/usr/share/pixmaps/netr.png
+StartupNotify=true
+Terminal=false
+Categories=Multimedia;
+
