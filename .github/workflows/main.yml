@@ -23,6 +23,8 @@ jobs:
       with:
         channel: stable
         flutter-version: 2.x
+    - name: Run flutter doctor
+      run: flutter doctor
     - name: Get flutter dependencies
       run: flutter pub get
     - name: Check formatting
