@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:date_time_picker/date_time_picker.dart';
+import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:netr/helpers/camera_helper.dart';
 import 'package:netr/helpers/historical_photo_camera_helper.dart';
@@ -463,7 +463,35 @@ class _HomePageState extends State<HomePage> {
       archiveDateTimeWidgets.add(
           const FittedBox(fit: BoxFit.fitHeight, child: Text('What (time): ')));
 
-      DateTimePicker dateTimePicker = DateTimePicker(
+      DatePicker.showDateTimePicker(
+        context,
+        minTime: _archiveDateTime,
+        maxTime: DateTime(now.year, now.month, now.day),
+        onChanged: (input) {
+          //var input = DateTime.parse(val);
+          var now = DateTime.now();
+          if (input.isAfter(now)) {
+            input = now;
+          }
+
+          if (_viewerMode == ViewerMode.pictureArchive) {
+            var rem = input.minute % 15;
+            if (rem >= 8) {
+              input = input.add(Duration(minutes: rem));
+            } else if (rem > 0) {
+              input = input.subtract(Duration(minutes: rem));
+            }
+          }
+
+          _selectedArchiveDateTimeButton = null;
+          setState(() {
+            _archiveDateTime = input;
+          });
+        },
+      );
+
+      /*
+      DatePicker dateTimePicker = DatePicker(
         type: DateTimePickerType.dateTime,
         initialDate: _archiveDateTime,
         initialTime: _archiveDateTime == null
@@ -497,6 +525,8 @@ class _HomePageState extends State<HomePage> {
         },
       );
 
+      */
+
       dateTimeMapping.forEach((key, value) {
         archiveDateTimeWidgets.add(createButton(
             toDisplayText(key),
@@ -517,7 +547,7 @@ class _HomePageState extends State<HomePage> {
           child: Row(children: archiveDateTimeWidgets),
         ),
       );
-      columns.add(dateTimePicker);
+      //columns.add(dateTimePicker);
     }
   }
 

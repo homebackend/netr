@@ -1,29 +1,30 @@
 import 'dart:developer';
 import 'dart:ui';
 
-import 'package:dart_vlc/dart_vlc.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 import 'package:netr/controllers/video_player_controller_interface.dart';
 
-VideoPlayerControllerInterface createController(
-        String dataSource, bool autoPlay) =>
-    DartVlcVideoPlayerController.network(dataSource, autoPlay: autoPlay);
-
-class DartVlcVideoPlayerController implements VideoPlayerControllerInterface {
-  DartVlcVideoPlayerController.network(dataSource, {autoPlay = false})
+class MediaKitController implements VideoPlayerControllerInterface {
+  MediaKitController(dataSource, {autoPlay = false})
       : playing = true,
-        player = Player(
-          id: 0,
-          /* commandlineArguments: [
-            '--rtsp-frame-buffer-size=500000'
-          ] */
-        ) {
-    player.playbackStream.listen(
-        (PlaybackState playbackState) {
-          if (_playingListener != null && playbackState.isPlaying) {
+        player = Player() {
+    player.stream.buffering.listen(
+        (buffering) {
+          log('Buffering: $buffering');
+          return _bufferingListener?.call(50);
+        },
+        onError: _errorHandler,
+        onDone: () {
+          log('Buffering complete');
+          _bufferingListener?.call(100);
+        });
+    player.stream.playing.listen(
+        (playing) {
+          if (playing) {
+            _bufferingListener?.call(100);
             return _playingListener?.call();
-          }
-
-          if (_stoppedListener != null && playbackState.isCompleted) {
+          } else {
             return _stoppedListener?.call();
           }
         },
@@ -32,32 +33,19 @@ class DartVlcVideoPlayerController implements VideoPlayerControllerInterface {
           log("playback done");
           _stoppedListener?.call();
         });
-    player.bufferingProgressStream.listen(
-        (double bufferingProgress) {
-          log('Buffering: $bufferingProgress');
-          // Don't notify until buffering has started
-          if (bufferingProgress == 0) {
-            return;
-          }
 
-          return _bufferingListener?.call(bufferingProgress);
-        },
-        onError: _errorHandler,
-        onDone: () {
-          log('Buffering complete');
-          _bufferingListener?.call(100);
-        });
-
-    player.errorStream.listen((error) {
+    player.stream.error.listen((error) {
       log("Error during play: $error");
       _errorListener?.call("Unknown error: $error");
     });
 
+    controller = VideoController(player);
     setMediaFromNetwork(dataSource, autoPlay: autoPlay);
   }
 
   bool playing;
   Player player;
+  late VideoController controller;
   VoidCallback? _playingListener;
   DoubleCallback? _bufferingListener;
   VoidCallback? _stoppedListener;
@@ -104,7 +92,7 @@ class DartVlcVideoPlayerController implements VideoPlayerControllerInterface {
 
   @override
   Future<void> setMediaFromNetwork(String dataSource, {bool? autoPlay}) async {
-    player.open(Media.network(dataSource), autoStart: autoPlay ?? false);
+    player.open(Media(dataSource), play: autoPlay ?? false);
     player.play();
   }
 

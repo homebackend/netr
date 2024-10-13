@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:netr/config.dart';
-import 'package:netr/controllers/video_controller.dart';
 import 'package:netr/helpers/historical_photo_camera_helper.dart';
 import 'package:netr/home.dart';
 import 'package:netr/helpers/photo_camera_helper.dart';
@@ -28,11 +29,13 @@ import 'package:ota_update/ota_update.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'splash.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (isDesktopPlatform()) {
     await windowManager.ensureInitialized();
-    initialize();
+    MediaKit.ensureInitialized();
     windowManager.waitUntilReadyToShow().then((_) async {
       await windowManager.setTitle("Netr App");
       await windowManager.center();
@@ -43,6 +46,7 @@ void main() async {
   return runApp(const MyApp());
 }
 
+/*
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
@@ -56,6 +60,76 @@ class MyApp extends StatelessWidget {
     }
 
     return const MaterialApp(home: Home());
+  }
+}
+ */
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    if (isMobilePlatform()) {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+    }
+
+    //return const MaterialApp(home: Home());
+    return FutureBuilder(
+        future: _startupTasks(context),
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return SplashScreen();
+          } else {
+            String url = snapshot.data;
+            return Home();
+          }
+        });
+  }
+
+  Future<List> _startupTasks(BuildContext context) {
+    return Future.wait([
+      checkUpdateRequired(context),
+    ]);
+  }
+
+  Future<String> checkUpdateRequired(BuildContext context) async {
+    try {
+      bool error = true;
+      final currentInfo = await PackageInfo.fromPlatform();
+      log('Current App version: ${currentInfo.buildNumber}');
+      List<String> baseUrls = properties['upgrade']['baseUrls'];
+      for (String baseUrl in baseUrls) {
+        String contents;
+        try {
+          contents = await http.read(Uri.parse('$baseUrl/info.json'));
+          error = false;
+        } catch (e) {
+          log('Error accessing update data: $e');
+          continue;
+        }
+        final AppInfo appInfo = AppInfo.fromJson(jsonDecode(contents));
+        log('Available App version: ${appInfo.version}');
+
+        if (int.parse(currentInfo.buildNumber) < int.parse(appInfo.version)) {
+          return baseUrl;
+        }
+
+        break;
+      }
+
+      if (error) {
+        throw Exception('Unable to get update data');
+      }
+    } catch (e) {
+      showSnackBar(
+          context, 'Unable to check for App update. Will retry later.',
+      );
+    }
+
+    return '';
   }
 }
 

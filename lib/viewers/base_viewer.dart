@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:netr/tool.dart';
 import 'package:netr/viewers/picture_historical_viewer.dart';
 import 'package:vector_math/vector_math_64.dart' as vm64;
-import 'package:wakelock/wakelock.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 typedef ViewerCallback = void Function(bool showInstruction);
 
@@ -62,13 +62,13 @@ abstract class BaseViewerState<T extends BaseViewer> extends State<T> {
 
   Future<void> lockScreen() async {
     if (kIsWeb || !Platform.isLinux) {
-      await Wakelock.enable();
+      await WakelockPlus.enable();
     }
   }
 
   Future<void> unlockScreen() async {
     if (kIsWeb || !Platform.isLinux) {
-      await Wakelock.disable();
+      await WakelockPlus.disable();
     }
   }
 
