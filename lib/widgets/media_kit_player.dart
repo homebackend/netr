@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:netr/controllers/media_kit_controller.dart';
 
 class MediaKitVideoPlayer extends StatefulWidget {
-  const MediaKitVideoPlayer({Key? key, required this.videoPlayerController})
-      : super(key: key);
+  const MediaKitVideoPlayer({super.key, required this.videoPlayerController});
 
   final MediaKitController videoPlayerController;
 

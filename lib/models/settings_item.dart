@@ -6,8 +6,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-class AppInfo {
-  final String version;
+abstract class SettingsItem {
+  String name;
+  
+  SettingsItem(this.name);
 
-  AppInfo.fromJson(Map<String, dynamic> json) : version = json['version'];
+  Map<String, dynamic> toJson();
+  SettingsItem copySelf();
 }

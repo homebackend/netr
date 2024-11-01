@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2024 Neeraj Jakhar
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ */
+
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -5,15 +13,16 @@ import 'package:flutter/services.dart';
 
 Widget _wrapInRawKeyboardListener(ElevatedButton widget, String? label,
     [bool usePlayButtonAsEnter = false]) {
-  return RawKeyboardListener(
+  return KeyboardListener(
     focusNode: FocusNode(),
-    onKey: (RawKeyEvent event) {
-      if (event is RawKeyDownEvent) {
-        if (event.isKeyPressed(LogicalKeyboardKey.enter) ||
-            event.isKeyPressed(LogicalKeyboardKey.select) ||
+    onKeyEvent: (KeyEvent event) {
+      if (event is KeyDownEvent) {
+        if (event.logicalKey.keyId == LogicalKeyboardKey.enter ||
+            event.logicalKey.keyId == LogicalKeyboardKey.select ||
             (usePlayButtonAsEnter &&
-                (event.isKeyPressed(LogicalKeyboardKey.mediaPlay) ||
-                    event.isKeyPressed(LogicalKeyboardKey.mediaPlayPause)))) {
+                (event.logicalKey.keyId == LogicalKeyboardKey.mediaPlay ||
+                    event.logicalKey.keyId ==
+                        LogicalKeyboardKey.mediaPlayPause))) {
           if (widget.onPressed != null) {
             widget.onPressed!();
           }
@@ -47,8 +56,8 @@ Widget createNavigatorButton(IconData icon, VoidCallback? handler) {
     handler,
     "",
     ButtonStyle(
-      foregroundColor: MaterialStateProperty.all(Colors.blue),
-      backgroundColor: MaterialStateProperty.all(Colors.black54),
+      foregroundColor: WidgetStateProperty.all(Colors.blue),
+      backgroundColor: WidgetStateProperty.all(Colors.black54),
     ),
   );
 }

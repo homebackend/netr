@@ -8,6 +8,8 @@
 
 import 'package:flutter/material.dart';
 
+import '../constants.dart' as constants;
+
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
@@ -19,8 +21,8 @@ class SplashScreen extends StatelessWidget {
         children: <Widget>[
           Center(
             child: Image(
-              fit: BoxFit.fill,
-              image: AssetImage('assets/icons/netr.png'),
+              fit: BoxFit.fitHeight,
+              image: AssetImage(constants.appIcon),
             ),
           ),
           SizedBox(height: 20),

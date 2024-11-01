@@ -6,8 +6,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-class AppInfo {
-  final String version;
+part of 'theme_cubit.dart';
 
-  AppInfo.fromJson(Map<String, dynamic> json) : version = json['version'];
+class ThemeState {
+  final ThemeData data;
+  ThemeState(this.data);
 }

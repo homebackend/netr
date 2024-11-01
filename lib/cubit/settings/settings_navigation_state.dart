@@ -6,8 +6,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-class AppInfo {
-  final String version;
+part of 'settings_navigation_cubit.dart';
 
-  AppInfo.fromJson(Map<String, dynamic> json) : version = json['version'];
+final class SettingsNavigationState {
+  final int index;
+  final String name;
+  SettingsNavigationState(this.index, this.name);
 }

@@ -6,8 +6,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-class AppInfo {
-  final String version;
+part of 'internet_cubit.dart';
 
-  AppInfo.fromJson(Map<String, dynamic> json) : version = json['version'];
+enum InternetConnectivityStatus {
+  connected,
+  connectedWifiOrEthernet,
+  disconnected,
+}
+
+class InternetStatus {
+  final InternetConnectivityStatus status;
+  const InternetStatus(this.status);
 }

@@ -588,9 +588,9 @@ class _HomePageState extends State<HomePage> {
           'Go',
           ButtonStyle(
             alignment: Alignment.center,
-            backgroundColor: MaterialStateProperty.all(Colors.black54),
-            foregroundColor: MaterialStateProperty.all(Colors.blue),
-            textStyle: MaterialStateProperty.all(
+            backgroundColor: WidgetStateProperty.all(Colors.black54),
+            foregroundColor: WidgetStateProperty.all(Colors.blue),
+            textStyle: WidgetStateProperty.all(
               const TextStyle(
                 fontSize: 35,
                 fontWeight: FontWeight.bold,
