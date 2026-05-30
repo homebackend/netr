@@ -115,28 +115,32 @@ class _SettingsPageViewState extends State<SettingsPageView> {
   }
 
   Widget _buildSettings(SettingsNavigationState state) {
-    return Stack(
-      alignment: Alignment.bottomCenter,
+    return Column(
       children: [
-        PageView(
-          onPageChanged: (index) {
-            context.read<SettingsNavigationCubit>().setSelectedIndex(index);
-          },
-          controller: _controller,
-          children: <Widget>[
-            GeneralSettings(),
-            AddDeviceSettings(DeviceType.camera),
-            AddDeviceSettings(DeviceType.nvr),
-            AddLocationSettings(),
-            AddCredentialSettings(),
-          ],
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          child: DotsIndicator(
+            dotsCount: 5,
+            position: state.index.toDouble(),
+            onTap: (position) {
+              _controller.jumpToPage(position);
+            },
+          ),
         ),
-        DotsIndicator(
-          dotsCount: 5,
-          position: state.index.toDouble(),
-          onTap: (position) {
-            _controller.jumpToPage(position);
-          },
+        Expanded(
+          child: PageView(
+            onPageChanged: (index) {
+              context.read<SettingsNavigationCubit>().setSelectedIndex(index);
+            },
+            controller: _controller,
+            children: <Widget>[
+              GeneralSettings(),
+              AddDeviceSettings(DeviceType.camera),
+              AddDeviceSettings(DeviceType.nvr),
+              AddLocationSettings(),
+              AddCredentialSettings(),
+            ],
+          ),
         ),
       ],
     );
