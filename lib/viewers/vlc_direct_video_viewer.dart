@@ -1,21 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:netr/controllers/vlc_remote_controller.dart';
-import 'package:netr/helpers/stream_camera_helper.dart';
 import 'package:netr/viewers/direct_video_viewer.dart';
 import 'package:netr/tool.dart';
 
 class VlcDirectVideoViewerHome extends DirectVideoViewerHome {
-  const VlcDirectVideoViewerHome(StreamCameraHelper streamCameraHelper,
-      selectedVideoCamera, selectedVideoQuality, location, callback,
-      {Key? key})
-      : super(
-          streamCameraHelper,
-          selectedVideoCamera,
-          selectedVideoQuality,
-          location,
-          callback,
-          key: key,
-        );
+  const VlcDirectVideoViewerHome(
+      super.streamCameraHelper,
+      super.selectedVideoCamera,
+      super.selectedVideoQuality,
+      super.location,
+      super.callback,
+      {super.key});
 
   @override
   VlcDirectVideoViewerHomeState createState() =>

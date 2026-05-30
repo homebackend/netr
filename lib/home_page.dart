@@ -24,7 +24,7 @@ typedef HomePageCallback = void Function(
 
 class HomePage extends StatefulWidget {
   const HomePage(this.onSubmit,
-      {Key? key,
+      {super.key,
       this.viewerMode,
       this.videoStreamMode,
       this.videoStreamType,
@@ -36,8 +36,7 @@ class HomePage extends StatefulWidget {
       this.photoCameraHelper,
       this.historicalPhotoCameraHelper,
       this.streamCameraHelper})
-      : isRestored = false,
-        super(key: key);
+      : isRestored = false;
 
   const HomePage.restore(
       this.onSubmit,
@@ -52,9 +51,8 @@ class HomePage extends StatefulWidget {
       this.photoCameraHelper,
       this.historicalPhotoCameraHelper,
       this.streamCameraHelper,
-      {Key? key})
-      : isRestored = true,
-        super(key: key);
+      {super.key})
+      : isRestored = true;
 
   final bool isRestored;
   final HomePageCallback onSubmit;

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:http/http.dart' as http;
-import 'package:netr/helpers/camera_helper.dart';
 import 'package:netr/helpers/dropbox_camera_helper.dart';
 import 'package:netr/models/latest_info.dart';
 
@@ -12,8 +11,7 @@ class PhotoCameraHelper extends DropboxCameraHelper {
 
   LatestInfo? _latestInfo;
 
-  PhotoCameraHelper(OnLoadHandler onLoadHandler, OnErrorHandler onErrorHandler)
-      : super(onLoadHandler, onErrorHandler);
+  PhotoCameraHelper(super.onLoadHandler, super.onErrorHandler);
 
   @override
   Future<void> load() async {
@@ -90,9 +88,9 @@ class PhotoCameraHelper extends DropboxCameraHelper {
   }
 
   int getFrequency(String camera) {
-    if(_latestInfo!.minCameras.contains(camera)) {
+    if (_latestInfo!.minCameras.contains(camera)) {
       return _latestInfo!.minCameraFrequency;
-    } else if(_latestInfo!.cameras.contains(camera)) {
+    } else if (_latestInfo!.cameras.contains(camera)) {
       return _latestInfo!.frequency;
     }
 

@@ -13,8 +13,7 @@ typedef ViewerCallback = void Function(bool showInstruction);
 abstract class BaseViewer extends StatefulWidget {
   const BaseViewer(this.selectedVideoCamera, this.selectedVideoQuality,
       this.location, this.callback,
-      {Key? key})
-      : super(key: key);
+      {super.key});
 
   final String selectedVideoCamera;
   final String selectedVideoQuality;

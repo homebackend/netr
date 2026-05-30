@@ -1,20 +1,14 @@
-import 'package:flutter/material.dart';
 import 'package:netr/config.dart';
-import 'package:netr/helpers/stream_camera_helper.dart';
 import 'package:netr/viewers/video_viewer.dart';
 
 class DirectVideoViewerHome extends VideoViewerHome {
-  const DirectVideoViewerHome(StreamCameraHelper streamCameraHelper,
-      selectedVideoCamera, selectedVideoQuality, location, callback,
-      {Key? key})
-      : super(
-          streamCameraHelper,
-          selectedVideoCamera,
-          selectedVideoQuality,
-          location,
-          callback,
-          key: key,
-        );
+  const DirectVideoViewerHome(
+      super.streamCameraHelper,
+      super.selectedVideoCamera,
+      super.selectedVideoQuality,
+      super.location,
+      super.callback,
+      {super.key});
 
   @override
   DirectVideoViewerHomeState createState() => DirectVideoViewerHomeState();
@@ -22,7 +16,6 @@ class DirectVideoViewerHome extends VideoViewerHome {
 
 class DirectVideoViewerHomeState<T extends DirectVideoViewerHome>
     extends VideoViewerHomeState<T> {
-
   @override
   void initState() {
     super.initState();

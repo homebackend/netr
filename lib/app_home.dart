@@ -125,7 +125,7 @@ class AppHome extends StatelessWidget {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, state) {
         return Switch(
-          activeColor: Colors.white,
+          activeThumbColor: Colors.white,
           value: state.data.brightness == Brightness.dark,
           onChanged: (value) {
             context.read<ThemeCubit>().toggleTheme(value);

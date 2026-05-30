@@ -5,9 +5,9 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 abstract class BaseCameraViewer extends BaseViewer {
   const BaseCameraViewer(selectedVideoCamera, selectedVideoQuality,
-      String location, ViewerCallback callback, {Key? key})
-      : super(selectedVideoCamera, selectedVideoQuality, location, callback,
-            key: key);
+      String location, ViewerCallback callback,
+      {super.key})
+      : super(selectedVideoCamera, selectedVideoQuality, location, callback);
 }
 
 abstract class BaseCameraViewerState<T extends BaseCameraViewer>

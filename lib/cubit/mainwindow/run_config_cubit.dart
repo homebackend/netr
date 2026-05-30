@@ -38,7 +38,7 @@ class RunConfigCubit extends Cubit<RunConfigState> with Preferences {
     if (dateTimeString == null) {
       archiveDate = state.archiveDate;
     } else {
-      archiveDate = DateTime.tryParse(dateTimeString!);
+      archiveDate = DateTime.tryParse(dateTimeString);
     }
 
     emit(state.copyWith(
