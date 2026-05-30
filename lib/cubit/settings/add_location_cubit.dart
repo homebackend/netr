@@ -119,7 +119,7 @@ class AddLocationCubit
 
   void addSshPrivateKey() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
+      FilePickerResult? result = await FilePicker.pickFiles(
         dialogTitle: 'Please select a SSH private key file',
         lockParentWindow: true,
       );

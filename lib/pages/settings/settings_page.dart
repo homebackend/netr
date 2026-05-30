@@ -133,7 +133,7 @@ class _SettingsPageViewState extends State<SettingsPageView> {
         ),
         DotsIndicator(
           dotsCount: 5,
-          position: state.index,
+          position: state.index.toDouble(),
           onTap: (position) {
             _controller.jumpToPage(position);
           },

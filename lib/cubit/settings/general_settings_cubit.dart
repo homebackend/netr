@@ -35,7 +35,7 @@ class GeneralSettingsCubit extends Cubit<GeneralSettingsState>
 
       List<int> list = utf8.encode(prefsJson);
       Uint8List bytes = Uint8List.fromList(list);
-      String? outputFile = await FilePicker.platform.saveFile(
+      String? outputFile = await FilePicker.saveFile(
         dialogTitle: 'Please select an output file:',
         lockParentWindow: true,
         fileName: _exportFileName,
@@ -85,7 +85,7 @@ class GeneralSettingsCubit extends Cubit<GeneralSettingsState>
   void importFile() async {
     emit(state.copyWith(importInProgress: true));
     try {
-      FilePickerResult? inputFile = await FilePicker.platform.pickFiles(
+      FilePickerResult? inputFile = await FilePicker.pickFiles(
         dialogTitle: 'Please select an input file to load preferences',
         lockParentWindow: true,
         initialDirectory: await getDefaultDirectory(),
