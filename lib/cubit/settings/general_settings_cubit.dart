@@ -67,14 +67,18 @@ class GeneralSettingsCubit extends Cubit<GeneralSettingsState>
     emit(state.copyWith(shareInProgress: true));
     try {
       String prefsJson = await getAllPreferencesAsString();
-      Share.shareXFiles([
-        XFile.fromData(
-          utf8.encode(prefsJson),
-          mimeType: 'text/json',
-        )
-      ], fileNameOverrides: [
-        _exportFileName
-      ]);
+
+      final params = ShareParams(
+        files: [
+          XFile.fromData(
+            utf8.encode(prefsJson),
+            mimeType: 'text/json',
+          ),
+        ],
+        fileNameOverrides: [_exportFileName],
+      );
+      await SharePlus.instance.share(params);
+
       emit(state.copyWith(shareInProgress: false, shareFailed: false));
     } catch (e) {
       log('Error sharing file: $e');

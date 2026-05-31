@@ -16,11 +16,16 @@ mixin EncryptMixin {
   static final _key = Key.fromBase64(_secureKey);
   static final _encrypter = Encrypter(AES(_key));
 
-  String encrypt(String plainText) {
+  static String? encrypt(String? plainText) {
+    if (plainText == null) {
+      return plainText;
+    }
+
     return _encrypter.encrypt(plainText, iv: encryptionIV).base64;
   }
 
-  String decrypt(String encryptedText) {
-    return _encrypter.decrypt(Encrypted.fromBase64(encryptedText), iv: encryptionIV);
+  static String decrypt(String encryptedText) {
+    return _encrypter.decrypt(Encrypted.fromBase64(encryptedText),
+        iv: encryptionIV);
   }
 }

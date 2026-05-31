@@ -36,7 +36,7 @@ class Credential extends SettingsItem with EncryptMixin {
     );
 
     if (cred.password.isNotEmpty) {
-      cred.password = cred.decrypt(cred.password);
+      cred.password = EncryptMixin.decrypt(cred.password);
     }
 
     return cred;
@@ -47,7 +47,7 @@ class Credential extends SettingsItem with EncryptMixin {
     return {
       _keyName: name,
       _keyUser: user,
-      _keyPassword: encrypt(password),
+      _keyPassword: EncryptMixin.encrypt(password),
     };
   }
 }

@@ -6,6 +6,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import '../mixin/encrypter.dart';
 import 'settings_item.dart';
 
 enum LocationDistance {
@@ -43,7 +44,7 @@ enum LocationDistance {
   }
 }
 
-class Location extends SettingsItem {
+class Location extends SettingsItem with EncryptMixin {
   static final String _keyName = 'name';
   static final String _keyLongitude = 'longitude';
   static final String _keyLatitude = 'latitude';
@@ -104,7 +105,7 @@ class Location extends SettingsItem {
       sshHost: locMap[_keySshHost],
       sshPort: locMap[_keySshPort],
       sshUser: locMap[_keySshUser],
-      sshPrivateKey: locMap[_keySshPrivateKey],
+      sshPrivateKey: EncryptMixin.decrypt(locMap[_keySshPrivateKey]),
     );
   }
 
@@ -120,7 +121,7 @@ class Location extends SettingsItem {
       _keySshHost: sshHost,
       _keySshPort: sshPort,
       _keySshUser: sshUser,
-      _keySshPrivateKey: sshPrivateKey,
+      _keySshPrivateKey: EncryptMixin.encrypt(sshPrivateKey),
     };
   }
 }
