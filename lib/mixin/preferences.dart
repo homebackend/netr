@@ -9,8 +9,11 @@
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:encrypt/encrypt.dart';
 import 'package:netr/models/settings_item.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../mixin/encrypter.dart' as encrypter;
 
 mixin Preferences {
   static const String keyCameras = 'cameras';
@@ -140,6 +143,9 @@ mixin Preferences {
             await prefs.setBool(key, value);
             break;
           case keyEncryptionIV:
+            encrypter.encryptionIV = IV.fromBase64(value);
+            await prefs.setString(key, value);
+            break;
           case keyLastUsedDirectory:
             await prefs.setString(key, value);
             break;
