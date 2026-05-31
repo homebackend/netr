@@ -89,14 +89,18 @@ class _LiveViewPageState extends State<LiveViewPage> {
           children: [
             _getCameraHeader(state.selectedCamera!.name),
             SizedBox(height: 8),
-            PlayerBase(
-              constraints.maxWidth,
-              constraints.maxHeight - 40,
-              state.selectedCamera!,
-              state.selectedLocation!,
-              state.cameraCredential(state.selectedCamera!)!,
-              'Live Camera Viewer',
-              'Select a Camera',
+            Expanded(
+              child: LayoutBuilder(builder: (context, playerConstraints) {
+                return PlayerBase(
+                  constraints.maxWidth,
+                  constraints.maxHeight - 40,
+                  state.selectedCamera!,
+                  state.selectedLocation!,
+                  state.cameraCredential(state.selectedCamera!)!,
+                  'Live Camera Viewer',
+                  'Select a Camera',
+                );
+              }),
             )
           ],
         );

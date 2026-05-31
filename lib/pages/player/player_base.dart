@@ -356,8 +356,6 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
               }
             },
           ),
-
-          ///*
           BlocListener<LiveViewCubit, LiveViewState>(
             listener: (context, state) {
               if (state is LiveViewUpdatedState && !state.isFreshState) {
@@ -370,36 +368,33 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
               }
             },
           ),
-          //*/
         ],
         child: BlocBuilder<VideoPlayerCubit, VideoPlayerState>(
           builder: (context, state) {
             if (state.width > 0 && state.height > 0) {
-              double width;
-              double height;
-
-              if (widget.maxWidth / widget.maxHeight > state.aspectRatio) {
-                height = widget.maxHeight;
-                width = state.aspectRatio * height;
-              } else {
-                width = widget.maxWidth;
-                height = width / state.aspectRatio;
-              }
-
-              log('Calculated ${widget.maxWidth} x ${widget.maxHeight} => $width x $height');
-
               return SizedBox(
-                width: width,
-                height: height,
-                child: Video(
-                  controller: _videoController,
-                  controls: null,
+                width: widget.maxWidth,
+                height: widget.maxHeight,
+                child: Center(
+                  child: AspectRatio(
+                    aspectRatio: state.aspectRatio,
+                    child: Video(
+                      controller: _videoController,
+                      controls: null,
+                    ),
+                  ),
                 ),
               );
             } else {
               context.read<LiveCameraViewCubit>().getStreamUrl();
-              return CircularProgressIndicator(
-                semanticsLabel: 'Waiting for video',
+              return SizedBox(
+                width: 48,
+                height: 48,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    semanticsLabel: 'Waiting for video',
+                  ),
+                ),
               );
             }
           },
