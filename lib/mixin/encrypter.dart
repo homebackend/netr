@@ -24,7 +24,11 @@ mixin EncryptMixin {
     return _encrypter.encrypt(plainText, iv: encryptionIV).base64;
   }
 
-  static String decrypt(String encryptedText) {
+  static String? decrypt(String? encryptedText) {
+    if (encryptedText == null) {
+      return encryptedText;
+    }
+
     return _encrypter.decrypt(Encrypted.fromBase64(encryptedText),
         iv: encryptionIV);
   }
