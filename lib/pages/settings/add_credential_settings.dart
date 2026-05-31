@@ -33,10 +33,10 @@ class _AddCredentialSettingsState extends State<AddCredentialSettings> {
 
   @override
   void dispose() {
-    super.dispose();
     _nameController.dispose();
     _userController.dispose();
     _passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -54,74 +54,78 @@ class _AddCredentialSettingsState extends State<AddCredentialSettings> {
   }
 
   Widget _form(
-    formKey,
+    GlobalKey<FormState> formKey,
     BuildContext context,
   ) {
-    return BlocBuilder<AddCredentialCubit, AddCredentialState>(
-      builder: (context, state) {
+    return BlocListener<AddCredentialCubit, AddCredentialState>(
+      listenWhen: (previous, current) => previous.index != current.index,
+      listener: (context, state) {
         _nameController.text = state.name;
         _userController.text = state.user;
         _passwordController.text = state.password;
-
-        return Form(
-          key: formKey,
-          autovalidateMode: state.autovalidateMode,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _nameController,
-                validator: (value) =>
-                    widget.validateName<AddCredentialsCubit, Credential>(
-                        value, context, state.index >= 0),
-                onChanged: context.read<AddCredentialCubit>().updateName,
-                onSaved: (value) {
-                  _credential.name = value!;
-                },
-                decoration: widget.textFieldDecoration(
-                  'Credential Name',
-                  'Unique name of credential',
-                  Icons.title,
-                ),
-              ),
-              widget.verticalSpacing(),
-              TextFormField(
-                controller: _userController,
-                validator: widget.validateUser,
-                onChanged: context.read<AddCredentialCubit>().updateUser,
-                onSaved: (value) {
-                  _credential.user = value!;
-                },
-                decoration: widget.textFieldDecoration(
-                  'User Name',
-                  'User name',
-                  Icons.person,
-                ),
-              ),
-              widget.verticalSpacing(),
-              TextFormField(
-                controller: _passwordController,
-                obscureText: !state.passwordVisibility,
-                validator: widget.validatePassword,
-                onChanged: context.read<AddCredentialCubit>().updatePassword,
-                onSaved: (value) {
-                  _credential.password = value!;
-                },
-                decoration: widget.passwordFieldDecoration(
-                  'Password',
-                  'Password',
-                  Icons.lock,
-                  !state.passwordVisibility,
-                  () {
-                    context
-                        .read<AddCredentialCubit>()
-                        .togglePasswordVisibility();
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
       },
+      child: BlocBuilder<AddCredentialCubit, AddCredentialState>(
+        builder: (context, state) {
+          return Form(
+            key: formKey,
+            autovalidateMode: state.autovalidateMode,
+            child: Column(
+              children: [
+                TextFormField(
+                  controller: _nameController,
+                  validator: (value) =>
+                      widget.validateName<AddCredentialsCubit, Credential>(
+                          value, context, state.index >= 0),
+                  onChanged: context.read<AddCredentialCubit>().updateName,
+                  onSaved: (value) {
+                    _credential.name = value!;
+                  },
+                  decoration: widget.textFieldDecoration(
+                    'Credential Name',
+                    'Unique name of credential',
+                    Icons.title,
+                  ),
+                ),
+                widget.verticalSpacing(),
+                TextFormField(
+                  controller: _userController,
+                  validator: widget.validateUser,
+                  onChanged: context.read<AddCredentialCubit>().updateUser,
+                  onSaved: (value) {
+                    _credential.user = value!;
+                  },
+                  decoration: widget.textFieldDecoration(
+                    'User Name',
+                    'User name',
+                    Icons.person,
+                  ),
+                ),
+                widget.verticalSpacing(),
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: !state.passwordVisibility,
+                  validator: widget.validatePassword,
+                  onChanged: context.read<AddCredentialCubit>().updatePassword,
+                  onSaved: (value) {
+                    _credential.password = value!;
+                  },
+                  decoration: widget.passwordFieldDecoration(
+                    'Password',
+                    'Password',
+                    Icons.lock,
+                    !state.passwordVisibility,
+                    () {
+                      context
+                          .read<AddCredentialCubit>()
+                          .togglePasswordVisibility();
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 

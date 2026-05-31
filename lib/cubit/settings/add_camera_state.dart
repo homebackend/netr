@@ -27,11 +27,11 @@ sealed class AddCameraState extends SettingsCommonItemState {
     this.protocol = '',
     this.host = '',
     this.port = '',
-    this.ipLocationNames = const [],
+    ipLocationNames = const [],
     this.locationName = '',
     this.credentialName = '',
     this.archiveName = '',
-  });
+  }) : ipLocationNames = List.from(ipLocationNames);
 
   @override
   Future<void> loadDefaults() async {

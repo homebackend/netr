@@ -20,37 +20,46 @@ mixin FieldsCommon {
   Widget dropDownMenu<T>(
     String title,
     List<T> values,
-    T value,
+    T? value,
     String Function(T) label,
-    void Function(T?) changeHandler,
-  ) {
+    void Function(T?) changeHandler, {
+    bool showEmptyOption = false,
+    String hintText = 'Select an option',
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('$title:'),
         InputDecorator(
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.all(
-                Radius.circular(8.0),
-              ),
+              borderRadius: BorderRadius.all(Radius.circular(8.0)),
             ),
             contentPadding: EdgeInsets.all(4.0),
           ),
-          child: DropdownButton<T>(
-            isExpanded: true,
-            elevation: 16,
-            borderRadius: BorderRadius.all(Radius.circular(8)),
-            value: value,
-            items: values.map<DropdownMenuItem<T>>(
-              (value) {
-                return DropdownMenuItem<T>(
-                  value: value,
-                  child: Text(label(value)),
-                );
-              },
-            ).toList(),
-            onChanged: (value) => changeHandler(value),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<T?>(
+              isExpanded: true,
+              elevation: 16,
+              borderRadius: const BorderRadius.all(Radius.circular(8)),
+              value: value,
+              hint: Text(hintText, style: const TextStyle(color: Colors.grey)),
+              items: [
+                if (showEmptyOption)
+                  DropdownMenuItem<T?>(
+                    value: null,
+                    child: Text('— $hintText —',
+                        style: const TextStyle(color: Colors.grey)),
+                  ),
+                ...values.map((item) {
+                  return DropdownMenuItem<T?>(
+                    value: item,
+                    child: Text(label(item)),
+                  );
+                }),
+              ],
+              onChanged: changeHandler,
+            ),
           ),
         ),
       ],

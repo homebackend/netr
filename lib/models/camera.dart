@@ -46,11 +46,11 @@ class Camera extends SettingsItem {
     this.protocol = '',
     this.host = '',
     this.port = 0,
-    this.ipLocationNames = const <String>[],
+    ipLocationNames = const <String>[],
     this.locationName = '',
     this.credentialName = '',
     this.archiveName = '',
-  });
+  }) : ipLocationNames = List<String>.from(ipLocationNames);
 
   factory Camera.fromJson(Map<String, dynamic> map) {
     return Camera(
@@ -59,7 +59,7 @@ class Camera extends SettingsItem {
       protocol: map[_keyProtocol] ?? '',
       host: map[_keyHost] ?? '',
       port: map[_keyPort] ?? '',
-     ipLocationNames:
+      ipLocationNames:
           List<String>.from(map[_keyIpLocationNames] ?? <String>[]),
       locationName: map[_keyLocationName] ?? '',
       credentialName: map[_keyCredentialName] ?? '',

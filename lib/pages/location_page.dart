@@ -59,9 +59,7 @@ class LocationPage extends StatelessWidget with FieldsCommon {
                             .locations
                             .map((l) => l.name)
                             .toList(),
-                        state.location.isEmpty
-                            ? context.read<RunConfigCubit>().locations[0].name
-                            : state.location,
+                        state.location.isEmpty ? null : state.location,
                         (v) => v,
                         (value) {
                           context.read<RunConfigCubit>().updateLocation(
@@ -92,6 +90,7 @@ class LocationPage extends StatelessWidget with FieldsCommon {
                   (v) {
                     context.read<RunConfigCubit>().updateQuality(v!);
                   },
+                  showEmptyOption: false,
                 ),
                 verticalSpacing(),
                 Row(

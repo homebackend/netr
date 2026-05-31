@@ -22,7 +22,11 @@ import '../../models/location.dart';
 import '../../tool.dart';
 
 class AddLocationSettings extends StatefulWidget
-    with CommonFormValidator, AddLocationFormValidator, FieldsCommon, SettingsCommon {
+    with
+        CommonFormValidator,
+        AddLocationFormValidator,
+        FieldsCommon,
+        SettingsCommon {
   AddLocationSettings({super.key});
 
   @override
@@ -42,8 +46,6 @@ class _AddLocationSettingsState extends State<AddLocationSettings> {
 
   @override
   void dispose() {
-    super.dispose();
-
     _nameController.dispose();
     _longitudeController.dispose();
     _latitudeController.dispose();
@@ -51,6 +53,7 @@ class _AddLocationSettingsState extends State<AddLocationSettings> {
     _sshHostController.dispose();
     _sshPortController.dispose();
     _sshUserController.dispose();
+    super.dispose();
   }
 
   @override
@@ -68,11 +71,12 @@ class _AddLocationSettingsState extends State<AddLocationSettings> {
   }
 
   Widget _form(
-    formKey,
+    GlobalKey<FormState> formKey,
     BuildContext context,
   ) {
-    return BlocBuilder<AddLocationCubit, AddLocationState>(
-      builder: (context, state) {
+    return BlocListener<AddLocationCubit, AddLocationState>(
+      listenWhen: (previous, current) => previous.index != current.index,
+      listener: (context, state) {
         _nameController.text = state.name;
         _longitudeController.text = state.longitude;
         _latitudeController.text = state.latitude;
@@ -80,79 +84,84 @@ class _AddLocationSettingsState extends State<AddLocationSettings> {
         _sshHostController.text = state.sshHost;
         _sshPortController.text = state.sshPort;
         _sshUserController.text = state.sshUser;
-
-        return Form(
-          key: formKey,
-          autovalidateMode: state.autovalidateMode,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _nameController,
-                validator: (value) =>
-                    widget.validateName<AddLocationsCubit, Location>(
-                        value, context, state.index >= 0),
-                onChanged: context.read<AddLocationCubit>().updateName,
-                onSaved: (value) {
-                  _location.name = value!;
-                },
-                decoration: widget.textFieldDecoration(
-                  'Location Name',
-                  'Location',
-                  Icons.title,
-                ),
-              ),
-              widget.verticalSpacing(),
-              TextFormField(
-                controller: _longitudeController,
-                validator: widget.validateLongitude,
-                onChanged: context.read<AddLocationCubit>().updateLongitude,
-                onSaved: (value) {
-                  if (value != null && value.isNotEmpty) {
-                    _location.longitude = double.parse(value);
-                  }
-                },
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'(^-?\d*\.?\d*)')),
-                ],
-                keyboardType: TextInputType.numberWithOptions(
-                    signed: true, decimal: true),
-                decoration: widget.textFieldDecoration(
-                  'Longitude',
-                  'Longitude',
-                  Icons.location_on,
-                ),
-              ),
-              widget.verticalSpacing(),
-              TextFormField(
-                controller: _latitudeController,
-                validator: widget.validateLatitude,
-                onSaved: (value) {
-                  if (value != null && value.isNotEmpty) {
-                    _location.latitude = double.parse(value);
-                  }
-                },
-                onChanged: context.read<AddLocationCubit>().updateLatitude,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'(^-?\d*\.?\d*)')),
-                ],
-                keyboardType: TextInputType.numberWithOptions(
-                    signed: true, decimal: true),
-                decoration: widget.textFieldDecoration(
-                  'Latitude',
-                  'Latitude',
-                  Icons.location_on,
-                ),
-              ),
-              widget.verticalSpacing(),
-              _searchLocation(context, state),
-              widget.verticalSpacing(),
-              _allowedDistanceError(_location, context, state),
-              widget.verticalSpacing(),
-              _sshConfiguration(_location, context, state),
-            ],
-          ),
-        );
       },
+      child: BlocBuilder<AddLocationCubit, AddLocationState>(
+        builder: (context, state) {
+          return Form(
+            key: formKey,
+            autovalidateMode: state.autovalidateMode,
+            child: Column(
+              children: [
+                TextFormField(
+                  controller: _nameController,
+                  validator: (value) =>
+                      widget.validateName<AddLocationsCubit, Location>(
+                          value, context, state.index >= 0),
+                  onChanged: context.read<AddLocationCubit>().updateName,
+                  onSaved: (value) {
+                    _location.name = value!;
+                  },
+                  decoration: widget.textFieldDecoration(
+                    'Location Name',
+                    'Location',
+                    Icons.title,
+                  ),
+                ),
+                widget.verticalSpacing(),
+                TextFormField(
+                  controller: _longitudeController,
+                  validator: widget.validateLongitude,
+                  onChanged: context.read<AddLocationCubit>().updateLongitude,
+                  onSaved: (value) {
+                    if (value != null && value.isNotEmpty) {
+                      _location.longitude = double.parse(value);
+                    }
+                  },
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(
+                        RegExp(r'(^-?\d*\.?\d*)')),
+                  ],
+                  keyboardType: TextInputType.numberWithOptions(
+                      signed: true, decimal: true),
+                  decoration: widget.textFieldDecoration(
+                    'Longitude',
+                    'Longitude',
+                    Icons.location_on,
+                  ),
+                ),
+                widget.verticalSpacing(),
+                TextFormField(
+                  controller: _latitudeController,
+                  validator: widget.validateLatitude,
+                  onSaved: (value) {
+                    if (value != null && value.isNotEmpty) {
+                      _location.latitude = double.parse(value);
+                    }
+                  },
+                  onChanged: context.read<AddLocationCubit>().updateLatitude,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(
+                        RegExp(r'(^-?\d*\.?\d*)')),
+                  ],
+                  keyboardType: TextInputType.numberWithOptions(
+                      signed: true, decimal: true),
+                  decoration: widget.textFieldDecoration(
+                    'Latitude',
+                    'Latitude',
+                    Icons.location_on,
+                  ),
+                ),
+                widget.verticalSpacing(),
+                _searchLocation(context, state),
+                widget.verticalSpacing(),
+                _allowedDistanceError(_location, context, state),
+                widget.verticalSpacing(),
+                _sshConfiguration(_location, context, state),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 

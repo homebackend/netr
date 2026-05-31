@@ -126,18 +126,10 @@ mixin SettingsCommon on FieldsCommon {
             ? state.items.map((item) => item.name).toList()
             : [];
 
-        if (value.isEmpty && items.isNotEmpty) {
-          updateHandler(items[0]);
-        }
-
         return dropDownMenu<String>(
           title,
           items,
-          value.isNotEmpty && items.contains(value)
-              ? value
-              : items.isNotEmpty
-                  ? items[0]
-                  : '',
+          value.isNotEmpty && items.contains(value) ? value : null,
           (item) => item,
           (item) {
             updateHandler(item!);
@@ -183,6 +175,7 @@ mixin SettingsCommon on FieldsCommon {
             BlocBuilder<C, S>(
               builder: (context, state) {
                 return cancelButton(
+                  formKey,
                   context.read<C>().reset,
                 );
               },
@@ -221,11 +214,13 @@ mixin SettingsCommon on FieldsCommon {
             formKey.currentState!.save();
             context.read<C>().saveStateDefaults();
             if (index < 0) {
-              context.read<Cs>().addItem(value);
+              final itemToAdd = value.copySelf() as T;
+              context.read<Cs>().addItem(itemToAdd);
             } else {
               context.read<Cs>().editItem(index, value);
             }
             context.read<C>().reset();
+            formKey.currentState!.reset();
           } else {
             context.read<C>().updateAutovalidateMode(AutovalidateMode.always);
           }
@@ -245,11 +240,13 @@ mixin SettingsCommon on FieldsCommon {
   }
 
   Widget cancelButton(
+    GlobalKey<FormState> formKey,
     void Function() reset,
   ) {
     return ElevatedButton(
       onPressed: () {
         reset();
+        formKey.currentState!.reset();
       },
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
