@@ -319,7 +319,9 @@ mixin SettingsCommon on FieldsCommon {
               fontSize: 20,
             ),
           ),
-          subtitle: Row(
+          subtitle: Wrap(
+            spacing: 8.0, // Gap between adjacent items
+            runSpacing: 4.0, // Gap between lines
             children: getSubTitle(item),
           ),
           trailing: Row(
