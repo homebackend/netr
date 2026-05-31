@@ -93,7 +93,7 @@ class _LiveViewPageState extends State<LiveViewPage> {
               child: LayoutBuilder(builder: (context, playerConstraints) {
                 return PlayerBase(
                   constraints.maxWidth,
-                  constraints.maxHeight - 40,
+                  constraints.maxHeight,
                   state.selectedCamera!,
                   state.selectedLocation!,
                   state.cameraCredential(state.selectedCamera!)!,
