@@ -186,6 +186,7 @@ mixin SettingsCommon on FieldsCommon {
               (item) => item.name,
               getSubTitle,
               (cubit) => cubit.editData,
+              (cubit) => cubit.copyData,
               (cubit) => cubit.removeLocation,
             )
           ],
@@ -266,6 +267,7 @@ mixin SettingsCommon on FieldsCommon {
     String Function(T) getTileTitle,
     List<Widget> Function(T) getTileSubTitle,
     void Function(int, T) Function(ItemCubit) editItem,
+    void Function(int, T) Function(ItemCubit) copyItem,
     void Function(int) Function(ViewCubit) removeItem,
   ) {
     return BlocBuilder<ViewCubit, SettingsCommonState>(
@@ -280,6 +282,7 @@ mixin SettingsCommon on FieldsCommon {
             getTileTitle,
             getTileSubTitle,
             editItem(context.read<ItemCubit>()),
+            copyItem(context.read<ItemCubit>()),
             removeItem(context.read<ViewCubit>()),
           );
         }
@@ -300,6 +303,7 @@ mixin SettingsCommon on FieldsCommon {
     String Function(T) getTitle,
     List<Widget> Function(T) getSubTitle,
     void Function(int, T) editItem,
+    void Function(int, T) copyItem,
     void Function(int) removeItem,
   ) {
     return ListView.builder(
@@ -318,14 +322,28 @@ mixin SettingsCommon on FieldsCommon {
           subtitle: Row(
             children: getSubTitle(item),
           ),
-          trailing: IconButton(
-            onPressed: () {
-              editItem(index, item);
-            },
-            icon: Icon(
-              Icons.edit,
-              color: Colors.blue,
-            ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                onPressed: () {
+                  copyItem(index, item);
+                },
+                icon: Icon(
+                  Icons.copy,
+                  color: Colors.blue,
+                ),
+              ),
+              IconButton(
+                onPressed: () {
+                  editItem(index, item);
+                },
+                icon: Icon(
+                  Icons.edit,
+                  color: Colors.blue,
+                ),
+              ),
+            ],
           ),
           leading: IconButton(
             onPressed: () {

@@ -19,7 +19,9 @@ abstract class SettingsCommonItemCubit<S extends SettingsCommonItemState, T>
   Future<void> saveStateDefaults() async {
     await state.saveDefaults();
   }
+
   void editData(int index, T item);
+  void copyData(int index, T item);
   void updateAutovalidateMode(AutovalidateMode? autovalidateMode);
   void updateName(String? name);
   void reset();

@@ -47,6 +47,12 @@ class AddLocationCubit
   }
 
   @override
+  void copyData(int index, Location item) {
+    editData(index, item);
+    emit(state.copyWith(index: -1, name: 'New Location'));
+  }
+
+  @override
   void updateAutovalidateMode(AutovalidateMode? autovalidateMode) {
     emit(state.copyWith(autovalidateMode: autovalidateMode));
   }

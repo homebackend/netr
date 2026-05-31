@@ -31,6 +31,12 @@ class AddCredentialCubit
   }
 
   @override
+  void copyData(int index, Credential item) {
+    editData(index, item);
+    emit(state.copyWith(index: -1, name: 'New Credential'));
+  }
+
+  @override
   void reset() {
     emit(AddCredentialUpdateState());
     loadStateDefaults();

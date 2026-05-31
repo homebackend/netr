@@ -46,6 +46,12 @@ class AddCameraCubitBase
   }
 
   @override
+  void copyData(int index, Camera item) {
+    editData(index, item);
+    emit(state.copyWith(index: -1, name: 'New Name'));
+  }
+
+  @override
   void reset() {
     emit(AddCameraUpdateState(stateName));
     loadStateDefaults();
