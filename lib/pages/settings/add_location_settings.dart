@@ -43,6 +43,7 @@ class _AddLocationSettingsState extends State<AddLocationSettings> {
   final _sshHostController = TextEditingController();
   final _sshPortController = TextEditingController();
   final _sshUserController = TextEditingController();
+  final _sshKeyController = TextEditingController();
 
   @override
   void dispose() {
@@ -53,6 +54,7 @@ class _AddLocationSettingsState extends State<AddLocationSettings> {
     _sshHostController.dispose();
     _sshPortController.dispose();
     _sshUserController.dispose();
+    _sshKeyController.dispose();
     super.dispose();
   }
 
@@ -85,82 +87,98 @@ class _AddLocationSettingsState extends State<AddLocationSettings> {
         _sshPortController.text = state.sshPort;
         _sshUserController.text = state.sshUser;
       },
-      child: BlocBuilder<AddLocationCubit, AddLocationState>(
-        builder: (context, state) {
-          return Form(
-            key: formKey,
-            autovalidateMode: state.autovalidateMode,
-            child: Column(
-              children: [
-                TextFormField(
-                  controller: _nameController,
-                  validator: (value) =>
-                      widget.validateName<AddLocationsCubit, Location>(
-                          value, context, state.index >= 0),
-                  onChanged: context.read<AddLocationCubit>().updateName,
-                  onSaved: (value) {
-                    _location.name = value!;
-                  },
-                  decoration: widget.textFieldDecoration(
-                    'Location Name',
-                    'Location',
-                    Icons.title,
-                  ),
-                ),
-                widget.verticalSpacing(),
-                TextFormField(
-                  controller: _longitudeController,
-                  validator: widget.validateLongitude,
-                  onChanged: context.read<AddLocationCubit>().updateLongitude,
-                  onSaved: (value) {
-                    if (value != null && value.isNotEmpty) {
-                      _location.longitude = double.parse(value);
-                    }
-                  },
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                        RegExp(r'(^-?\d*\.?\d*)')),
-                  ],
-                  keyboardType: TextInputType.numberWithOptions(
-                      signed: true, decimal: true),
-                  decoration: widget.textFieldDecoration(
-                    'Longitude',
-                    'Longitude',
-                    Icons.location_on,
-                  ),
-                ),
-                widget.verticalSpacing(),
-                TextFormField(
-                  controller: _latitudeController,
-                  validator: widget.validateLatitude,
-                  onSaved: (value) {
-                    if (value != null && value.isNotEmpty) {
-                      _location.latitude = double.parse(value);
-                    }
-                  },
-                  onChanged: context.read<AddLocationCubit>().updateLatitude,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                        RegExp(r'(^-?\d*\.?\d*)')),
-                  ],
-                  keyboardType: TextInputType.numberWithOptions(
-                      signed: true, decimal: true),
-                  decoration: widget.textFieldDecoration(
-                    'Latitude',
-                    'Latitude',
-                    Icons.location_on,
-                  ),
-                ),
-                widget.verticalSpacing(),
-                _searchLocation(context, state),
-                widget.verticalSpacing(),
-                _allowedDistanceError(_location, context, state),
-                widget.verticalSpacing(),
-                _sshConfiguration(_location, context, state),
-              ],
-            ),
-          );
+      child: BlocListener<AddLocationCubit, AddLocationState>(
+        listenWhen: (previous, current) => previous.index != current.index,
+        listener: (context, state) {
+          if (state.useSshForNonLocal) {
+            _sshHostController.text = state.sshHost;
+            _sshPortController.text = state.sshPort;
+            _sshUserController.text = state.sshUser;
+            _sshKeyController.text = state.sshPrivateKey;
+          } else {
+            _sshHostController.clear();
+            _sshPortController.clear();
+            _sshUserController.clear();
+            _sshKeyController.clear();
+          }
         },
+        child: BlocBuilder<AddLocationCubit, AddLocationState>(
+          builder: (context, state) {
+            return Form(
+              key: formKey,
+              autovalidateMode: state.autovalidateMode,
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _nameController,
+                    validator: (value) =>
+                        widget.validateName<AddLocationsCubit, Location>(
+                            value, context, state.index >= 0),
+                    onChanged: context.read<AddLocationCubit>().updateName,
+                    onSaved: (value) {
+                      _location.name = value!;
+                    },
+                    decoration: widget.textFieldDecoration(
+                      'Location Name',
+                      'Location',
+                      Icons.title,
+                    ),
+                  ),
+                  widget.verticalSpacing(),
+                  TextFormField(
+                    controller: _longitudeController,
+                    validator: widget.validateLongitude,
+                    onChanged: context.read<AddLocationCubit>().updateLongitude,
+                    onSaved: (value) {
+                      if (value != null && value.isNotEmpty) {
+                        _location.longitude = double.parse(value);
+                      }
+                    },
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                          RegExp(r'(^-?\d*\.?\d*)')),
+                    ],
+                    keyboardType: TextInputType.numberWithOptions(
+                        signed: true, decimal: true),
+                    decoration: widget.textFieldDecoration(
+                      'Longitude',
+                      'Longitude',
+                      Icons.location_on,
+                    ),
+                  ),
+                  widget.verticalSpacing(),
+                  TextFormField(
+                    controller: _latitudeController,
+                    validator: widget.validateLatitude,
+                    onSaved: (value) {
+                      if (value != null && value.isNotEmpty) {
+                        _location.latitude = double.parse(value);
+                      }
+                    },
+                    onChanged: context.read<AddLocationCubit>().updateLatitude,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                          RegExp(r'(^-?\d*\.?\d*)')),
+                    ],
+                    keyboardType: TextInputType.numberWithOptions(
+                        signed: true, decimal: true),
+                    decoration: widget.textFieldDecoration(
+                      'Latitude',
+                      'Latitude',
+                      Icons.location_on,
+                    ),
+                  ),
+                  widget.verticalSpacing(),
+                  _searchLocation(context, state),
+                  widget.verticalSpacing(),
+                  _allowedDistanceError(_location, context, state),
+                  widget.verticalSpacing(),
+                  _sshConfiguration(_location, context, state),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -267,6 +285,12 @@ class _AddLocationSettingsState extends State<AddLocationSettings> {
     AddLocationState state,
   ) {
     List<Widget> rows = [];
+    if (_sshKeyController.text != state.sshPrivateKey) {
+      _sshKeyController.value = TextEditingValue(
+        text: state.sshPrivateKey,
+        selection: TextSelection.collapsed(offset: state.sshPrivateKey.length),
+      );
+    }
 
     rows.add(
       Row(
@@ -274,27 +298,22 @@ class _AddLocationSettingsState extends State<AddLocationSettings> {
           Switch(
             value: state.useSshForNonLocal,
             onChanged: (value) {
-              location.supportsSsh = value;
-              location.useSshForNonLocal = value;
               context.read<AddLocationCubit>().updateUseSshForNonLocal(value);
             },
           ),
           widget.horizontalSpacing(),
-          Text('Use SSH when not on local network')
+          const Text('Use SSH when not on local network')
         ],
       ),
     );
 
     if (state.useSshForNonLocal) {
-      location.sshPrivateKey = state.sshPrivateKey;
-      var cubit = context.read<AddLocationCubit>();
-
       rows.addAll([
         widget.verticalSpacing(),
         TextFormField(
           controller: _sshHostController,
           validator: widget.validateHost,
-          onChanged: cubit.updateSshHost,
+          onChanged: context.read<AddLocationCubit>().updateSshHost,
           onSaved: (value) {
             location.sshHost = value!;
           },
@@ -308,11 +327,11 @@ class _AddLocationSettingsState extends State<AddLocationSettings> {
         TextFormField(
           controller: _sshPortController,
           validator: widget.validatePort,
-          onChanged: cubit.updateSshPort,
+          onChanged: context.read<AddLocationCubit>().updateSshPort,
           inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'(^\d+)')),
+            FilteringTextInputFormatter.digitsOnly,
           ],
-          keyboardType: TextInputType.numberWithOptions(),
+          keyboardType: const TextInputType.numberWithOptions(),
           onSaved: (value) {
             if (value != null && value.isNotEmpty) {
               location.sshPort = int.parse(value);
@@ -328,7 +347,7 @@ class _AddLocationSettingsState extends State<AddLocationSettings> {
         TextFormField(
           controller: _sshUserController,
           validator: widget.validateSshUser,
-          onChanged: cubit.updateSshUser,
+          onChanged: context.read<AddLocationCubit>().updateSshUser,
           onSaved: (value) {
             location.sshUser = value!;
           },
@@ -339,6 +358,30 @@ class _AddLocationSettingsState extends State<AddLocationSettings> {
           ),
         ),
         widget.verticalSpacing(),
+        TextFormField(
+          controller: _sshKeyController,
+          maxLines: 6,
+          minLines: 3,
+          keyboardType: TextInputType.multiline,
+          onChanged: context.read<AddLocationCubit>().updateSshPrivateKey,
+          onSaved: (value) {
+            location.sshPrivateKey = value ?? '';
+          },
+          decoration: InputDecoration(
+            labelText: 'SSH Private Key',
+            hintText:
+                'Paste your private key text here or pick a file below...',
+            alignLabelWithHint: true,
+            prefixIcon: const Padding(
+              padding: EdgeInsets.only(bottom: 40.0),
+              child: Icon(Icons.vpn_key),
+            ),
+            border: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(8.0)),
+            ),
+          ),
+        ),
+        widget.verticalSpacing(),
         ElevatedButton(
           onPressed: () {
             context.read<AddLocationCubit>().addSshPrivateKey();
@@ -346,11 +389,13 @@ class _AddLocationSettingsState extends State<AddLocationSettings> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.lock),
+              const Icon(Icons.file_open),
               widget.horizontalSpacing(),
-              state.sshPrivateKey.isEmpty
-                  ? Text('Add SSH Private Key')
-                  : Text('Update SSH Private Key'),
+              Text(
+                state.sshPrivateKey.isEmpty
+                    ? 'Import Key from File'
+                    : 'Change Key File',
+              ),
             ],
           ),
         ),
@@ -362,19 +407,23 @@ class _AddLocationSettingsState extends State<AddLocationSettings> {
           state.sshPrivateKey.isNotEmpty) {
         rows.add(widget.verticalSpacing());
         if (state.testingSshConnection) {
-          rows.add(CircularProgressIndicator());
+          rows.add(
+            const Center(child: CircularProgressIndicator()),
+          ); // Centered to fix layout crash
         } else {
-          List<Widget> children = [];
-          children.add(Icon(Icons.private_connectivity));
-          children.add(widget.horizontalSpacing());
-          children.add(Text('Test Connection'));
+          List<Widget> children = [
+            const Icon(Icons.private_connectivity),
+            widget.horizontalSpacing(),
+            const Text('Test Connection'),
+          ];
+
           switch (state.sshConnectionStatus) {
             case SshConnectionStatus.untested:
               break;
             case SshConnectionStatus.successful:
               children.addAll([
                 widget.horizontalSpacing(),
-                Icon(
+                const Icon(
                   Icons.check_box,
                   color: Colors.green,
                 ),
@@ -383,7 +432,7 @@ class _AddLocationSettingsState extends State<AddLocationSettings> {
             case SshConnectionStatus.failed:
               children.addAll([
                 widget.horizontalSpacing(),
-                Icon(
+                const Icon(
                   Icons.error,
                   color: Colors.red,
                 ),
