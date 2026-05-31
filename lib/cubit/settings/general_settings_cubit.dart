@@ -93,6 +93,7 @@ class GeneralSettingsCubit extends Cubit<GeneralSettingsState>
         dialogTitle: 'Please select an input file to load preferences',
         lockParentWindow: true,
         initialDirectory: await getDefaultDirectory(),
+        type: FileType.any,
       );
 
       if (inputFile == null) {
@@ -106,9 +107,10 @@ class GeneralSettingsCubit extends Cubit<GeneralSettingsState>
       await setDefaultDirectory(dirname(inputFile.files.single.path!));
 
       emit(state.copyWith(
-          importInProgress: false,
-          importFailed: false,
-          reloadPreferences: true));
+        importInProgress: false,
+        importFailed: false,
+        reloadPreferences: true,
+      ));
       emit(GeneralSettingsUpdateState());
     } catch (e) {
       log('Error importing file: $e');
