@@ -42,13 +42,19 @@ class AddCameraCubitBase
       locationName: item.locationName,
       ipLocationNames: item.ipLocationNames,
       credentialName: item.credentialName,
+      archiveName: item.archiveName,
     ));
   }
 
   @override
   void copyData(int index, Camera item) {
     editData(index, item);
-    emit(state.copyWith(index: -1, name: 'New Name'));
+    emit(
+      state.copyWith(
+        index: -1,
+        name: 'New ${stateName[0].toUpperCase()}${stateName.substring(1)}',
+      ),
+    );
   }
 
   @override
