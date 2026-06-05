@@ -135,13 +135,20 @@ jobs:
           }
           EOF
 
-      - name: Build Arch Linux Pacman Package
-        uses: FFY00/build-arch-package@v1
-        with:
-          PKGBUILD: './PKGBUILD'
+      - name: Compile Package inside Arch Linux Container
+        run: |
+          docker run --privileged -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} archlinux:latest bash -c "
+            pacman -Syu --noconfirm --needed base-devel binutils
+            
+            useradd -m builder && echo 'builder ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+            chown -R builder:builder ${{ github.workspace }}
+            
+            su builder -c 'makepkg -s --noconfirm'
+          "
 
       - name: Prepare Arch Package
-        run: mv *.pkg.tar.zst netr-linux-x64.pkg.tar.zst
+        run: |
+          mv *.pkg.tar.zst netr-linux-x64.pkg.tar.zst
 
       - name: Upload Arch Artifact
         uses: actions/upload-artifact@v4
