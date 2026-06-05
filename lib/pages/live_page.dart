@@ -10,6 +10,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:netr/cubit/common.dart';
 
 import '../cubit/viewer/live_view_cubit.dart';
 import '../models/location.dart';
@@ -38,13 +39,7 @@ class _LiveViewPageState extends State<LiveViewPage> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<LiveViewCubit, LiveViewState>(
-      buildWhen: (previous, current) {
-        if (current is LiveViewUpdatedState && !current.isFreshState) {
-          return false;
-        }
-
-        return true;
-      },
+      buildWhen: CubitCommon.liveViewBuildWhen,
       builder: (context, state) {
         return state is LiveViewUpdatedState && state.fullScreen
             ? _videoViewer(state)
@@ -199,7 +194,7 @@ class _LiveViewPageState extends State<LiveViewPage> {
               splashColor: Colors.blue.withAlpha(30),
               onTap: () {
                 context.read<LiveViewCubit>().updateSelectedCameraAndLocation(
-                    state.locationCamera(location)[index], location);
+                    state.locationCamera(location)[index], location, true);
               },
               child: Column(
                 children: [

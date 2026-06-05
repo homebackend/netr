@@ -9,6 +9,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../controllers/full_screen_controller.dart';
 import '../../mixin/preferences.dart';
 import '../../models/camera.dart';
 import '../../models/credential.dart';
@@ -36,11 +37,16 @@ class LiveViewCubit extends Cubit<LiveViewState> with Preferences {
     emit(LiveViewUpdatedState(locations, credentials, cameras, nvrs));
   }
 
-  void updateSelectedCameraAndLocation(Camera camera, Location location) {
+  void updateSelectedCameraAndLocation(
+    Camera camera,
+    Location location,
+    bool isFreshState,
+  ) {
     if (state is LiveViewUpdatedState) {
       emit((state as LiveViewUpdatedState).copyWith(
         camera: camera,
         location: location,
+        isFreshState: isFreshState,
       ));
     }
   }
@@ -85,14 +91,22 @@ class LiveViewCubit extends Cubit<LiveViewState> with Preferences {
   void back() {
     if (state is LiveViewUpdatedState) {
       LiveViewUpdatedState state = this.state as LiveViewUpdatedState;
-      emit(state.copyWith(listView: true));
+      if (state.fullScreen) {
+        FullScreenController.exit();
+      }
+      emit(state.copyWith(listView: true, fullScreen: false));
     }
   }
 
   void toggleFullScreen() {
     if (state is LiveViewUpdatedState) {
       LiveViewUpdatedState state = this.state as LiveViewUpdatedState;
-      emit(state.copyWith(fullScreen: !state.fullScreen));
+      if (state.fullScreen) {
+        FullScreenController.exit();
+      } else {
+        FullScreenController.enter();
+      }
+      emit(state.copyWith(fullScreen: !state.fullScreen, isFreshState: true));
     }
   }
 }

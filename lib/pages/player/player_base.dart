@@ -320,7 +320,7 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
         });
         context
             .read<LiveViewCubit>()
-            .updateSelectedCameraAndLocation(camera, location);
+            .updateSelectedCameraAndLocation(camera, location, false);
       },
       itemBuilder: (BuildContext context) {
         return widget.cameras.indexed.map((pair) {

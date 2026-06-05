@@ -92,19 +92,18 @@ final class LiveViewUpdatedState extends LiveViewState {
     bool? isFreshState,
     Camera? camera,
     Location? location,
+    bool? fullScreen,
     bool listView = false,
-    bool fullScreen = false,
   }) {
     return LiveViewUpdatedState(
       locations,
       credentials,
       cameras,
       nvrs,
-      isFreshState:
-          listView || fullScreen ? true : isFreshState ?? this.isFreshState,
+      isFreshState: listView ? true : isFreshState ?? this.isFreshState,
       selectedCamera: listView ? null : camera ?? selectedCamera,
       selectedLocation: listView ? null : location ?? selectedLocation,
-      fullScreen: fullScreen,
+      fullScreen: fullScreen ?? this.fullScreen,
     );
   }
 }

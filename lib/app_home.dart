@@ -12,6 +12,7 @@ import 'package:netr/cubit/mainwindow/navigation_cubit.dart';
 import 'package:netr/cubit/mainwindow/run_config_cubit.dart';
 import 'package:netr/cubit/viewer/live_view_cubit.dart';
 
+import 'cubit/common.dart';
 import 'cubit/mainwindow/location_cubit.dart';
 import 'pages/archive_page.dart';
 import 'constants.dart' as constants;
@@ -42,17 +43,13 @@ class AppHome extends StatelessWidget {
             home: BlocBuilder<NavigationCubit, NavigationState>(
               builder: (context, navState) {
                 return BlocBuilder<LiveViewCubit, LiveViewState>(
-                  buildWhen: (previous, current) {
-                    if (current is LiveViewUpdatedState &&
-                        !current.isFreshState) {
-                      return false;
-                    }
-
-                    return true;
-                  },
+                  buildWhen: CubitCommon.liveViewBuildWhen,
                   builder: (context, lvState) {
                     if (lvState is LiveViewUpdatedState && lvState.fullScreen) {
-                      return LiveViewPage();
+                      return Scaffold(
+                        backgroundColor: Colors.black,
+                        body: LiveViewPage(),
+                      );
                     } else {
                       return _buildNavigationPage(context, navState);
                     }
