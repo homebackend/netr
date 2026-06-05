@@ -112,7 +112,7 @@ jobs:
           arch=('x86_64')
           url="https://github.com"
           license=('GPL-3.0-only')
-          depends=('gtk3' 'xz' 'mpv') # FIXED: Changed 'liblzma' to 'xz' to comply with Arch packaging conventions
+          depends=('gtk3' 'xz' 'mpv')
           source=()
           
           package() {
@@ -141,12 +141,12 @@ jobs:
             
             useradd -m builder && echo 'builder ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
             chown -R builder:builder ${{ github.workspace }}
+            
             su builder -c 'makepkg -s --noconfirm'
+            
+            mv *.pkg.tar.zst netr-linux-x64.pkg.tar.zst            
+            chown -R 1001:1001 ${{ github.workspace }}
           "
-
-      - name: Prepare Arch Package
-        run: |
-          mv *.pkg.tar.zst netr-linux-x64.pkg.tar.zst
 
       - name: Upload Arch Artifact
         uses: actions/upload-artifact@v4
