@@ -218,15 +218,22 @@ jobs:
         with:
           path: ./artifacts
 
+      # Uses recursive glob matching and find commands to locate the assets anywhere inside the downloaded folders
       - name: Organize Files for Upload
         if: steps.tag-check.outputs.TAG_EXISTS == 'false'
         run: |
-          mkdir ./release-assets
-          cp artifacts/base-linux-and-mobile-artifacts/app-release.apk ./release-assets/netr-android.apk
-          cp artifacts/base-linux-and-mobile-artifacts/netr-web.zip ./release-assets/
-          cp artifacts/base-linux-and-mobile-artifacts/netr-linux-x64.tar.gz ./release-assets/
-          cp artifacts/arch-artifact/netr-linux-x64.pkg.tar.zst ./release-assets/
-          cp artifacts/windows-artifact/netr-windows-x64.zip ./release-assets/
+          mkdir -p ./release-assets
+          
+          # Find and copy files dynamically, ignoring their exact internal directory trees
+          find ./artifacts -name "app-release.apk" -exec cp {} ./release-assets/netr-android.apk \;
+          find ./artifacts -name "netr-web.zip" -exec cp {} ./release-assets/ \;
+          find ./artifacts -name "netr-linux-x64.tar.gz" -exec cp {} ./release-assets/ \;
+          find ./artifacts -name "netr-linux-x64.pkg.tar.zst" -exec cp {} ./release-assets/ \;
+          find ./artifacts -name "netr-windows-x64.zip" -exec cp {} ./release-assets/ \;
+          find ./artifacts -name "netr-macos-x64.zip" -exec cp {} ./release-assets/ \;
+
+          echo "=== Verified Release Assets ==="
+          ls -la ./release-assets/
 
       - name: Create GitHub Release and Upload Files
         if: steps.tag-check.outputs.TAG_EXISTS == 'false'
