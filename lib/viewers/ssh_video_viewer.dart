@@ -1,25 +1,16 @@
 import 'dart:developer';
 import 'dart:io';
 
-import 'package:dartssh2/dartssh2.dart';
-import 'package:flutter/material.dart';
+import 'package:dartssh2_plus/dartssh2.dart';
 import 'package:netr/config.dart';
-import 'package:netr/helpers/stream_camera_helper.dart';
+import 'package:netr/ssh/netr_ssh_forward_channel.dart';
 import 'package:netr/tool.dart';
 import 'package:netr/viewers/video_viewer.dart';
 
 class SshVideoViewerHome extends VideoViewerHome {
-  const SshVideoViewerHome(StreamCameraHelper streamCameraHelper,
-      selectedVideoCamera, selectedVideoQuality, location, callback,
-      {Key? key})
-      : super(
-          streamCameraHelper,
-          selectedVideoCamera,
-          selectedVideoQuality,
-          location,
-          callback,
-          key: key,
-        );
+  const SshVideoViewerHome(super.streamCameraHelper, super.selectedVideoCamera,
+      super.selectedVideoQuality, super.location, super.callback,
+      {super.key});
 
   @override
   SshVideoViewerHomeState createState() => SshVideoViewerHomeState();
@@ -137,7 +128,9 @@ class SshVideoViewerHomeState<T extends SshVideoViewerHome>
       }
 
       forward.stream.cast<List<int>>().pipe(socket);
-      socket.pipe(forward.sink);
+      Test t = Test(forward.sink);
+      //socket.pipe(forward.sink);
+      socket.pipe(t);
       //showSnackBar(context, 'Ssh pipe established');
     }
 

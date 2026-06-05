@@ -2,13 +2,12 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:netr/config.dart';
-import 'package:netr/controllers/video_controller.dart';
+import 'package:netr/controllers/media_kit_controller.dart';
 import 'package:netr/controllers/video_player_controller_interface.dart';
 import 'package:netr/helpers/stream_camera_helper.dart';
 import 'package:netr/tool.dart';
 import 'package:netr/viewers/base_camera_viewer.dart';
-import 'package:netr/widgets/video_player.dart';
-import 'package:syncfusion_flutter_gauges/gauges.dart';
+import 'package:netr/widgets/media_kit_player.dart';
 import 'package:window_manager/window_manager.dart';
 
 abstract class VideoViewerHome extends BaseCameraViewer {
@@ -54,7 +53,6 @@ abstract class VideoViewerHomeState<T extends VideoViewerHome>
     WidgetsBinding.instance.removeObserver(this);
     videoPlayerController.removeListener();
     videoPlayerController.dispose();
-    _hideBufferingOverlay();
     super.dispose();
   }
 
@@ -64,6 +62,7 @@ abstract class VideoViewerHomeState<T extends VideoViewerHome>
   }
 
   String getHost(String camera);
+
   int getPort(String camera);
 
   String getPath() {
@@ -97,7 +96,7 @@ abstract class VideoViewerHomeState<T extends VideoViewerHome>
 
   VideoPlayerControllerInterface getVideoPlayerControllerInternal(String url) {
     VideoPlayerControllerInterface videoPlayerController =
-        VideoController(url, true);
+        MediaKitController(url, autoPlay: true);
 
     videoPlayerController.addListener(() {
       _showMessage(context,
@@ -110,12 +109,10 @@ abstract class VideoViewerHomeState<T extends VideoViewerHome>
       if (bufferingProgress == 100) {
         bufferPercentage = -1;
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        return _hideBufferingOverlay();
+        //return _hideBufferingOverlay();
       }
 
       bufferPercentage = bufferingProgress;
-      _hideBufferingOverlay();
-      _showBufferingOverlay();
     }, () {
       lockScreen();
       _showMessage(context, 'Started playing');
@@ -213,7 +210,9 @@ abstract class VideoViewerHomeState<T extends VideoViewerHome>
 
   @override
   Widget getMainViewWidget(BuildContext context) {
-    return createVideoPlayer(videoPlayerController);
+    return MediaKitVideoPlayer(
+      videoPlayerController: videoPlayerController as MediaKitController,
+    );
   }
 
   @override
@@ -222,58 +221,12 @@ abstract class VideoViewerHomeState<T extends VideoViewerHome>
       case AppLifecycleState.inactive:
       case AppLifecycleState.paused:
       case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
         close();
         break;
 
       case AppLifecycleState.resumed:
         break;
     }
-  }
-
-  void _showBufferingOverlay() {
-    double width = MediaQuery.of(context).size.width;
-    double height = MediaQuery.of(context).size.height;
-
-    SfRadialGauge radialGauge = SfRadialGauge(
-      axes: <RadialAxis>[
-        RadialAxis(minimum: 0, maximum: 100, ranges: <GaugeRange>[
-          GaugeRange(startValue: 0, endValue: 40, color: Colors.red),
-          GaugeRange(startValue: 41, endValue: 80, color: Colors.orange),
-          GaugeRange(startValue: 81, endValue: 100, color: Colors.green)
-        ], pointers: <GaugePointer>[
-          NeedlePointer(
-            value: bufferPercentage,
-          )
-        ], annotations: const <GaugeAnnotation>[
-          GaugeAnnotation(
-              widget: Text('Buffering',
-                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
-              angle: 90,
-              positionFactor: 0.5)
-        ]),
-      ],
-    );
-
-    entry = OverlayEntry(
-      builder: (context) => Positioned(
-          left: width / 2 - 100,
-          top: height / 2 - 100,
-          child: SizedBox(
-            width: 200,
-            height: 200,
-            child: Container(
-              color: Colors.white,
-              child: radialGauge,
-            ),
-          )),
-    );
-
-    final overlay = Overlay.of(context);
-    overlay.insert(entry!);
-  }
-
-  void _hideBufferingOverlay() {
-    entry?.remove();
-    entry = null;
   }
 }

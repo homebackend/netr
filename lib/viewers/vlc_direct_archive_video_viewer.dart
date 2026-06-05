@@ -4,19 +4,17 @@ import 'package:netr/helpers/stream_camera_helper.dart';
 import 'package:netr/viewers/direct_archive_video_viewer.dart';
 import 'package:netr/tool.dart';
 
-
 class VlcDirectArchiveVideoViewerHome extends DirectArchiveVideoViewerHome {
   const VlcDirectArchiveVideoViewerHome(StreamCameraHelper streamCameraHelper,
       selectedVideoCamera, location, archiveDateTime, callback,
-      {Key? key})
+      {super.key})
       : super(
-    streamCameraHelper,
-    selectedVideoCamera,
-    location,
-    archiveDateTime,
-    callback,
-    key: key,
-  );
+          streamCameraHelper,
+          selectedVideoCamera,
+          location,
+          archiveDateTime,
+          callback,
+        );
 
   @override
   VlcDirectArchiveVideoViewerHomeState createState() =>
@@ -36,8 +34,8 @@ class VlcDirectArchiveVideoViewerHomeState
     return Scaffold(
         body: Center(
             child: Column(
-              children: navigators,
-            )));
+      children: navigators,
+    )));
   }
 
   @override

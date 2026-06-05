@@ -6,15 +6,14 @@ import 'package:flutter/services.dart';
 import 'package:netr/tool.dart';
 import 'package:netr/viewers/picture_historical_viewer.dart';
 import 'package:vector_math/vector_math_64.dart' as vm64;
-import 'package:wakelock/wakelock.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 typedef ViewerCallback = void Function(bool showInstruction);
 
 abstract class BaseViewer extends StatefulWidget {
   const BaseViewer(this.selectedVideoCamera, this.selectedVideoQuality,
       this.location, this.callback,
-      {Key? key})
-      : super(key: key);
+      {super.key});
 
   final String selectedVideoCamera;
   final String selectedVideoQuality;
@@ -62,13 +61,13 @@ abstract class BaseViewerState<T extends BaseViewer> extends State<T> {
 
   Future<void> lockScreen() async {
     if (kIsWeb || !Platform.isLinux) {
-      await Wakelock.enable();
+      await WakelockPlus.enable();
     }
   }
 
   Future<void> unlockScreen() async {
     if (kIsWeb || !Platform.isLinux) {
-      await Wakelock.disable();
+      await WakelockPlus.disable();
     }
   }
 
@@ -112,14 +111,14 @@ abstract class BaseViewerState<T extends BaseViewer> extends State<T> {
   ButtonStyle getPopupItemStyle() {
     return ButtonStyle(
       alignment: Alignment.centerLeft,
-      backgroundColor: MaterialStateProperty.all(Colors.black54),
-      foregroundColor: MaterialStateProperty.resolveWith((states) {
-        if (states.contains(MaterialState.disabled)) {
+      backgroundColor: WidgetStateProperty.all(Colors.black54),
+      foregroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.disabled)) {
           return Colors.amber;
         }
         return Colors.blue;
       }),
-      textStyle: MaterialStateProperty.all(const TextStyle(
+      textStyle: WidgetStateProperty.all(const TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.bold,
       )),
@@ -278,49 +277,52 @@ abstract class BaseViewerState<T extends BaseViewer> extends State<T> {
     }
   }
 
-  void _onKey(RawKeyEvent event) {
-    if (event is RawKeyDownEvent) {
-      if (event.isKeyPressed(LogicalKeyboardKey.select) ||
-          event.isKeyPressed(LogicalKeyboardKey.enter) ||
-          event.isKeyPressed(LogicalKeyboardKey.contextMenu)) {
+  void _onKey(KeyEvent event) {
+    if (event is KeyDownEvent) {
+      if (event.logicalKey.keyId == LogicalKeyboardKey.select.keyId ||
+          event.logicalKey.keyId == LogicalKeyboardKey.enter.keyId ||
+          event.logicalKey.keyId == LogicalKeyboardKey.contextMenu.keyId) {
         _onTap();
-      } else if (event.isKeyPressed(LogicalKeyboardKey.space) ||
-          event.isKeyPressed(LogicalKeyboardKey.mediaPlay) ||
-          event.isKeyPressed(LogicalKeyboardKey.mediaPlayPause) ||
-          event.isKeyPressed(LogicalKeyboardKey.mediaPause)) {
+      } else if (event.logicalKey.keyId == LogicalKeyboardKey.space.keyId ||
+          event.logicalKey.keyId == LogicalKeyboardKey.mediaPlay.keyId ||
+          event.logicalKey.keyId == LogicalKeyboardKey.mediaPlayPause.keyId ||
+          event.logicalKey.keyId == LogicalKeyboardKey.mediaPause.keyId) {
         togglePlay();
-      } else if (event.isKeyPressed(LogicalKeyboardKey.mediaFastForward)) {
+      } else if (event.logicalKey.keyId ==
+          LogicalKeyboardKey.mediaFastForward.keyId) {
         _zoomIn();
-      } else if (event.isKeyPressed(LogicalKeyboardKey.mediaRewind)) {
+      } else if (event.logicalKey.keyId ==
+          LogicalKeyboardKey.mediaRewind.keyId) {
         _zoomOut();
-      } else if (event.isKeyPressed(LogicalKeyboardKey.arrowLeft)) {
+      } else if (event.logicalKey.keyId == LogicalKeyboardKey.arrowLeft.keyId) {
         if (_controller.value.isIdentity()) {
           previous();
         } else {
           _translate(true, false, false, false);
         }
-      } else if (event.isKeyPressed(LogicalKeyboardKey.arrowRight)) {
+      } else if (event.logicalKey.keyId ==
+          LogicalKeyboardKey.arrowRight.keyId) {
         if (_controller.value.isIdentity()) {
           next();
         } else {
           _translate(false, true, false, false);
         }
-      } else if (event.isKeyPressed(LogicalKeyboardKey.arrowUp)) {
+      } else if (event.logicalKey.keyId == LogicalKeyboardKey.arrowUp.keyId) {
         if (!_controller.value.isIdentity()) {
           _translate(false, false, true, false);
         }
-      } else if (event.isKeyPressed(LogicalKeyboardKey.arrowDown)) {
+      } else if (event.logicalKey.keyId == LogicalKeyboardKey.arrowDown.keyId) {
         if (!_controller.value.isIdentity()) {
           _translate(false, false, false, true);
         }
-      } else if (event.isKeyPressed(LogicalKeyboardKey.zoomOut) ||
-          event.isKeyPressed(LogicalKeyboardKey.minus)) {
+      } else if (event.logicalKey.keyId == LogicalKeyboardKey.zoomOut.keyId ||
+          event.logicalKey.keyId == LogicalKeyboardKey.minus.keyId) {
         _zoomOut();
-      } else if (event.isKeyPressed(LogicalKeyboardKey.zoomIn) ||
-          event.isKeyPressed(LogicalKeyboardKey.add)) {
+      } else if (event.logicalKey.keyId == LogicalKeyboardKey.zoomIn.keyId ||
+          event.logicalKey.keyId == LogicalKeyboardKey.add.keyId) {
         _zoomIn();
-      } else if (event.isKeyPressed(LogicalKeyboardKey.backspace) ||
-          event.isKeyPressed(LogicalKeyboardKey.escape)) {
+      } else if (event.logicalKey.keyId == LogicalKeyboardKey.backspace.keyId ||
+          event.logicalKey.keyId == LogicalKeyboardKey.escape.keyId) {
         if (_controller.value.isIdentity()) {
           close();
         } else {
@@ -345,10 +347,10 @@ abstract class BaseViewerState<T extends BaseViewer> extends State<T> {
 
     return WillPopScope(
       onWillPop: _onWillPop,
-      child: RawKeyboardListener(
+      child: KeyboardListener(
         autofocus: true,
         focusNode: FocusNode(),
-        onKey: _onKey,
+        onKeyEvent: _onKey,
         child: Scaffold(
           body: InteractiveViewer(
             panEnabled: true,

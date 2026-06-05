@@ -32,7 +32,8 @@ class SwipeDetector extends StatelessWidget {
   final Function() onTap;
   final SwipeConfiguration swipeConfiguration;
 
-  const SwipeDetector({Key? key, 
+  const SwipeDetector({
+    super.key,
     required this.child,
     this.onSwipeUp = doNothing,
     this.onSwipeDown = doNothing,
@@ -40,7 +41,7 @@ class SwipeDetector extends StatelessWidget {
     this.onSwipeRight = doNothing,
     this.onTap = doNothing,
     this.swipeConfiguration = const SwipeConfiguration(),
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -13,10 +13,8 @@ abstract class DropboxCameraHelper extends CameraHelper {
   String location;
   bool _initialized = false;
 
-  DropboxCameraHelper(
-      OnLoadHandler onLoadHandler, OnErrorHandler onErrorHandler)
-      : location = "/${properties['defaultImageLocation']}",
-        super(onLoadHandler, onErrorHandler);
+  DropboxCameraHelper(super.onLoadHandler, super.onErrorHandler)
+      : location = "/${properties['defaultImageLocation']}";
 
   Future<bool> _authenticateUsingRefreshToken() async {
     _initialized = true;
