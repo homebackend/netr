@@ -62,6 +62,7 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
   bool _isStopped = false;
   Timer? _hideTimer;
   String? _currentUrl;
+  String? _selectedCamera;
 
   @override
   void initState() {
@@ -75,6 +76,7 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
     );
     _player = Player(configuration: playerConfiguration);
     _videoController = VideoController(_player);
+    _selectedCamera = "${widget.location.name}/${widget.camera.name}";
 
     _startHideTimer();
     WidgetsBinding.instance.addObserver(this);
@@ -303,8 +305,6 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
   }
 
   Widget _getCameraDropUpMenu(BuildContext context) {
-    String selectedCamera = "${widget.location.name}/${widget.camera.name}";
-
     return PopupMenuButton<String>(
       tooltip: "Select Camera",
       constraints: const BoxConstraints(maxHeight: 300, maxWidth: 300),
@@ -316,7 +316,7 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
         _startHideTimer();
         var (camera, location, _) = widget.cameras[int.parse(index)];
         setState(() {
-          selectedCamera = "${location.name}/${camera.name}";
+          _selectedCamera = "${location.name}/${camera.name}";
         });
         context
             .read<LiveViewCubit>()
@@ -353,7 +353,7 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
             const Icon(Icons.camera_alt, color: Colors.blue),
             const SizedBox(width: 8),
             Text(
-              selectedCamera,
+              _selectedCamera ?? '',
               style: const TextStyle(
                 color: Colors.blue,
                 fontWeight: FontWeight.bold,
