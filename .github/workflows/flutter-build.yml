@@ -15,8 +15,6 @@ jobs:
   build-ubuntu:
     name: Build Android, Web, Linux
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.pubspec-version.outputs.VERSION }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -44,7 +42,7 @@ jobs:
       - name: Extract Version from pubspec.yaml
         id: pubspec-version
         run: |
-          VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d '[:space:]')
+          VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //' | tr '+' '-' | tr -d '[:space:]')
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build Android APK
@@ -94,7 +92,7 @@ jobs:
       - name: Get version from pubspec.yaml
         id: pubspec-version
         run: |
-          VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d '[:space:]')
+          VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //' | tr '+' '-' | tr -d '[:space:]')
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Download Raw Linux Bundle
@@ -111,7 +109,7 @@ jobs:
           pkgver=${VERSION}
           pkgrel=1
           pkgdesc="CCTV camera monitor supporting intranet and remote SSH connections"
-          arch=('x64')
+          arch=('x86_64')
           url="https://github.com"
           license=('GPL-3.0-only')
           depends=('gtk3' 'liblzma' 'mpv')
@@ -139,10 +137,8 @@ jobs:
         run: |
           docker run --privileged -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} archlinux:latest bash -c "
             pacman -Syu --noconfirm --needed base-devel binutils
-            
             useradd -m builder && echo 'builder ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
             chown -R builder:builder ${{ github.workspace }}
-            
             su builder -c 'makepkg -s --noconfirm'
           "
 
@@ -197,7 +193,7 @@ jobs:
       - name: Get version from pubspec.yaml
         id: pubspec-version
         run: |
-          VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d '[:space:]')
+          VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //' | tr '+' '-' | tr -d '[:space:]')
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Verify Tag Status
@@ -206,6 +202,7 @@ jobs:
           TAG_NAME="v${{ steps.pubspec-version.outputs.VERSION }}"
           if git ls-remote --tags origin | grep -q "refs/tags/${TAG_NAME}$"; then
             echo "TAG_EXISTS=true" >> $GITHUB_OUTPUT
+            echo "Release for $TAG_NAME already exists. Skipping."
           else
             echo "TAG_EXISTS=false" >> $GITHUB_OUTPUT
           fi
@@ -225,7 +222,6 @@ jobs:
           cp artifacts/base-linux-and-mobile-artifacts/netr-linux-x64.tar.gz ./release-assets/
           cp artifacts/arch-artifact/netr-linux-x64.pkg.tar.zst ./release-assets/
           cp artifacts/windows-artifact/netr-windows-x64.zip ./release-assets/
-          cp artifacts/macos-artifact/netr-macos-x64.zip ./release-assets/
 
       - name: Create GitHub Release and Upload Files
         if: steps.tag-check.outputs.TAG_EXISTS == 'false'
