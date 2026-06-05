@@ -42,7 +42,7 @@ jobs:
       - name: Extract Version from pubspec.yaml
         id: pubspec-version
         run: |
-          VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //' | tr '+' '-' | tr -d '[:space:]')
+          VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d '[:space:]')
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build Android APK
@@ -92,7 +92,7 @@ jobs:
       - name: Get version from pubspec.yaml
         id: pubspec-version
         run: |
-          VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //' | tr '+' '-' | tr -d '[:space:]')
+          VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d '[:space:]')
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Download Raw Linux Bundle
@@ -106,7 +106,7 @@ jobs:
           VERSION="${{ steps.pubspec-version.outputs.VERSION }}"
           cat <<EOF > PKGBUILD
           pkgname=netr
-          pkgver=${VERSION}
+          pkgver=${VERSION} # Clean semantic version string (e.g., 1.0.0)
           pkgrel=1
           pkgdesc="CCTV camera monitor supporting intranet and remote SSH connections"
           arch=('x86_64')
@@ -193,7 +193,7 @@ jobs:
       - name: Get version from pubspec.yaml
         id: pubspec-version
         run: |
-          VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //' | tr '+' '-' | tr -d '[:space:]')
+          VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d '[:space:]')
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Verify Tag Status
@@ -233,7 +233,7 @@ jobs:
           name: Release v${{ steps.pubspec-version.outputs.VERSION }}
           body: |
             ## Automated Release
-            Successfully compiled multi-platform builds for version ${{ steps.pubspec-version.outputs.VERSION }}.
+            Successfully compiled multi-platform builds for version v${{ steps.pubspec-version.outputs.VERSION }}.
           draft: false
           prerelease: false
           files: |
