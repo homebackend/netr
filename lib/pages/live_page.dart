@@ -85,11 +85,11 @@ class _LiveViewPageState extends State<LiveViewPage> {
     );
   }
 
-  Widget _videoplayer(BoxConstraints constraints, LiveViewUpdatedState state) {
+  Widget _videoplayer(LiveViewUpdatedState state) {
     return LayoutBuilder(builder: (context, playerConstraints) {
       return PlayerBase(
-        constraints.maxWidth,
-        constraints.maxHeight,
+        playerConstraints.maxWidth,
+        playerConstraints.maxHeight,
         state.selectedCamera!,
         state.selectedLocation!,
         state.cameraCredential(state.selectedCamera!)!,
@@ -115,13 +115,13 @@ class _LiveViewPageState extends State<LiveViewPage> {
         return BlocBuilder<LiveViewCubit, LiveViewState>(
             builder: (context, lvState) {
           return lvState is LiveViewUpdatedState && lvState.fullScreen
-              ? _videoplayer(constraints, state)
+              ? SizedBox.expand(child: _videoplayer(state))
               : Column(
                   children: [
                     _getCameraHeader(state.selectedCamera!.name),
                     SizedBox(height: 8),
                     Expanded(
-                      child: _videoplayer(constraints, state),
+                      child: _videoplayer(state),
                     )
                   ],
                 );

@@ -154,36 +154,41 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
               onKeyEvent: (keyEvent) {
                 context.read<ViewerKeyboardCubit>().handleKeyPress(keyEvent);
               },
-              child: InteractiveViewer(
-                panEnabled: true,
-                scaleEnabled: true,
-                minScale: ViewerKeyboardCubit.minScale,
-                maxScale: ViewerKeyboardCubit.maxScale,
-                transformationController: _controller,
-                onInteractionEnd: (ScaleEndDetails details) {
-                  context
-                      .read<ViewerKeyboardCubit>()
-                      .handleInteractionEnd(details);
-                },
-                child: isInitialized
-                    ? Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          playerWidget(context),
-                          Positioned.fill(
-                            child: GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: _onTap,
-                              onSecondaryTap: _onTap,
-                              child: const SizedBox.expand(),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Positioned.fill(
+                    child: InteractiveViewer(
+                      panEnabled: true,
+                      scaleEnabled: true,
+                      minScale: ViewerKeyboardCubit.minScale,
+                      maxScale: ViewerKeyboardCubit.maxScale,
+                      transformationController: _controller,
+                      onInteractionEnd: (ScaleEndDetails details) {
+                        context
+                            .read<ViewerKeyboardCubit>()
+                            .handleInteractionEnd(details);
+                      },
+                      child: isInitialized
+                          ? playerWidget(context)
+                          : const Center(
+                              child: CircularProgressIndicator(
+                                semanticsLabel: 'Loading',
+                              ),
                             ),
-                          ),
-                          _buildInlineControlsOverlay(context),
-                        ],
-                      )
-                    : const CircularProgressIndicator(
-                        semanticsLabel: 'Loading',
+                    ),
+                  ),
+                  if (isInitialized)
+                    Positioned.fill(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: _onTap,
+                        onSecondaryTap: _onTap,
+                        child: const SizedBox.expand(),
                       ),
+                    ),
+                  if (isInitialized) _buildInlineControlsOverlay(context),
+                ],
               ),
             );
           },
