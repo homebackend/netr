@@ -90,11 +90,14 @@ jobs:
           EOF
 
       - name: Build Arch Linux Pacman Package
-        uses: Menci/action-build-arch-linux-package@beta-v1
-
-      - name: Prepare Arch Package
-        run: mv *.pkg.tar.zst netr-linux-x64.pkg.tar.zst
-
+        uses: FFY00/build-arch-package@v1
+        with:
+          PKGBUILD: './PKGBUILD'
+  
+      - name: Prepare Arch Package for Release
+        run: |
+          mv *.pkg.tar.zst netr-linux-x64.pkg.tar.zst
+  
       - name: Pack Web Build
         run: |
           cd build
