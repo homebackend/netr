@@ -1,4 +1,4 @@
-name: Build Netr - A Flutter Multi-Platform App
+name: Build and Release Flutter Multi-Platform App
 
 on:
   push:
@@ -6,16 +6,14 @@ on:
       - main
     paths:
       - 'pubspec.yaml'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'pubspec.yaml'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build-ubuntu:
-    name: Build Android, Web & Linux
+    name: Build Android, Web, Linux
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -41,6 +39,12 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
+      - name: Extract Version from pubspec.yaml
+        id: pubspec-version
+        run: |
+          VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d '[:space:]')
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Build Android APK
         run: flutter build apk --release
 
@@ -50,23 +54,108 @@ jobs:
       - name: Build Linux Desktop App
         run: flutter build linux --release
 
-      - name: Upload Android Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: netr-android-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+      - name: Compress Linux Bundle
+        run: |
+          cd build/linux/x64/release/
+          tar -czf ../../../../netr-linux-x64.tar.gz bundle/
+          cd ../../../..
 
-      - name: Upload Web Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: netr-web-bundle
-          path: build/web/
+      - name: Pack Web Build
+        run: |
+          cd build
+          zip -r ../netr-web.zip web/
+          cd ..
 
-      - name: Upload Linux Artifact
+      - name: Upload Raw Linux Bundle for Packaging
         uses: actions/upload-artifact@v4
         with:
-          name: netr-linux-app
+          name: raw-linux-bundle
           path: build/linux/x64/release/bundle/
+
+      - name: Upload Main Base Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: base-linux-and-mobile-artifacts
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            netr-web.zip
+            netr-linux-x64.tar.gz
+
+  build-arch:
+    name: Build Arch Linux Pacman Package
+    needs: build-ubuntu
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Get version from pubspec.yaml
+        id: pubspec-version
+        run: |
+          VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d '[:space:]')
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download Raw Linux Bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: raw-linux-bundle
+          path: build/linux/x64/release/bundle/
+
+      - name: Generate Arch Linux PKGBUILD
+        run: |
+          VERSION="${{ steps.pubspec-version.outputs.VERSION }}"
+          cat <<EOF > PKGBUILD
+          pkgname=netr
+          pkgver=${VERSION}
+          pkgrel=1
+          pkgdesc="CCTV camera monitor supporting intranet and remote SSH connections"
+          arch=('x86_64')
+          url="https://github.com"
+          license=('GPL-3.0-only')
+          depends=('gtk3' 'xz' 'mpv')
+          source=()
+          
+          package() {
+            install -dm755 "\${pkgdir}/opt/netr"
+            cp -r "${GITHUB_WORKSPACE}/build/linux/x64/release/bundle/." "\${pkgdir}/opt/netr/"
+            
+            install -dm755 "\${pkgdir}/usr/bin"
+            ln -s "/opt/netr/netr" "\${pkgdir}/usr/bin/netr"
+
+            install -dm755 "\${pkgdir}/usr/share/applications"
+            install -m644 "${GITHUB_WORKSPACE}/linux/netr.desktop" "\${pkgdir}/usr/share/applications/netr.desktop"
+
+            install -dm755 "\${pkgdir}/usr/share/pixmaps"
+            install -m644 "${GITHUB_WORKSPACE}/icons/netr.png" "\${pkgdir}/usr/share/pixmaps/netr.png"
+
+            install -dm755 "\${pkgdir}/usr/share/licenses/\${pkgname}"
+            install -m644 "${GITHUB_WORKSPACE}/LICENSE" "\${pkgdir}/usr/share/licenses/\${pkgname}/LICENSE"
+          }
+          EOF
+
+      - name: Setup Compiler Dependencies
+        run: |
+          pacman -Sy --noconfirm
+          pacman -S --noconfirm --needed base-devel binutils sudo
+          useradd -m builder
+          echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+          chown -R builder:builder $GITHUB_WORKSPACE
+
+      - name: Compile Package
+        run: |
+          su builder -c "makepkg -s --noconfirm"
+
+      - name: Prepare Arch Package
+        run: |
+          mv netr-${{ steps.pubspec-version.outputs.VERSION }}-1-x86_64.pkg.tar.zst netr-linux-x64.pkg.tar.zst
+
+      - name: Upload Arch Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: arch-artifact
+          path: netr-linux-x64.pkg.tar.zst
 
   build-windows:
     name: Build Windows Desktop
@@ -87,9 +176,81 @@ jobs:
       - name: Build Windows Desktop App
         run: flutter build windows --release
 
+      - name: Compress Windows Bundle
+        shell: pwsh
+        run: |
+          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath netr-windows-x64.zip
+
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: netr-windows-app
-          path: build/windows/x64/runner/Release/
+          name: windows-artifact
+          path: netr-windows-x64.zip
 
+  create-release:
+    name: Publish Production GitHub Release
+    needs: [build-ubuntu, build-arch, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Get version from pubspec.yaml
+        id: pubspec-version
+        run: |
+          VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d '[:space:]')
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Verify Tag Status
+        id: tag-check
+        run: |
+          TAG_NAME="v${{ steps.pubspec-version.outputs.VERSION }}"
+          if git ls-remote --tags origin | grep -q "refs/tags/${TAG_NAME}$"; then
+            echo "TAG_EXISTS=true" >> $GITHUB_OUTPUT
+            echo "Release for $TAG_NAME already exists. Skipping."
+          else
+            echo "TAG_EXISTS=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download All Production Artifacts
+        if: steps.tag-check.outputs.TAG_EXISTS == 'false'
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      # Uses recursive glob matching and find commands to locate the assets anywhere inside the downloaded folders
+      - name: Organize Files for Upload
+        if: steps.tag-check.outputs.TAG_EXISTS == 'false'
+        run: |
+          mkdir -p ./release-assets
+          
+          # Find and copy files dynamically, ignoring their exact internal directory trees
+          find ./artifacts -name "app-release.apk" -exec cp {} ./release-assets/netr-android.apk \;
+          find ./artifacts -name "netr-web.zip" -exec cp {} ./release-assets/ \;
+          find ./artifacts -name "netr-linux-x64.tar.gz" -exec cp {} ./release-assets/ \;
+          find ./artifacts -name "netr-linux-x64.pkg.tar.zst" -exec cp {} ./release-assets/ \;
+          find ./artifacts -name "netr-windows-x64.zip" -exec cp {} ./release-assets/ \;
+          find ./artifacts -name "netr-macos-x64.zip" -exec cp {} ./release-assets/ \;
+
+          echo "=== Verified Release Assets ==="
+          ls -la ./release-assets/
+
+      - name: Create GitHub Release and Upload Files
+        if: steps.tag-check.outputs.TAG_EXISTS == 'false'
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.pubspec-version.outputs.VERSION }}
+          name: Release v${{ steps.pubspec-version.outputs.VERSION }}
+          body: |
+            ## Automated Release
+            Successfully compiled multi-platform builds for version v${{ steps.pubspec-version.outputs.VERSION }}.
+          draft: false
+          prerelease: false
+          files: |
+            release-assets/netr-android.apk
+            release-assets/netr-web.zip
+            release-assets/netr-linux-x64.tar.gz
+            release-assets/netr-linux-x64.pkg.tar.zst
+            release-assets/netr-windows-x64.zip
