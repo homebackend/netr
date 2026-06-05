@@ -38,14 +38,20 @@ Widget createIconButton(IconData icon, VoidCallback? handler,
     ButtonStyle? style,
     bool autofocus = false,
     bool usePlayButtonAsEnter = false]) {
-  text ??= '';
-  ElevatedButton button = ElevatedButton.icon(
-    autofocus: autofocus,
-    icon: Icon(icon),
-    onPressed: handler,
-    label: Text(text),
-    style: style,
-  );
+  ElevatedButton button = text == null || text.isEmpty
+      ? ElevatedButton(
+          autofocus: autofocus,
+          onPressed: handler,
+          style: style,
+          child: Icon(icon),
+        )
+      : ElevatedButton.icon(
+          autofocus: autofocus,
+          icon: Icon(icon),
+          onPressed: handler,
+          label: Text(text),
+          style: style,
+        );
 
   return _wrapInRawKeyboardListener(button, text, usePlayButtonAsEnter);
 }

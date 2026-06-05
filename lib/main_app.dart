@@ -35,7 +35,10 @@ class MainApp extends StatelessWidget {
             case AppInitializationState.initialization:
               return SplashScreen();
             case AppInitializationState.updateApp:
-              return UpdateApp(status.baseUrl ?? '');
+              return UpdateApp(
+                status.baseUrl ?? '',
+                () => context.read<AppInitializationCubit>().emitInitialized(),
+              );
             case AppInitializationState.initialized:
               return AppHome();
             case AppInitializationState.updateCheckFailed:

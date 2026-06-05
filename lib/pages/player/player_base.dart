@@ -6,6 +6,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 
@@ -32,6 +33,7 @@ class PlayerBase extends StatefulWidget {
   final Location location;
   final Credential credential;
   final Camera? archive;
+  final List<(Camera, Location, Credential)> cameras;
   final String playerTitle;
   final String dialogText;
   const PlayerBase(
@@ -40,6 +42,7 @@ class PlayerBase extends StatefulWidget {
     this.camera,
     this.location,
     this.credential,
+    this.cameras,
     this.playerTitle,
     this.dialogText, {
     super.key,
@@ -52,10 +55,13 @@ class PlayerBase extends StatefulWidget {
 
 class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
   final TransformationController _controller = TransformationController();
-  //late VideoPlayerControllerInterface videoPlayerController;
   late Player _player;
   late VideoController _videoController;
   bool isInitialized = false;
+  bool _controlsVisible = true;
+  bool _isStopped = false;
+  Timer? _hideTimer;
+  String? _currentUrl;
 
   @override
   void initState() {
@@ -64,11 +70,13 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
     PlayerConfiguration playerConfiguration = PlayerConfiguration(
       logLevel: MPVLogLevel.info,
       title: widget.playerTitle,
+      bufferSize: 1024 * 32,
       osc: true,
     );
     _player = Player(configuration: playerConfiguration);
     _videoController = VideoController(_player);
 
+    _startHideTimer();
     WidgetsBinding.instance.addObserver(this);
     setState(() {
       isInitialized = true;
@@ -77,12 +85,33 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _hideTimer?.cancel();
     _controller.dispose();
-    WidgetsBinding.instance.removeObserver(this);
-    //videoPlayerController.removeListener();
-    //videoPlayerController.dispose();
     _player.dispose();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  void _startHideTimer() {
+    _stopHideTimer();
+    _hideTimer = Timer(const Duration(seconds: 4), () {
+      if (mounted) {
+        setState(() => _controlsVisible = false);
+      }
+    });
+  }
+
+  void _stopHideTimer() {
+    _hideTimer?.cancel();
+  }
+
+  void _toggleControls() {
+    setState(() {
+      _controlsVisible = !_controlsVisible;
+    });
+    if (_controlsVisible) {
+      _startHideTimer();
+    }
   }
 
   @override
@@ -114,41 +143,47 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
                 break;
             }
           } else if (state is ViewerKeyboardBackState) {
-            close();
+            close(context);
           }
         },
         child: BlocBuilder<ViewerKeyboardCubit, ViewerKeyboardState>(
           builder: (context, state) {
-            return PopScope(
-              canPop: false,
-              child: KeyboardListener(
-                autofocus: true,
-                focusNode: FocusNode(),
-                onKeyEvent: (keyEvent) {
-                  context.read<ViewerKeyboardCubit>().handleKeyPress(keyEvent);
+            return KeyboardListener(
+              autofocus: true,
+              focusNode: FocusNode(),
+              onKeyEvent: (keyEvent) {
+                context.read<ViewerKeyboardCubit>().handleKeyPress(keyEvent);
+              },
+              child: InteractiveViewer(
+                panEnabled: true,
+                scaleEnabled: true,
+                minScale: ViewerKeyboardCubit.minScale,
+                maxScale: ViewerKeyboardCubit.maxScale,
+                transformationController: _controller,
+                onInteractionEnd: (ScaleEndDetails details) {
+                  context
+                      .read<ViewerKeyboardCubit>()
+                      .handleInteractionEnd(details);
                 },
-                child: InteractiveViewer(
-                  panEnabled: true,
-                  scaleEnabled: true,
-                  minScale: ViewerKeyboardCubit.minScale,
-                  maxScale: ViewerKeyboardCubit.maxScale,
-                  transformationController: _controller,
-                  onInteractionEnd: (ScaleEndDetails details) {
-                    context
-                        .read<ViewerKeyboardCubit>()
-                        .handleInteractionEnd(details);
-                  },
-                  child: isInitialized
-                      ? GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: _onTap,
-                          onSecondaryTap: _onTap,
-                          child: playerWidget(context),
-                        )
-                      : CircularProgressIndicator(
-                          semanticsLabel: 'Loading',
-                        ),
-                ),
+                child: isInitialized
+                    ? Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          playerWidget(context),
+                          Positioned.fill(
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: _onTap,
+                              onSecondaryTap: _onTap,
+                              child: const SizedBox.expand(),
+                            ),
+                          ),
+                          _buildInlineControlsOverlay(context),
+                        ],
+                      )
+                    : const CircularProgressIndicator(
+                        semanticsLabel: 'Loading',
+                      ),
               ),
             );
           },
@@ -158,58 +193,7 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
   }
 
   void _onTap() {
-    showGeneralDialog(
-      context: context,
-      barrierColor: Colors.black38,
-      barrierLabel: 'Camera Selection',
-      barrierDismissible: true,
-      pageBuilder: (_, __, ___) => Center(
-        child: Material(
-          color: Colors.transparent,
-          child: SizedBox(
-            height: 400,
-            width: 400,
-            child: ListView(
-              scrollDirection: Axis.vertical,
-              children: _getDialogItems(),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  List<Widget> _getDialogItems() {
-    List<Widget> navigators = getNavigators(context);
-    navigators.add(getBackButton(context));
-
-    return [
-      SizedBox(
-        height: 35,
-        child: ListView(
-          scrollDirection: Axis.horizontal,
-          shrinkWrap: true,
-          children: navigators,
-        ),
-      ),
-      Text(widget.dialogText, style: _getPopupInfoStyle()),
-      SizedBox(
-        height: 300,
-        child: _getSelectionView(),
-      ),
-    ];
-  }
-
-  Widget _getSelectionView() {
-    return Placeholder();
-  }
-
-  TextStyle _getPopupInfoStyle() {
-    return const TextStyle(
-      color: Colors.green,
-      fontWeight: FontWeight.bold,
-      fontSize: 30,
-    );
+    _toggleControls();
   }
 
   List<Widget> getNavigators(BuildContext context) {
@@ -221,52 +205,62 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
     return navigators;
   }
 
-  Widget _getPlayButton(context) {
+  Widget _getPlayButton(BuildContext context) {
     return createNavigatorButton(Icons.play_arrow, () async {
-      Navigator.pop(context);
       try {
-        await _player.play();
+        _startHideTimer();
+        if (_isStopped && _currentUrl != null) {
+          open(_currentUrl!);
+        }
       } on Exception catch (e) {
         showSnackBar(context, 'Error during play: $e');
       }
     });
   }
 
-  Widget _getStopButton(context) {
+  Widget _getStopButton(BuildContext context) {
     return createNavigatorButton(Icons.stop, () async {
-      Navigator.pop(context);
       try {
+        _startHideTimer();
         await _player.stop();
+        _isStopped = true;
       } on Exception catch (e) {
         showSnackBar(context, 'Error during stop: $e');
       }
     });
   }
 
-  Widget _getPreviousButton(context) {
+  Widget _getPreviousButton(BuildContext context) {
     return createNavigatorButton(Icons.arrow_back, () {
-      Navigator.pop(context);
+      _startHideTimer();
       previous(context);
     });
   }
 
-  Widget _getNextButton(context) {
+  Widget _getNextButton(BuildContext context) {
     return createNavigatorButton(Icons.arrow_forward, () {
-      Navigator.pop(context);
+      _startHideTimer();
       next(context);
     });
   }
 
-  Widget getBackButton(context) {
+  Widget _getBackButton(BuildContext context) {
     return createNavigatorButton(Icons.settings_backup_restore, () async {
-      Navigator.pop(context);
-      await close();
+      _startHideTimer();
+      await close(context);
     });
   }
 
-  Future<void> close() async {
+  Widget _getFullscreenButton(BuildContext context) {
+    return createNavigatorButton(Icons.fullscreen, () async {
+      _startHideTimer();
+      context.read<LiveViewCubit>().toggleFullScreen();
+    });
+  }
+
+  Future<void> close(BuildContext context) async {
+    context.read<LiveViewCubit>().back();
     await backButtonCleanup(context);
-    //widget.callback(false);
   }
 
   Future<void> backButtonCleanup(BuildContext context) async {
@@ -303,6 +297,129 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
     }
   }
 
+  Widget _getCameraDropUpMenu(BuildContext context) {
+    String selectedCamera = "${widget.location.name}/${widget.camera.name}";
+
+    return PopupMenuButton<String>(
+      tooltip: "Select Camera",
+      constraints: const BoxConstraints(maxHeight: 300, maxWidth: 300),
+      position: PopupMenuPosition.over,
+      offset: const Offset(0, -120),
+      onOpened: () => _stopHideTimer(),
+      onCanceled: () => _startHideTimer(),
+      onSelected: (String index) async {
+        _startHideTimer();
+        var (camera, location, _) = widget.cameras[int.parse(index)];
+        setState(() {
+          selectedCamera = "${location.name}/${camera.name}";
+        });
+        context
+            .read<LiveViewCubit>()
+            .updateSelectedCameraAndLocation(camera, location);
+      },
+      itemBuilder: (BuildContext context) {
+        return widget.cameras.indexed.map((pair) {
+          var (index, (camera, location, credential)) = pair;
+          return PopupMenuItem<String>(
+            value: index.toString(),
+            child: ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.videocam, color: Colors.blue),
+              title: Text(
+                "${location.name}/${camera.name}",
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ),
+          );
+        }).toList();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.black54,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.blue, width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.camera_alt, color: Colors.blue),
+            const SizedBox(width: 8),
+            Text(
+              selectedCamera,
+              style: const TextStyle(
+                color: Colors.blue,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const Icon(Icons.arrow_drop_up, color: Colors.blue),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInlineControlsOverlay(BuildContext context) {
+    return Positioned.fill(
+      child: AnimatedOpacity(
+        opacity: _controlsVisible ? 1.0 : 0.0,
+        duration: const Duration(milliseconds: 250),
+        child: IgnorePointer(
+          ignoring: !_controlsVisible,
+          child: Container(
+            color: Colors.black45,
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Top Details Label Bar
+                Align(
+                  alignment: Alignment.topLeft,
+                  child: Text(
+                    widget.dialogText,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                    ),
+                  ),
+                ),
+
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    _startHideTimer();
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ...getNavigators(context),
+                      _getBackButton(context),
+                      _getFullscreenButton(context),
+                      SizedBox(
+                        width: 40,
+                      ),
+                      Text(
+                        "Jump to: ",
+                        style: TextStyle(
+                          color: Colors.blue,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      _getCameraDropUpMenu(context),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget playerWidget(BuildContext context) {
     log('${MediaQuery.of(context).size.width} x ${MediaQuery.of(context).size.width * 9.0 / 16.0}');
 
@@ -312,14 +429,15 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
           create: (context) => VideoPlayerCubit(),
         ),
         BlocProvider(
-            create: (context) => LiveCameraViewCubit(
-                  _player.stream,
-                  widget.camera,
-                  widget.location,
-                  widget.credential,
-                  StreamQuality.high,
-                  archive: widget.archive,
-                )),
+          create: (context) => LiveCameraViewCubit(
+            _player.stream,
+            widget.camera,
+            widget.location,
+            widget.credential,
+            StreamQuality.high,
+            archive: widget.archive,
+          ),
+        ),
       ],
       child: MultiBlocListener(
         listeners: [
@@ -343,6 +461,7 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
                 }
               } else if (state is LiveCameraViewUpdatedState) {
                 log('Opening url: ${state.url}');
+                _currentUrl = state.url;
                 open(state.url);
               } else if (state is LiveCameraViewVideoState) {
                 if (state.width > 0 && state.height > 0) {
@@ -353,12 +472,18 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
               } else if (state is LiveCameraViewErrorState) {
                 log('Error during video play: ${state.error}');
                 showSnackBar(context, 'Play error: ${state.error}');
+                close(context);
+              } else if (state is LiveCameraViewDoneState) {
+                close(context);
               }
             },
           ),
           BlocListener<LiveViewCubit, LiveViewState>(
             listener: (context, state) {
-              if (state is LiveViewUpdatedState && !state.isFreshState) {
+              if (state is LiveViewUpdatedState &&
+                  !state.isFreshState &&
+                  state.selectedCamera != null &&
+                  state.selectedLocation != null) {
                 context.read<LiveCameraViewCubit>().updateCamera(
                       state.selectedCamera!,
                       state.selectedLocation!,

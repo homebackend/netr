@@ -28,50 +28,54 @@ class _LiveViewPageState extends State<LiveViewPage> {
 
   @override
   void dispose() {
-    super.dispose();
     _verticalController.dispose();
     for (var c in _horizontalControllers) {
       c.dispose();
     }
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => LiveViewCubit(),
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            'Live View',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
+    return BlocBuilder<LiveViewCubit, LiveViewState>(
+      buildWhen: (previous, current) {
+        if (current is LiveViewUpdatedState && !current.isFreshState) {
+          return false;
+        }
+
+        return true;
+      },
+      builder: (context, state) {
+        return state is LiveViewUpdatedState && state.fullScreen
+            ? _videoViewer(state)
+            : _buildCameraView(state);
+      },
+    );
+  }
+
+  Widget _buildCameraView(LiveViewState state) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Live View',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
           ),
         ),
-        body: BlocBuilder<LiveViewCubit, LiveViewState>(
-          buildWhen: (previous, current) {
-            if (current is LiveViewUpdatedState && !current.isFreshState) {
-              return false;
-            }
-
-            return true;
-          },
-          builder: (context, state) {
-            if (state is LiveViewInitialState) {
-              return _noCameraView();
-            } else if (state is LiveViewUpdatedState) {
-              if (state.selectedCamera != null &&
-                  state.selectedLocation != null) {
-                return _videoViewer(state);
-              } else {
-                return _listCamerasByLocation(state);
-              }
-            }
-
-            return _noCameraView();
-          },
-        ),
       ),
+      body: (() {
+        if (state is LiveViewInitialState) {
+          return _noCameraView();
+        } else if (state is LiveViewUpdatedState) {
+          if (state.selectedCamera != null && state.selectedLocation != null) {
+            return _videoViewer(state);
+          } else {
+            return _listCamerasByLocation(state);
+          }
+        }
+
+        return _noCameraView();
+      }()),
     );
   }
 
@@ -81,29 +85,47 @@ class _LiveViewPageState extends State<LiveViewPage> {
     );
   }
 
+  Widget _videoplayer(BoxConstraints constraints, LiveViewUpdatedState state) {
+    return LayoutBuilder(builder: (context, playerConstraints) {
+      return PlayerBase(
+        constraints.maxWidth,
+        constraints.maxHeight,
+        state.selectedCamera!,
+        state.selectedLocation!,
+        state.cameraCredential(state.selectedCamera!)!,
+        state.cameras
+            .map(
+              (camera) => (
+                camera,
+                state.cameraLocation(camera)!,
+                state.cameraCredential(camera)!,
+              ),
+            )
+            .toList(),
+        'Live Camera Viewer',
+        'Select a Camera',
+      );
+    });
+  }
+
   Widget _videoViewer(LiveViewUpdatedState state) {
     return LayoutBuilder(
       builder: (context, constraints) {
         log('Viewer: ${constraints.maxWidth}x${constraints.maxHeight}');
-        return Column(
-          children: [
-            _getCameraHeader(state.selectedCamera!.name),
-            SizedBox(height: 8),
-            Expanded(
-              child: LayoutBuilder(builder: (context, playerConstraints) {
-                return PlayerBase(
-                  constraints.maxWidth,
-                  constraints.maxHeight,
-                  state.selectedCamera!,
-                  state.selectedLocation!,
-                  state.cameraCredential(state.selectedCamera!)!,
-                  'Live Camera Viewer',
-                  'Select a Camera',
+        return BlocBuilder<LiveViewCubit, LiveViewState>(
+            builder: (context, lvState) {
+          return lvState is LiveViewUpdatedState && lvState.fullScreen
+              ? _videoplayer(constraints, state)
+              : Column(
+                  children: [
+                    _getCameraHeader(state.selectedCamera!.name),
+                    SizedBox(height: 8),
+                    Expanded(
+                      child: _videoplayer(constraints, state),
+                    )
+                  ],
                 );
-              }),
-            )
-          ],
-        );
+        });
       },
     );
   }

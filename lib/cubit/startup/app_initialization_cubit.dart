@@ -30,8 +30,12 @@ class AppInitializationCubit extends Cubit<AppInitializationStatus> {
     if (isMobilePlatform()) {
       await checkUpdateRequired();
     } else {
-      emit(AppInitializationStatus(AppInitializationState.initialized));
+      emitInitialized();
     }
+  }
+
+  void emitInitialized() {
+    emit(AppInitializationStatus(AppInitializationState.initialized));
   }
 
   Future<void> checkUpdateRequired() async {
@@ -49,6 +53,8 @@ class AppInitializationCubit extends Cubit<AppInitializationStatus> {
         if (int.parse(currentInfo.buildNumber) < int.parse(appInfo.version)) {
           emit(AppInitializationStatus(AppInitializationState.updateApp,
               baseUrl: baseUrl));
+        } else {
+          emitInitialized();
         }
 
         return;

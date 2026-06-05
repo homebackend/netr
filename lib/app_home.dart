@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:netr/cubit/mainwindow/navigation_cubit.dart';
 import 'package:netr/cubit/mainwindow/run_config_cubit.dart';
+import 'package:netr/cubit/viewer/live_view_cubit.dart';
 
 import 'cubit/mainwindow/location_cubit.dart';
 import 'pages/archive_page.dart';
@@ -27,96 +28,100 @@ class AppHome extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
-          create: (_) => ThemeCubit()..setInitialTheme(),
-        ),
-        BlocProvider(
-          create: (_) => NavigationCubit(),
-        ),
-        BlocProvider(
-          create: (_) => LocationCubit()..determinePosition(),
-        ),
-        BlocProvider(
-          create: (_) => RunConfigCubit(),
-        ),
+        BlocProvider(create: (_) => ThemeCubit()..setInitialTheme()),
+        BlocProvider(create: (_) => NavigationCubit()),
+        BlocProvider(create: (_) => LocationCubit()..determinePosition()),
+        BlocProvider(create: (_) => RunConfigCubit()),
+        BlocProvider(create: (_) => LiveViewCubit()),
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(
-        builder: (_, state) {
+        builder: (_, themeState) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
-            theme: state.data,
-            home: Scaffold(
-              appBar: AppBar(
-                actions: [],
-                title: Row(
-                  children: [
-                    Image.asset(
-                      constants.appEyeIcon,
-                      height: 40,
-                    ),
-                    SizedBox(
-                      width: 20,
-                    ),
-                    Text(constants.appName),
-                    Expanded(
-                      child: Container(),
-                    ),
-                    showDarkLightSwitch(context),
-                    InternetStatusWidget(),
-                  ],
-                ),
-              ),
-              body: BlocBuilder<NavigationCubit, NavigationState>(
-                builder: (context, state) {
-                  switch (state.index) {
-                    case 0:
+            theme: themeState.data,
+            home: BlocBuilder<NavigationCubit, NavigationState>(
+              builder: (context, navState) {
+                return BlocBuilder<LiveViewCubit, LiveViewState>(
+                  buildWhen: (previous, current) {
+                    if (current is LiveViewUpdatedState &&
+                        !current.isFreshState) {
+                      return false;
+                    }
+
+                    return true;
+                  },
+                  builder: (context, lvState) {
+                    if (lvState is LiveViewUpdatedState && lvState.fullScreen) {
                       return LiveViewPage();
-                    case 1:
-                      return ArchiveViewPage();
-                    case 2:
-                      return LocationPage();
-                    case 3:
-                      return SettingsPage();
-                  }
-                  return Container();
-                },
-              ),
-              bottomNavigationBar:
-                  BlocBuilder<NavigationCubit, NavigationState>(
-                builder: (context, state) {
-                  return NavigationBar(
-                    selectedIndex: state.index,
-                    onDestinationSelected: (index) {
-                      context.read<NavigationCubit>().setSelectedIndex(index);
-                    },
-                    destinations: [
-                      NavigationDestination(
-                        icon: Icon(Icons.live_tv_outlined),
-                        selectedIcon: Icon(Icons.live_tv),
-                        label: 'Live View',
-                      ),
-                      NavigationDestination(
-                        icon: Icon(Icons.archive_outlined),
-                        selectedIcon: Icon(Icons.archive),
-                        label: 'Archive View',
-                      ),
-                      NavigationDestination(
-                        icon: Icon(Icons.location_city_outlined),
-                        selectedIcon: Icon(Icons.location_city),
-                        label: 'Location',
-                      ),
-                      NavigationDestination(
-                        icon: Icon(Icons.settings_outlined),
-                        selectedIcon: Icon(Icons.settings),
-                        label: 'Settings',
-                      ),
-                    ],
-                  );
-                },
-              ),
+                    } else {
+                      return _buildNavigationPage(context, navState);
+                    }
+                  },
+                );
+              },
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildNavigationPage(BuildContext context, NavigationState navState) {
+    return Scaffold(
+      appBar: AppBar(
+        actions: [],
+        title: Row(
+          children: [
+            Image.asset(
+              constants.appEyeIcon,
+              height: 40,
+            ),
+            SizedBox(
+              width: 20,
+            ),
+            Text(constants.appName),
+            Expanded(
+              child: Container(),
+            ),
+            showDarkLightSwitch(context),
+            InternetStatusWidget(),
+          ],
+        ),
+      ),
+      body: switch (navState.index) {
+        0 => LiveViewPage(),
+        1 => ArchiveViewPage(),
+        2 => LocationPage(),
+        3 => SettingsPage(),
+        int() => Container(),
+      },
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: navState.index,
+        onDestinationSelected: (index) {
+          context.read<NavigationCubit>().setSelectedIndex(index);
+        },
+        destinations: [
+          NavigationDestination(
+            icon: Icon(Icons.live_tv_outlined),
+            selectedIcon: Icon(Icons.live_tv),
+            label: 'Live View',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.archive_outlined),
+            selectedIcon: Icon(Icons.archive),
+            label: 'Archive View',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.location_city_outlined),
+            selectedIcon: Icon(Icons.location_city),
+            label: 'Location',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Settings',
+          ),
+        ],
       ),
     );
   }

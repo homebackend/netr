@@ -81,4 +81,18 @@ class LiveViewCubit extends Cubit<LiveViewState> with Preferences {
       ));
     }
   }
+
+  void back() {
+    if (state is LiveViewUpdatedState) {
+      LiveViewUpdatedState state = this.state as LiveViewUpdatedState;
+      emit(state.copyWith(listView: true));
+    }
+  }
+
+  void toggleFullScreen() {
+    if (state is LiveViewUpdatedState) {
+      LiveViewUpdatedState state = this.state as LiveViewUpdatedState;
+      emit(state.copyWith(fullScreen: !state.fullScreen));
+    }
+  }
 }

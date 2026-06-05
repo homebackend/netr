@@ -22,6 +22,7 @@ final class LiveViewUpdatedState extends LiveViewState {
 
   final Camera? selectedCamera;
   final Location? selectedLocation;
+  final bool fullScreen;
 
   final List<Camera> camerasWithoutLocation = [];
 
@@ -39,6 +40,7 @@ final class LiveViewUpdatedState extends LiveViewState {
     this.isFreshState = true,
     this.selectedCamera,
     this.selectedLocation,
+    this.fullScreen = false,
   }) {
     for (Location location in locations) {
       _mapLocations[location.name] = location;
@@ -90,15 +92,19 @@ final class LiveViewUpdatedState extends LiveViewState {
     bool? isFreshState,
     Camera? camera,
     Location? location,
+    bool listView = false,
+    bool fullScreen = false,
   }) {
     return LiveViewUpdatedState(
       locations,
       credentials,
       cameras,
       nvrs,
-      isFreshState: isFreshState ?? this.isFreshState,
-      selectedCamera: camera ?? selectedCamera,
-      selectedLocation: location ?? selectedLocation,
+      isFreshState:
+          listView || fullScreen ? true : isFreshState ?? this.isFreshState,
+      selectedCamera: listView ? null : camera ?? selectedCamera,
+      selectedLocation: listView ? null : location ?? selectedLocation,
+      fullScreen: fullScreen,
     );
   }
 }

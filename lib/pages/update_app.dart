@@ -10,14 +10,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ota_update/ota_update.dart';
 
-import '../app_home.dart';
 import '../constants.dart' as constants;
 import '../cubit/startup/app_update_cubit.dart';
 import '../tool.dart';
 
 class UpdateApp extends StatefulWidget {
   final String url;
-  const UpdateApp(this.url, {super.key});
+  final void Function() back;
+  const UpdateApp(this.url, this.back, {super.key});
 
   @override
   State<UpdateApp> createState() => _UpdateAppState();
@@ -36,13 +36,27 @@ class _UpdateAppState extends State<UpdateApp> {
             case AppUpdateState.inProgress:
               return showProgress(status.event!);
             case AppUpdateState.skipped:
-              return AppHome();
+              widget.back();
+              return waitForAppLoad();
             case AppUpdateState.error:
+              widget.back();
               showSnackBar(context,
                   'Failed to make OTA update. Details: ${status.error!}');
-              return AppHome();
+              return waitForAppLoad();
           }
         },
+      ),
+    );
+  }
+
+  Widget waitForAppLoad() {
+    return MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(
+            semanticsLabel: 'Waiting for App Load',
+          ),
+        ),
       ),
     );
   }
