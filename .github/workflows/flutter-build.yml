@@ -13,8 +13,10 @@ permissions:
 
 jobs:
   build-ubuntu:
-    name: Build Android, Web, Linux & Arch Package
+    name: Build Android, Web, Linux
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.pubspec-version.outputs.VERSION }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -60,6 +62,53 @@ jobs:
           tar -czf ../../../../netr-linux-x64.tar.gz bundle/
           cd ../../../..
 
+      - name: Pack Web Build
+        run: |
+          cd build
+          zip -r ../netr-web.zip web/
+          cd ..
+
+      - name: Upload Raw Linux Bundle for Packaging
+        uses: actions/upload-artifact@v4
+        with:
+          name: raw-linux-bundle
+          path: build/linux/x64/release/bundle/
+
+      - name: Upload Main Base Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: base-linux-and-mobile-artifacts
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            netr-web.zip
+            netr-linux-x64.tar.gz
+
+  build-arch:
+    name: Build Arch Linux Pacman Package
+    needs: build-ubuntu
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+      options: --privileged
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Container Core Dependencies
+        run: pacman -Syu --noconfirm --needed grep sed binutils
+
+      - name: Get version from pubspec.yaml
+        id: pubspec-version
+        run: |
+          VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d '[:space:]')
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download Raw Linux Bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: raw-linux-bundle
+          path: build/linux/x64/release/bundle/
+
       - name: Generate Arch Linux PKGBUILD
         run: |
           VERSION="${{ steps.pubspec-version.outputs.VERSION }}"
@@ -86,6 +135,9 @@ jobs:
 
             install -dm755 "\${pkgdir}/usr/share/pixmaps"
             install -m644 "${GITHUB_WORKSPACE}/icons/netr.png" "\${pkgdir}/usr/share/pixmaps/netr.png"
+
+            install -dm755 "\${pkgdir}/usr/share/licenses/\${pkgname}"
+            install -m644 "${GITHUB_WORKSPACE}/LICENSE" "\${pkgdir}/usr/share/licenses/\${pkgname}/LICENSE"
           }
           EOF
 
@@ -93,26 +145,15 @@ jobs:
         uses: FFY00/build-arch-package@v1
         with:
           PKGBUILD: './PKGBUILD'
-  
-      - name: Prepare Arch Package for Release
-        run: |
-          mv *.pkg.tar.zst netr-linux-x64.pkg.tar.zst
-  
-      - name: Pack Web Build
-        run: |
-          cd build
-          zip -r ../netr-web.zip web/
-          cd ..
 
-      - name: Upload Artifacts
+      - name: Prepare Arch Package
+        run: mv *.pkg.tar.zst netr-linux-x64.pkg.tar.zst
+
+      - name: Upload Arch Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: base-linux-and-mobile-artifacts
-          path: |
-            build/app/outputs/flutter-apk/app-release.apk
-            netr-web.zip
-            netr-linux-x64.tar.gz
-            netr-linux-x64.pkg.tar.zst
+          name: arch-artifact
+          path: netr-linux-x64.pkg.tar.zst
 
   build-windows:
     name: Build Windows Desktop
@@ -146,7 +187,7 @@ jobs:
 
   create-release:
     name: Publish Production GitHub Release
-    needs: [build-ubuntu, build-windows]
+    needs: [build-ubuntu, build-arch, build-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -164,7 +205,6 @@ jobs:
           TAG_NAME="v${{ steps.pubspec-version.outputs.VERSION }}"
           if git ls-remote --tags origin | grep -q "refs/tags/${TAG_NAME}$"; then
             echo "TAG_EXISTS=true" >> $GITHUB_OUTPUT
-            echo "Tag ${TAG_NAME} already exists. Skipping release creation."
           else
             echo "TAG_EXISTS=false" >> $GITHUB_OUTPUT
           fi
@@ -182,7 +222,7 @@ jobs:
           cp artifacts/base-linux-and-mobile-artifacts/app-release.apk ./release-assets/netr-android.apk
           cp artifacts/base-linux-and-mobile-artifacts/netr-web.zip ./release-assets/
           cp artifacts/base-linux-and-mobile-artifacts/netr-linux-x64.tar.gz ./release-assets/
-          cp artifacts/base-linux-and-mobile-artifacts/netr-linux-x64.pkg.tar.zst ./release-assets/
+          cp artifacts/arch-artifact/netr-linux-x64.pkg.tar.zst ./release-assets/
           cp artifacts/windows-artifact/netr-windows-x64.zip ./release-assets/
           cp artifacts/macos-artifact/netr-macos-x64.zip ./release-assets/
 
@@ -205,4 +245,3 @@ jobs:
             release-assets/netr-linux-x64.tar.gz
             release-assets/netr-linux-x64.pkg.tar.zst
             release-assets/netr-windows-x64.zip
-            release-assets/netr-macos-x64.zip
