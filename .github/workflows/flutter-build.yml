@@ -87,15 +87,9 @@ jobs:
     name: Build Arch Linux Pacman Package
     needs: build-ubuntu
     runs-on: ubuntu-latest
-    container:
-      image: archlinux:latest
-      options: --privileged
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Install Container Core Dependencies
-        run: pacman -Syu --noconfirm --needed grep sed binutils
 
       - name: Get version from pubspec.yaml
         id: pubspec-version
