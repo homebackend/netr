@@ -121,6 +121,10 @@ jobs:
           
           package() {
             install -dm755 "\${pkgdir}/opt/netr"
+            
+            chmod +x "${GITHUB_WORKSPACE}/build/linux/x64/release/bundle/netr"
+            chmod +x "${GITHUB_WORKSPACE}/build/linux/x64/release/bundle/lib/libflutter_linux_gtk.so"
+            
             cp -r "${GITHUB_WORKSPACE}/build/linux/x64/release/bundle/." "\${pkgdir}/opt/netr/"
             
             install -dm755 "\${pkgdir}/usr/bin"
