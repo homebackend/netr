@@ -40,14 +40,20 @@ class LiveViewCubit extends Cubit<LiveViewState> with Preferences {
   void updateSelectedCameraAndLocation(
     Camera camera,
     Location location,
-    bool isFreshState,
-  ) {
+    bool isFreshState, {
+    bool? fullScreen,
+  }) {
     if (state is LiveViewUpdatedState) {
-      emit((state as LiveViewUpdatedState).copyWith(
-        camera: camera,
-        location: location,
-        isFreshState: isFreshState,
-      ));
+      if (fullScreen ?? false) {
+        FullScreenController.enter();
+      }
+
+      LiveViewUpdatedState state = this.state as LiveViewUpdatedState;
+      emit(state.copyWith(
+          camera: camera,
+          location: location,
+          isFreshState: isFreshState,
+          fullScreen: fullScreen ?? state.fullScreen));
     }
   }
 

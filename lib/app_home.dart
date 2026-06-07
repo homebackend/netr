@@ -8,12 +8,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:netr/cubit/mainwindow/navigation_cubit.dart';
-import 'package:netr/cubit/mainwindow/run_config_cubit.dart';
-import 'package:netr/cubit/viewer/live_view_cubit.dart';
 
 import 'cubit/common.dart';
 import 'cubit/mainwindow/location_cubit.dart';
+import 'cubit/mainwindow/navigation_cubit.dart';
+import 'cubit/mainwindow/run_config_cubit.dart';
+import 'cubit/viewer/live_view_cubit.dart';
 import 'pages/archive_page.dart';
 import 'constants.dart' as constants;
 import 'cubit/settings/theme_cubit.dart';

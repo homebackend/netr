@@ -35,7 +35,7 @@ class ThemeCubit extends Cubit<ThemeState> {
 
   void _saveState(bool useDarkTheme) async {
     final prefs = await SharedPreferences.getInstance();
-    prefs.setBool(prefUseDarkTheme, useDarkTheme);
+    await prefs.setBool(prefUseDarkTheme, useDarkTheme);
   }
 
   static Future<bool> _loadTheme() async {
