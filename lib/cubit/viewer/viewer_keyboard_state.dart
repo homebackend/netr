@@ -20,10 +20,10 @@ enum PlayActions {
   next,
 }
 
-final class ViewerKeyboadPlayState extends ViewerKeyboardState {
+final class ViewerKeyboardPlayState extends ViewerKeyboardState {
   final PlayActions playActions;
 
-  ViewerKeyboadPlayState(this.playActions);
+  ViewerKeyboardPlayState(this.playActions);
 }
 
 final class ViewerKeyboardControllerState extends ViewerKeyboardState {
@@ -33,3 +33,5 @@ final class ViewerKeyboardControllerState extends ViewerKeyboardState {
 }
 
 final class ViewerKeyboardBackState extends ViewerKeyboardState {}
+
+final class ViewerKeyboardFullscreenState extends ViewerKeyboardState {}

@@ -43,12 +43,41 @@ class ViewerKeyboardCubit extends Cubit<ViewerKeyboardState> {
     this.maxHeight = maxHeight;
   }
 
+  void zoomIn() {
+    double scale = controllerValue.getMaxScaleOnAxis();
+    if (scale * scaleFactor < maxScale) {
+      _scaleAndCenter(scaleFactor);
+    } else {
+      _scaleAndCenter(maxScale / scale);
+    }
+
+    emit(ViewerKeyboardControllerState(controllerValue));
+  }
+
+  void zoomOut() {
+    double scale = controllerValue.getMaxScaleOnAxis();
+    if (scale / scaleFactor > minScale) {
+      _scaleAndCenter(1 / scaleFactor);
+    } else {
+      _scaleAndCenter(minScale / scale);
+    }
+
+    emit(ViewerKeyboardControllerState(controllerValue));
+  }
+
   void _scaleAndCenter(double scaleFactor) {
-    Matrix4 value = Matrix4.copy(controllerValue)..scale(scaleFactor);
+    Matrix4 value = Matrix4.copy(controllerValue)
+      ..scaleByDouble(
+        scaleFactor,
+        scaleFactor,
+        scaleFactor,
+        1.0,
+      );
     double scale = value.getMaxScaleOnAxis();
     maxWidth *= scale - 1;
     maxHeight *= scale - 1;
     value.setTranslationRaw(-maxWidth / 2, -maxHeight / 2, 0);
+    controllerValue = value;
   }
 
   void _translate(bool left, bool right, bool up, bool down) {
@@ -94,49 +123,47 @@ class ViewerKeyboardCubit extends Cubit<ViewerKeyboardState> {
     }
 
     value.setTranslationRaw(x, y, translation.z);
+    controllerValue = value;
   }
 
-  void handleKeyPress(KeyEvent event) {
+  bool handleKeyPress(KeyEvent event) {
     if (event is KeyDownEvent) {
       switch (event.logicalKey) {
+        case LogicalKeyboardKey.f11:
+        case LogicalKeyboardKey.keyF:
+          emit(ViewerKeyboardFullscreenState());
+          break;
         case LogicalKeyboardKey.select:
-        case LogicalKeyboardKey.enter:
         case LogicalKeyboardKey.contextMenu:
           emit(ViewerKeyboardTapState());
+          break;
+        case LogicalKeyboardKey.enter:
+          if (HardwareKeyboard.instance.isAltPressed) {
+            emit(ViewerKeyboardFullscreenState());
+          } else {
+            emit(ViewerKeyboardTapState());
+          }
           break;
         case LogicalKeyboardKey.space:
         case LogicalKeyboardKey.mediaPlay:
         case LogicalKeyboardKey.mediaPlayPause:
         case LogicalKeyboardKey.mediaPause:
-          emit(ViewerKeyboadPlayState(PlayActions.playToggle));
+        case LogicalKeyboardKey.keyP:
+          emit(ViewerKeyboardPlayState(PlayActions.playToggle));
           break;
         case LogicalKeyboardKey.zoomIn:
         case LogicalKeyboardKey.add:
         case LogicalKeyboardKey.mediaFastForward:
-          double scale = controllerValue.getMaxScaleOnAxis();
-          if (scale * scaleFactor < maxScale) {
-            _scaleAndCenter(scaleFactor);
-          } else {
-            _scaleAndCenter(maxScale / scale);
-          }
-
-          emit(ViewerKeyboardControllerState(controllerValue));
+          zoomIn();
           break;
         case LogicalKeyboardKey.zoomOut:
         case LogicalKeyboardKey.minus:
         case LogicalKeyboardKey.mediaRewind:
-          double scale = controllerValue.getMaxScaleOnAxis();
-          if (scale / scaleFactor > minScale) {
-            _scaleAndCenter(1 / scaleFactor);
-          } else {
-            _scaleAndCenter(minScale / scale);
-          }
-
-          emit(ViewerKeyboardControllerState(controllerValue));
+          zoomOut();
           break;
         case LogicalKeyboardKey.arrowLeft:
           if (controllerValue.isIdentity()) {
-            emit(ViewerKeyboadPlayState(PlayActions.previous));
+            emit(ViewerKeyboardPlayState(PlayActions.previous));
           } else {
             _translate(true, false, false, false);
             emit(ViewerKeyboardControllerState(controllerValue));
@@ -144,7 +171,7 @@ class ViewerKeyboardCubit extends Cubit<ViewerKeyboardState> {
           break;
         case LogicalKeyboardKey.arrowRight:
           if (controllerValue.isIdentity()) {
-            emit(ViewerKeyboadPlayState(PlayActions.next));
+            emit(ViewerKeyboardPlayState(PlayActions.next));
           } else {
             _translate(false, true, false, false);
             emit(ViewerKeyboardControllerState(controllerValue));
@@ -154,12 +181,16 @@ class ViewerKeyboardCubit extends Cubit<ViewerKeyboardState> {
           if (!controllerValue.isIdentity()) {
             _translate(false, false, true, false);
             emit(ViewerKeyboardControllerState(controllerValue));
+          } else {
+            return false;
           }
           break;
         case LogicalKeyboardKey.arrowDown:
           if (!controllerValue.isIdentity()) {
             _translate(false, false, false, true);
             emit(ViewerKeyboardControllerState(controllerValue));
+          } else {
+            return false;
           }
           break;
         case LogicalKeyboardKey.backspace:
@@ -171,8 +202,14 @@ class ViewerKeyboardCubit extends Cubit<ViewerKeyboardState> {
             emit(ViewerKeyboardControllerState(controllerValue));
           }
           break;
+        default:
+          return false;
       }
+
+      return true;
     }
+
+    return false;
   }
 
   bool _valueCloseToZero(double value) => value.abs() < minDeltaAllowed;
@@ -189,10 +226,10 @@ class ViewerKeyboardCubit extends Cubit<ViewerKeyboardState> {
     if (_isNotZoomedAndNotTranslated(controllerValue)) {
       if (details.pointerCount == 0) {
         if (details.velocity.pixelsPerSecond.dx > _drag) {
-          emit(ViewerKeyboadPlayState(PlayActions.previous));
+          emit(ViewerKeyboardPlayState(PlayActions.previous));
         }
         if (details.velocity.pixelsPerSecond.dx < -_drag) {
-          emit(ViewerKeyboadPlayState(PlayActions.next));
+          emit(ViewerKeyboardPlayState(PlayActions.next));
         }
       }
     }

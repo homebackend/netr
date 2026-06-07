@@ -11,34 +11,15 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-Widget _wrapInRawKeyboardListener(ElevatedButton widget, String? label,
-    [bool usePlayButtonAsEnter = false]) {
-  return KeyboardListener(
-    focusNode: FocusNode(),
-    onKeyEvent: (KeyEvent event) {
-      if (event is KeyDownEvent) {
-        if (event.logicalKey.keyId == LogicalKeyboardKey.enter ||
-            event.logicalKey.keyId == LogicalKeyboardKey.select ||
-            (usePlayButtonAsEnter &&
-                (event.logicalKey.keyId == LogicalKeyboardKey.mediaPlay ||
-                    event.logicalKey.keyId ==
-                        LogicalKeyboardKey.mediaPlayPause))) {
-          if (widget.onPressed != null) {
-            widget.onPressed!();
-          }
-        }
-      }
-    },
-    child: widget,
-  );
-}
-
-Widget createIconButton(IconData icon, VoidCallback? handler,
-    [String? text,
-    ButtonStyle? style,
-    bool autofocus = false,
-    bool usePlayButtonAsEnter = false]) {
-  ElevatedButton button = text == null || text.isEmpty
+Widget createIconButton(
+  IconData icon,
+  VoidCallback? handler, [
+  String? text,
+  ButtonStyle? style,
+  bool autofocus = false,
+  bool usePlayButtonAsEnter = false,
+]) {
+  final Widget button = text == null || text.isEmpty
       ? ElevatedButton(
           autofocus: autofocus,
           onPressed: handler,
@@ -53,7 +34,17 @@ Widget createIconButton(IconData icon, VoidCallback? handler,
           style: style,
         );
 
-  return _wrapInRawKeyboardListener(button, text, usePlayButtonAsEnter);
+  if (!usePlayButtonAsEnter) return button;
+
+  return Shortcuts(
+    shortcuts: <ShortcutActivator, Intent>{
+      const SingleActivator(LogicalKeyboardKey.mediaPlay):
+          const ActivateIntent(),
+      const SingleActivator(LogicalKeyboardKey.mediaPlayPause):
+          const ActivateIntent(),
+    },
+    child: button,
+  );
 }
 
 Widget createNavigatorButton(IconData icon, VoidCallback? handler) {
@@ -70,17 +61,15 @@ Widget createNavigatorButton(IconData icon, VoidCallback? handler) {
 
 Widget createButton(String text, VoidCallback? handler,
     [ButtonStyle? style, bool autofocus = false]) {
-  ElevatedButton button = ElevatedButton(
+  return ElevatedButton(
     autofocus: autofocus,
     onPressed: handler,
     style: style,
     child: Text(text),
   );
-
-  return _wrapInRawKeyboardListener(button, text);
 }
 
-void showSnackBar(context, message) {
+void showSnackBar(BuildContext context, String message) {
   final snackBar = SnackBar(
     content: Text(message),
     action: SnackBarAction(
@@ -94,7 +83,7 @@ void showSnackBar(context, message) {
   ScaffoldMessenger.of(context).showSnackBar(snackBar);
 }
 
-void showAlertDialog(context, message, [int duration = 5]) {
+void showAlertDialog(BuildContext context, String message, [int duration = 5]) {
   showDialog(
       context: context,
       barrierDismissible: false,
