@@ -11,8 +11,10 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:netr/cubit/common.dart';
+import 'package:netr/widgets/thumbnail.dart';
 
 import '../cubit/viewer/live_view_cubit.dart';
+import '../models/camera.dart';
 import '../models/location.dart';
 import 'player/player_base.dart';
 
@@ -189,24 +191,26 @@ class _LiveViewPageState extends State<LiveViewPage> {
           return SizedBox(width: 16);
         },
         itemBuilder: (context, index) {
+          Camera camera = state.locationCamera(location)[index];
+
           return Card(
             child: InkWell(
               splashColor: Colors.blue.withAlpha(30),
               onTap: () {
-                context.read<LiveViewCubit>().updateSelectedCameraAndLocation(
-                    state.locationCamera(location)[index], location, true);
+                context
+                    .read<LiveViewCubit>()
+                    .updateSelectedCameraAndLocation(camera, location, true);
               },
               child: Column(
                 children: [
-                  SizedBox(
-                    height: 240,
+                  Container(
+                    height: 180,
                     width: 320,
-                    child: Container(
-                      color: Colors.blue,
-                    ),
+                    color: Colors.black12,
+                    child: ThumbnailWidget(location.name, camera.name),
                   ),
                   SizedBox(height: 8),
-                  _getCameraHeader(state.locationCamera(location)[index].name),
+                  _getCameraHeader(camera.name),
                 ],
               ),
             ),
