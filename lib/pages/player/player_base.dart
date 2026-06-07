@@ -16,6 +16,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:netr/cubit/viewer/live_view_cubit.dart';
+import 'package:netr/cubit/viewer/thumbnail_cubit.dart';
+import 'package:netr/helpers/thumbnail_manager.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../cubit/viewer/live_camera_view_cubit.dart';
@@ -83,6 +85,12 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
     setState(() {
       isInitialized = true;
     });
+
+    ThumbnailManager.generateCctvThumbnail(
+      _player,
+      widget.location.name,
+      widget.camera.name,
+    );
   }
 
   @override
@@ -120,34 +128,56 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     double maxWidth = MediaQuery.of(context).size.width;
     double maxHeight = MediaQuery.of(context).size.height;
-    return BlocProvider(
-      create: (context) => ViewerKeyboardCubit(
-        _controller.value,
-        maxWidth,
-        maxHeight,
-      ),
-      child: BlocListener<ViewerKeyboardCubit, ViewerKeyboardState>(
-        listener: (context, state) {
-          if (state is ViewerKeyboardTapState) {
-            _onTap();
-          } else if (state is ViewerKeyboardControllerState) {
-            _controller.value = state.controllerValue;
-          } else if (state is ViewerKeyboadPlayState) {
-            switch (state.playActions) {
-              case PlayActions.playToggle:
-                togglePlay();
-                break;
-              case PlayActions.previous:
-                previous(context);
-                break;
-              case PlayActions.next:
-                next(context);
-                break;
-            }
-          } else if (state is ViewerKeyboardBackState) {
-            close(context);
-          }
-        },
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => ViewerKeyboardCubit(
+            _controller.value,
+            maxWidth,
+            maxHeight,
+          ),
+        ),
+        BlocProvider(create: (_) => ThumbnailCubit()),
+      ],
+      child: MultiBlocListener(
+        listeners: [
+          BlocListener<ThumbnailCubit, ThumbnailState>(
+            listener: (context, state) {
+              if (state is ThumbnailGeneratorState &&
+                  state.location != null &&
+                  state.camera != null) {
+                ThumbnailManager.generateCctvThumbnail(
+                  _player,
+                  state.location!.name,
+                  state.camera!.name,
+                );
+              }
+            },
+          ),
+          BlocListener<ViewerKeyboardCubit, ViewerKeyboardState>(
+            listener: (context, state) {
+              if (state is ViewerKeyboardTapState) {
+                _onTap();
+              } else if (state is ViewerKeyboardControllerState) {
+                _controller.value = state.controllerValue;
+              } else if (state is ViewerKeyboadPlayState) {
+                switch (state.playActions) {
+                  case PlayActions.playToggle:
+                    togglePlay();
+                    break;
+                  case PlayActions.previous:
+                    previous(context);
+                    break;
+                  case PlayActions.next:
+                    next(context);
+                    break;
+                }
+              } else if (state is ViewerKeyboardBackState) {
+                close(context);
+              }
+            },
+          ),
+        ],
         child: BlocBuilder<ViewerKeyboardCubit, ViewerKeyboardState>(
           builder: (context, state) {
             return KeyboardListener(
@@ -493,7 +523,13 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
                       state.selectedCamera!,
                       state.selectedLocation!,
                       state.cameraCredential(state.selectedCamera!)!,
-                      state.cameraNvr(state.selectedCamera!),
+                      state.cameraNvr(
+                        state.selectedCamera!,
+                      ),
+                    );
+                context.read<ThumbnailCubit>().generate(
+                      location: state.selectedLocation,
+                      camera: state.selectedCamera,
                     );
               }
             },
