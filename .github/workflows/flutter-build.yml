@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - 'pubspec.yaml'
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
 
 permissions:
@@ -193,6 +195,7 @@ jobs:
 
   create-release:
     name: Publish Production GitHub Release
+    if: github.event_name != 'pull_request'
     needs: [build-ubuntu, build-arch, build-windows]
     runs-on: ubuntu-latest
     steps:
