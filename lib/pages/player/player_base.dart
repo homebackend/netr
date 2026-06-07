@@ -59,6 +59,7 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
   final TransformationController _controller = TransformationController();
   late Player _player;
   late VideoController _videoController;
+  final FocusNode _keyboardFocusNode = FocusNode();
   bool isInitialized = false;
   bool _controlsVisible = true;
   bool _isStopped = false;
@@ -96,6 +97,7 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
   @override
   void dispose() {
     _hideTimer?.cancel();
+    _keyboardFocusNode.dispose();
     _controller.dispose();
     _player.dispose();
     WidgetsBinding.instance.removeObserver(this);
@@ -139,97 +141,100 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
         ),
         BlocProvider(create: (_) => ThumbnailCubit()),
       ],
-      child: MultiBlocListener(
-        listeners: [
-          BlocListener<ThumbnailCubit, ThumbnailState>(
-            listener: (context, state) {
-              if (state is ThumbnailGeneratorState &&
-                  state.location != null &&
-                  state.camera != null) {
-                ThumbnailManager.generateCctvThumbnail(
-                  _player,
-                  state.location!.name,
-                  state.camera!.name,
-                );
-              }
-            },
-          ),
-          BlocListener<ViewerKeyboardCubit, ViewerKeyboardState>(
-            listener: (context, state) {
-              if (state is ViewerKeyboardTapState) {
-                _onTap();
-              } else if (state is ViewerKeyboardControllerState) {
-                _controller.value = state.controllerValue;
-              } else if (state is ViewerKeyboadPlayState) {
-                switch (state.playActions) {
-                  case PlayActions.playToggle:
-                    togglePlay();
-                    break;
-                  case PlayActions.previous:
-                    previous(context);
-                    break;
-                  case PlayActions.next:
-                    next(context);
-                    break;
+      child: Builder(builder: (nestedContext) {
+        return MultiBlocListener(
+          listeners: [
+            BlocListener<ThumbnailCubit, ThumbnailState>(
+              listener: (context, state) {
+                if (state is ThumbnailGeneratorState &&
+                    state.location != null &&
+                    state.camera != null) {
+                  ThumbnailManager.generateCctvThumbnail(
+                    _player,
+                    state.location!.name,
+                    state.camera!.name,
+                  );
                 }
-              } else if (state is ViewerKeyboardBackState) {
-                close(context);
-              }
-            },
-          ),
-        ],
-        child: BlocBuilder<ViewerKeyboardCubit, ViewerKeyboardState>(
-          builder: (context, state) {
-            return KeyboardListener(
-              autofocus: true,
-              focusNode: FocusNode(),
-              onKeyEvent: (keyEvent) {
-                context.read<ViewerKeyboardCubit>().handleKeyPress(keyEvent);
               },
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Positioned.fill(
-                    child: InteractiveViewer(
-                      panEnabled: true,
-                      scaleEnabled: true,
-                      minScale: ViewerKeyboardCubit.minScale,
-                      maxScale: ViewerKeyboardCubit.maxScale,
-                      transformationController: _controller,
-                      onInteractionEnd: (ScaleEndDetails details) {
-                        context
-                            .read<ViewerKeyboardCubit>()
-                            .handleInteractionEnd(details);
-                      },
-                      child: isInitialized
-                          ? playerWidget(context)
-                          : const Center(
-                              child: CircularProgressIndicator(
-                                semanticsLabel: 'Loading',
-                              ),
-                            ),
-                    ),
-                  ),
-                  if (isInitialized)
+            ),
+            BlocListener<ViewerKeyboardCubit, ViewerKeyboardState>(
+              listener: (context, state) {
+                if (state is ViewerKeyboardTapState) {
+                  _onTap();
+                } else if (state is ViewerKeyboardControllerState) {
+                  _controller.value = Matrix4.copy(state.controllerValue);
+                } else if (state is ViewerKeyboardPlayState) {
+                  switch (state.playActions) {
+                    case PlayActions.playToggle:
+                      togglePlay();
+                      break;
+                    case PlayActions.previous:
+                      previous(context);
+                      break;
+                    case PlayActions.next:
+                      next(context);
+                      break;
+                  }
+                } else if (state is ViewerKeyboardBackState) {
+                  close(context);
+                } else if (state is ViewerKeyboardFullscreenState) {
+                  context.read<LiveViewCubit>().toggleFullScreen();
+                }
+              },
+            ),
+          ],
+          child: Focus(
+            autofocus: true,
+            focusNode: _keyboardFocusNode,
+            onKeyEvent: (node, keyEvent) => nestedContext
+                    .read<ViewerKeyboardCubit>()
+                    .handleKeyPress(keyEvent)
+                ? KeyEventResult.handled
+                : KeyEventResult.ignored,
+            child: BlocBuilder<ViewerKeyboardCubit, ViewerKeyboardState>(
+              builder: (context, state) {
+                return Stack(
+                  alignment: Alignment.center,
+                  children: [
                     Positioned.fill(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: _onTap,
-                        onSecondaryTap: _onTap,
-                        child: const SizedBox.expand(),
+                      child: InteractiveViewer(
+                        panEnabled: true,
+                        scaleEnabled: true,
+                        minScale: ViewerKeyboardCubit.minScale,
+                        maxScale: ViewerKeyboardCubit.maxScale,
+                        transformationController: _controller,
+                        onInteractionEnd: (ScaleEndDetails details) {
+                          final cubit = context.read<ViewerKeyboardCubit>();
+                          cubit.updateControllerValue(_controller.value);
+                          cubit.handleInteractionEnd(details);
+                        },
+                        child: isInitialized
+                            ? GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: _onTap,
+                                onSecondaryTap: _onTap,
+                                child: playerWidget(context),
+                              )
+                            : const Center(
+                                child: CircularProgressIndicator(
+                                  semanticsLabel: 'Loading',
+                                ),
+                              ),
                       ),
                     ),
-                  if (isInitialized) _buildInlineControlsOverlay(context),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
+                    if (isInitialized) _buildInlineControlsOverlay(context),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      }),
     );
   }
 
   void _onTap() {
+    _keyboardFocusNode.requestFocus();
     _toggleControls();
   }
 
@@ -239,6 +244,8 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
     navigators.add(_getStopButton(context));
     navigators.add(_getPreviousButton(context));
     navigators.add(_getNextButton(context));
+    navigators.add(_getZoomInButton(context));
+    navigators.add(_getZoomOutButton(context));
     return navigators;
   }
 
@@ -281,10 +288,28 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
     });
   }
 
+  Widget _getZoomInButton(BuildContext context) {
+    return createNavigatorButton(Icons.zoom_in, () {
+      _startHideTimer();
+      context.read<ViewerKeyboardCubit>().zoomIn();
+    });
+  }
+
+  Widget _getZoomOutButton(BuildContext context) {
+    return createNavigatorButton(Icons.zoom_out, () {
+      _startHideTimer();
+      context.read<ViewerKeyboardCubit>().zoomOut();
+    });
+  }
+
   Widget _getBackButton(BuildContext context) {
     return createNavigatorButton(Icons.settings_backup_restore, () async {
       _startHideTimer();
-      await close(context);
+      if (_controller.value.isIdentity()) {
+        await close(context);
+      } else {
+        _controller.value = Matrix4.identity();
+      }
     });
   }
 
