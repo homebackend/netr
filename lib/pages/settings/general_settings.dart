@@ -12,6 +12,7 @@ import 'package:netr/cubit/settings/app_settings_cubit.dart';
 import 'package:netr/cubit/settings/general_settings_cubit.dart';
 import 'package:netr/mixin/fields_common.dart';
 import 'package:netr/mixin/settings_common.dart';
+import 'package:netr/tool.dart';
 
 class GeneralSettings extends StatefulWidget with FieldsCommon, SettingsCommon {
   const GeneralSettings({super.key});
@@ -31,20 +32,21 @@ class _GeneralSettingsState extends State<GeneralSettings> {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                Row(
-                  children: [
-                    Switch(
-                      value: appState.startAppMaximized,
-                      onChanged: (value) {
-                        context
-                            .read<AppSettingsCubit>()
-                            .setStartApplicationAsMaximized(value);
-                      },
-                    ),
-                    widget.horizontalSpacing(),
-                    const Text('Start Application as Maximized'),
-                  ],
-                ),
+                if (isDesktopPlatform())
+                  Row(
+                    children: [
+                      Switch(
+                        value: appState.startAppMaximized,
+                        onChanged: (value) {
+                          context
+                              .read<AppSettingsCubit>()
+                              .setStartApplicationAsMaximized(value);
+                        },
+                      ),
+                      widget.horizontalSpacing(),
+                      const Text('Start Application as Maximized'),
+                    ],
+                  ),
                 Row(
                   children: [
                     Switch(
