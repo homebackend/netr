@@ -452,24 +452,28 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
                   onTap: () {
                     _startHideTimer();
                   },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ...getNavigators(context),
-                      _getBackButton(context),
-                      _getFullscreenButton(context),
-                      SizedBox(
-                        width: 40,
-                      ),
-                      Text(
-                        "Jump to: ",
-                        style: TextStyle(
-                          color: Colors.blue,
-                          fontWeight: FontWeight.bold,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ...getNavigators(context),
+                        _getBackButton(context),
+                        _getFullscreenButton(context),
+                        SizedBox(
+                          width: 40,
                         ),
-                      ),
-                      _getCameraDropUpMenu(context),
-                    ],
+                        Text(
+                          "Jump to: ",
+                          style: TextStyle(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        _getCameraDropUpMenu(context),
+                      ],
+                    ),
                   ),
                 ),
               ],
