@@ -14,25 +14,42 @@ permissions:
   contents: write
 
 jobs:
-  build-ubuntu:
-    name: Build Android, Web, Linux
-    runs-on: ubuntu-latest
+  build-apps:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    outputs:
+      app_version: ${{ steps.version-collector.outputs.VERSION }}
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [apk, web, linux, windows]
+        include:
+          - target: apk
+            os: ubuntu-latest
+          - target: web
+            os: ubuntu-latest
+          - target: linux
+            os: ubuntu-latest
+          - target: windows
+            os: windows-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Java JDK
+      - name: Set up Java JDK (Android Only)
+        if: matrix.target == 'apk'
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install Linux Build Dependencies
+      - name: Install Linux Build Dependencies (Linux Only)
+        if: matrix.target == 'linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev mpv libmpv-dev
 
-      - name: Set up Flutter
+      - name: Set up Flutter Engine
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
@@ -42,62 +59,70 @@ jobs:
         run: flutter pub get
 
       - name: Extract Version from pubspec.yaml
-        id: pubspec-version
+        id: version-collector
+        if: matrix.target == 'linux'
+        shell: bash
         run: |
           VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d '[:space:]')
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Build Android APK
-        run: flutter build apk --release
+      - name: Build Flutter Target (${{ matrix.target }})
+        shell: bash
+        run: |
+          flutter build ${{ matrix.target }} --release \
+            --dart-define=GH_OWNER=$GITHUB_REPOSITORY_OWNER \
+            --dart-define=GH_REPO=${GITHUB_REPOSITORY#*/}
 
-      - name: Build Web App
-        run: flutter build web --release
-
-      - name: Build Linux Desktop App
-        run: flutter build linux --release
-
-      - name: Compress Linux Bundle
+      - name: Package Linux Target
+        if: matrix.target == 'linux'
         run: |
           cd build/linux/x64/release/
           tar -czf ../../../../netr-linux-x64.tar.gz bundle/
-          cd ../../../..
 
-      - name: Pack Web Build
+      - name: Package Web Target
+        if: matrix.target == 'web'
         run: |
           cd build
           zip -r ../netr-web.zip web/
-          cd ..
 
-      - name: Upload Raw Linux Bundle for Packaging
+      - name: Package Windows Target
+        if: matrix.target == 'windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath netr-windows-x64.zip
+
+      - name: Upload Raw Linux Bundle for Arch Packaging
+        if: matrix.target == 'linux'
         uses: actions/upload-artifact@v4
         with:
           name: raw-linux-bundle
           path: build/linux/x64/release/bundle/
 
-      - name: Upload Main Base Artifacts
+      - name: Upload Finished Production Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: base-linux-and-mobile-artifacts
+          name: base-${{ matrix.target }}-artifacts
           path: |
-            build/app/outputs/flutter-apk/app-release.apk
-            netr-web.zip
-            netr-linux-x64.tar.gz
+            ${{ matrix.target == 'apk' && 'build/app/outputs/flutter-apk/app-release.apk' || '' }}
+            ${{ matrix.target == 'web' && 'netr-web.zip' || '' }}
+            ${{ matrix.target == 'linux' && 'netr-linux-x64.tar.gz' || '' }}
+            ${{ matrix.target == 'windows' && 'netr-windows-x64.zip' || '' }}
 
-  build-arch:
-    name: Build Arch Linux Pacman Package
-    needs: build-ubuntu
+  build-linux-packages:
+    name: Build Downstream Package (${{ matrix.target }})
+    needs: build-apps
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [arch]
+        include:
+          - target: arch
+            container_image: 'archlinux:latest'
     container:
-      image: archlinux:latest
+      image: ${{ matrix.container_image }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Get version from pubspec.yaml
-        id: pubspec-version
-        run: |
-          VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d '[:space:]')
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Download Raw Linux Bundle
         uses: actions/download-artifact@v4
@@ -106,8 +131,9 @@ jobs:
           path: build/linux/x64/release/bundle/
 
       - name: Generate Arch Linux PKGBUILD
+        if: matrix.target == 'arch'
         run: |
-          VERSION="${{ steps.pubspec-version.outputs.VERSION }}"
+          VERSION="${{ needs.build-apps.outputs.app_version }}"
           cat <<EOF > PKGBUILD
           pkgname=netr
           pkgver=${VERSION}
@@ -121,27 +147,22 @@ jobs:
           
           package() {
             install -dm755 "\${pkgdir}/opt/netr"
-            
             chmod +x "${GITHUB_WORKSPACE}/build/linux/x64/release/bundle/netr"
             chmod +x "${GITHUB_WORKSPACE}/build/linux/x64/release/bundle/lib/libflutter_linux_gtk.so"
-            
             cp -r "${GITHUB_WORKSPACE}/build/linux/x64/release/bundle/." "\${pkgdir}/opt/netr/"
-            
             install -dm755 "\${pkgdir}/usr/bin"
             ln -s "/opt/netr/netr" "\${pkgdir}/usr/bin/netr"
-
             install -dm755 "\${pkgdir}/usr/share/applications"
             install -m644 "${GITHUB_WORKSPACE}/linux/netr.desktop" "\${pkgdir}/usr/share/applications/netr.desktop"
-
             install -dm755 "\${pkgdir}/usr/share/pixmaps"
             install -m644 "${GITHUB_WORKSPACE}/icons/netr.png" "\${pkgdir}/usr/share/pixmaps/netr.png"
-
             install -dm755 "\${pkgdir}/usr/share/licenses/\${pkgname}"
             install -m644 "${GITHUB_WORKSPACE}/LICENSE" "\${pkgdir}/usr/share/licenses/\${pkgname}/LICENSE"
           }
           EOF
 
       - name: Setup Compiler Dependencies
+        if: matrix.target == 'arch'
         run: |
           pacman -Sy --noconfirm
           pacman -S --noconfirm --needed base-devel binutils sudo
@@ -150,114 +171,74 @@ jobs:
           chown -R builder:builder $GITHUB_WORKSPACE
 
       - name: Compile Package
+        if: matrix.target == 'arch'
         run: |
           su builder -c "makepkg -s --noconfirm"
 
       - name: Prepare Arch Package
+        if: matrix.target == 'arch'
         run: |
-          mv netr-${{ steps.pubspec-version.outputs.VERSION }}-1-x86_64.pkg.tar.zst netr-linux-x64.pkg.tar.zst
+          mv netr-${{ needs.build-apps.outputs.app_version }}-1-x86_64.pkg.tar.zst netr-linux-x64.pkg.tar.zst
 
       - name: Upload Arch Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: arch-artifact
+          name: base-${{ matrix.target }}-artifacts
           path: netr-linux-x64.pkg.tar.zst
-
-  build-windows:
-    name: Build Windows Desktop
-    runs-on: windows-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          cache: true
-
-      - name: Install Dependencies
-        run: flutter pub get
-
-      - name: Build Windows Desktop App
-        run: flutter build windows --release
-
-      - name: Compress Windows Bundle
-        shell: pwsh
-        run: |
-          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath netr-windows-x64.zip
-
-      - name: Upload Windows Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-artifact
-          path: netr-windows-x64.zip
 
   create-release:
     name: Publish Production GitHub Release
     if: github.event_name != 'pull_request'
-    needs: [build-ubuntu, build-arch, build-windows]
+    needs: [build-apps, build-linux-packages]
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Get version from pubspec.yaml
-        id: pubspec-version
-        run: |
-          VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d '[:space:]')
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-
       - name: Verify Tag Status
         id: tag-check
         run: |
-          TAG_NAME="v${{ steps.pubspec-version.outputs.VERSION }}"
+          TAG_NAME="v${{ needs.build-apps.outputs.app_version }}"
           if git ls-remote --tags origin | grep -q "refs/tags/${TAG_NAME}$"; then
             echo "TAG_EXISTS=true" >> $GITHUB_OUTPUT
-            echo "Release for $TAG_NAME already exists. Skipping."
+            echo "Release for $TAG_NAME already exists. Halting execution gracefully."
           else
             echo "TAG_EXISTS=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Guard Against Duplicate Builds
+        if: steps.tag-check.outputs.TAG_EXISTS == 'true'
+        run: |
+          echo "Version v${{ needs.build-apps.outputs.app_version }} already published. Exiting cleanly."
+          exit 0
+
+      - name: Create and Push Secure Git Tag
+        run: |
+          TAG_NAME="v${{ needs.build-apps.outputs.app_version }}"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@://github.com"
+          
+          git init
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@://github.com{{ github.repository }}.git"
+          git tag "$TAG_NAME" ${{ github.sha }}
+          git push origin "$TAG_NAME"
+
       - name: Download All Production Artifacts
-        if: steps.tag-check.outputs.TAG_EXISTS == 'false'
         uses: actions/download-artifact@v4
         with:
           path: ./artifacts
 
-      # Uses recursive glob matching and find commands to locate the assets anywhere inside the downloaded folders
       - name: Organize Files for Upload
-        if: steps.tag-check.outputs.TAG_EXISTS == 'false'
         run: |
           mkdir -p ./release-assets
-          
-          # Find and copy files dynamically, ignoring their exact internal directory trees
           find ./artifacts -name "app-release.apk" -exec cp {} ./release-assets/netr-android.apk \;
           find ./artifacts -name "netr-web.zip" -exec cp {} ./release-assets/ \;
           find ./artifacts -name "netr-linux-x64.tar.gz" -exec cp {} ./release-assets/ \;
           find ./artifacts -name "netr-linux-x64.pkg.tar.zst" -exec cp {} ./release-assets/ \;
           find ./artifacts -name "netr-windows-x64.zip" -exec cp {} ./release-assets/ \;
-          find ./artifacts -name "netr-macos-x64.zip" -exec cp {} ./release-assets/ \;
 
-          echo "=== Verified Release Assets ==="
-          ls -la ./release-assets/
-
-      - name: Create GitHub Release and Upload Files
-        if: steps.tag-check.outputs.TAG_EXISTS == 'false'
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.pubspec-version.outputs.VERSION }}
-          name: Release v${{ steps.pubspec-version.outputs.VERSION }}
-          body: |
-            ## Automated Release
-            Successfully compiled multi-platform builds for version v${{ steps.pubspec-version.outputs.VERSION }}.
+          tag_name: v${{ needs.build-apps.outputs.app_version }}
+          name: Release v${{ needs.build-apps.outputs.app_version }}
           draft: false
           prerelease: false
-          files: |
-            release-assets/netr-android.apk
-            release-assets/netr-web.zip
-            release-assets/netr-linux-x64.tar.gz
-            release-assets/netr-linux-x64.pkg.tar.zst
-            release-assets/netr-windows-x64.zip
+          files: ./release-assets/*
