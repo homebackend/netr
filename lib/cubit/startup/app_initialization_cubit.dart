@@ -255,6 +255,8 @@ class AppInitializationCubit extends Cubit<AppInitializationStatus> {
         ? AppInitializationState.updateApp
         : AppInitializationState.showUpdateDetails;
 
+    log('${state.toString()}: $rawLatestTag/$downloadLink');
+
     emit(AppInitializationStatus(
       state,
       baseUrl: '$baseGitHubUrl/releases?per_page=10',

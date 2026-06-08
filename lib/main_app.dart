@@ -52,10 +52,9 @@ class MainApp extends StatelessWidget {
                           context: context,
                           barrierDismissible: false,
                           builder: (dialogContext) => AppUpdateDialog(
-                            status: status,
-                            onProceed: () {
-                              log('User accepted the update parameters. Triggering next operational execution loop...');
-                            },
+                            downloadUrl: status.downloadUrl,
+                            latestVersion: status.latestVersion,
+                            changeLog: status.changeLog,
                           ),
                         );
                       },
@@ -96,7 +95,9 @@ class MainApp extends StatelessWidget {
                           return const AppHome();
                         case AppInitializationState.updateApp:
                           return UpdateApp(
-                            status.baseUrl ?? '',
+                            status.downloadUrl,
+                            status.latestVersion,
+                            status.changeLog,
                             () => context
                                 .read<AppInitializationCubit>()
                                 .emitInitialized(),
