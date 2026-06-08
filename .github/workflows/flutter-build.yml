@@ -209,16 +209,15 @@ jobs:
           echo "Version v${{ needs.build-apps.outputs.app_version }} already published. Exiting cleanly."
           exit 0
 
-      - name: Create and Push Secure Git Tag
+      - name: Create and Push Secure Git Tag via REST API
         run: |
           TAG_NAME="v${{ needs.build-apps.outputs.app_version }}"
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@://github.com"
           
-          git init
-          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@://github.com{{ github.repository }}.git"
-          git tag "$TAG_NAME" ${{ github.sha }}
-          git push origin "$TAG_NAME"
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://github.com{{ github.repository }}/git/refs \
+            -d "{\"ref\": \"refs/tags/$TAG_NAME\", \"sha\": \"${{ github.sha }}\"}"
 
       - name: Download All Production Artifacts
         uses: actions/download-artifact@v4
