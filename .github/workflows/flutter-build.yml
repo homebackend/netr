@@ -122,7 +122,7 @@ jobs:
       image: ${{ matrix.container_image }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download Raw Linux Bundle
         uses: actions/download-artifact@v4
@@ -181,7 +181,7 @@ jobs:
           mv netr-${{ needs.build-apps.outputs.app_version }}-1-x86_64.pkg.tar.zst netr-linux-x64.pkg.tar.zst
 
       - name: Upload Arch Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: base-${{ matrix.target }}-artifacts
           path: netr-linux-x64.pkg.tar.zst
@@ -216,11 +216,11 @@ jobs:
           curl -X POST \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/{{ github.repository }}/git/refs \
+            https://api.github.com/repos/${{ github.repository }}/git/refs \
             -d "{\"ref\": \"refs/tags/$TAG_NAME\", \"sha\": \"${{ github.sha }}\"}"
 
       - name: Download All Production Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           path: ./artifacts
 
