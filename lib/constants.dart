@@ -9,8 +9,8 @@
 const String appName = 'Netr App';
 const String appIcon = 'icons/netr.png';
 const String appEyeIcon = 'icons/eye.png';
-const List<String> upgradeBaseUrls = [
-  'http://192.168.1.13/apks/netr',
-  'http://192.168.1.65/apks/netr'
-];
-const String upgradeFileName = 'app-armeabi-v7a-release.apk';
+const String githubOrganization =
+    String.fromEnvironment('GH_OWNER', defaultValue: 'homebackend');
+const String githubRepo =
+    String.fromEnvironment('GH_REPO', defaultValue: 'netr');
+const String upgradeFileName = 'netr-release.apk';

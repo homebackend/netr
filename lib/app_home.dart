@@ -29,7 +29,6 @@ class AppHome extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => ThemeCubit()..setInitialTheme()),
         BlocProvider(create: (_) => NavigationCubit()),
         BlocProvider(create: (_) => LocationCubit()..determinePosition()),
         BlocProvider(create: (_) => RunConfigCubit()),

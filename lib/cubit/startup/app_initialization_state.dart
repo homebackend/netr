@@ -11,6 +11,7 @@ part of 'app_initialization_cubit.dart';
 enum AppInitializationState {
   initialization,
   updateApp,
+  showUpdateDetails,
   initialized,
   updateCheckFailed,
 }
@@ -18,6 +19,17 @@ enum AppInitializationState {
 class AppInitializationStatus {
   final AppInitializationState state;
   String? baseUrl;
+  String? downloadUrl;
+  String? latestVersion;
+  String? changeLog;
+  String? error;
 
-  AppInitializationStatus(this.state, {this.baseUrl});
+  AppInitializationStatus(
+    this.state, {
+    this.baseUrl,
+    this.downloadUrl,
+    this.latestVersion,
+    this.changeLog,
+    this.error,
+  });
 }

@@ -8,106 +8,127 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ota_update/ota_update.dart';
 
 import '../constants.dart' as constants;
 import '../cubit/startup/app_update_cubit.dart';
+import '../helpers/app_update_detailer.dart';
 import '../tool.dart';
 
 class UpdateApp extends StatefulWidget {
-  final String url;
+  final String? downloadUrl;
+  final String? latestVersion;
+  final String? changeLog;
   final void Function() back;
-  const UpdateApp(this.url, this.back, {super.key});
+
+  const UpdateApp(
+    this.downloadUrl,
+    this.latestVersion,
+    this.changeLog,
+    this.back, {
+    super.key,
+  });
 
   @override
   State<UpdateApp> createState() => _UpdateAppState();
 }
 
 class _UpdateAppState extends State<UpdateApp> {
+  late final AppUpdateCubit _updateCubit;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateCubit = AppUpdateCubit();
+
+    if (_updateCubit.state.state == AppUpdateState.userInput) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showUpdateDialog(context);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _updateCubit.close();
+    super.dispose();
+  }
+
+  void _showUpdateDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AppUpdateDialog(
+        downloadUrl: widget.downloadUrl,
+        latestVersion: widget.latestVersion,
+        changeLog: widget.changeLog,
+        onProceed: widget.downloadUrl != null
+            ? () {
+                _updateCubit.tryOtaUpdate(widget.downloadUrl!);
+              }
+            : null,
+        onDismiss: widget.back,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => AppUpdateCubit(),
-      child: BlocBuilder<AppUpdateCubit, AppUpdateStatus>(
-        builder: (context, status) {
-          switch (status.state) {
-            case AppUpdateState.userInput:
-              return showUserInput(context);
-            case AppUpdateState.inProgress:
-              return showProgress(status.event!);
-            case AppUpdateState.skipped:
-              widget.back();
-              return waitForAppLoad();
-            case AppUpdateState.error:
-              widget.back();
-              showSnackBar(context,
-                  'Failed to make OTA update. Details: ${status.error!}');
-              return waitForAppLoad();
+    return BlocProvider<AppUpdateCubit>.value(
+      value: _updateCubit,
+      child: BlocListener<AppUpdateCubit, AppUpdateStatus>(
+        listenWhen: (previous, current) => previous.state != current.state,
+        listener: (context, state) {
+          if (state.state == AppUpdateState.userInput) {
+            _showUpdateDialog(context);
+          } else if (state.state == AppUpdateState.skipped) {
+            widget.back();
+          } else if (state.state == AppUpdateState.error) {
+            widget.back();
+            showSnackBar(
+              context,
+              'Failed to make OTA update. Details: ${state.error}',
+            );
           }
         },
-      ),
-    );
-  }
-
-  Widget waitForAppLoad() {
-    return MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(
-            semanticsLabel: 'Waiting for App Load',
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text(constants.appName),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: widget.back,
+            ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget showUserInput(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text(constants.appName),
-        ),
-        body: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: const Center(
-                child: Text(
-                  'A new version of App is available. Kindly update App to latest version.',
-                  style: TextStyle(
-                    color: Colors.blueAccent,
-                    fontSize: 20,
-                  ),
-                ),
-              ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                createButton("Yes update", () {
-                  context.read<AppUpdateCubit>().tryOtaUpdate(widget.url);
-                }),
-                SizedBox(width: 8.0),
-                createButton("No, may be next time", () {
-                  context.read<AppUpdateCubit>().skipUpdate();
-                }),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget showProgress(OtaEvent event) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text(constants.appName),
-        ),
-        body: Center(
-          child: Text(
-              'Update in progress. Current status: ${event.status} : ${event.value}'),
+          body: BlocBuilder<AppUpdateCubit, AppUpdateStatus>(
+            builder: (context, status) {
+              switch (status.state) {
+                case AppUpdateState.userInput:
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      semanticsLabel: "Waiting for user input",
+                    ),
+                  );
+                case AppUpdateState.inProgress:
+                  final event = status.event;
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Text(
+                        'Update in progress. Current status:\n${event?.status ?? "Processing"} : ${event?.value ?? ""}',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                  );
+                case AppUpdateState.skipped:
+                case AppUpdateState.error:
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      semanticsLabel: 'Waiting for App Load',
+                    ),
+                  );
+              }
+            },
+          ),
         ),
       ),
     );
