@@ -63,9 +63,11 @@ mixin ViewCubitMixin on Cubit<ViewState> implements ViewCubit {
         int index = (step * i + cameraIndex) % cameraLength;
         if (criteria == null ||
             criteria(state.locations[index], state.cameras[index])) {
+          Camera nextCamera = state.cameras[index];
+          Location nextLocation = state.cameraLocation(nextCamera)!;
           emit(state.copyWith(
-            camera: state.cameras[index],
-            location: state.locations[index],
+            camera: nextCamera,
+            location: nextLocation,
             isFreshState: false,
           ));
           return;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-26 Neeraj Jakhar
+ * Copyright (c) 2026 Neeraj Jakhar
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -14,10 +14,10 @@ import 'package:media_kit/media_kit.dart';
 import '../mixin/camera_view_cubit_mixin.dart';
 import 'camera_view_state.dart';
 
-class LiveCameraViewCubit extends Cubit<CameraViewState>
+class ArchiveCameraViewCubit extends Cubit<CameraViewState>
     with CameraViewCubitMixin {
   late List<StreamSubscription> subscriptions;
-  LiveCameraViewCubit(PlayerStream playerStream, CameraViewData data)
+  ArchiveCameraViewCubit(PlayerStream playerStream, CameraViewData data)
       : super(CameraViewInitialState(data)) {
     subscriptions = subscribe(playerStream);
   }

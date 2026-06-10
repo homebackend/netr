@@ -9,7 +9,10 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:netr/cubit/viewer/camera_view_state.dart';
 
+import '../cubit/viewer/archive_camera_view_cubit.dart';
 import '../cubit/viewer/archive_view_cubit.dart';
 import '../helpers/date_time_picker.dart';
 import '../models/camera.dart';
@@ -24,11 +27,16 @@ class ArchiveViewPage extends CameraViewPage {
   State<ArchiveViewPage> createState() => _ArchiveViewPageState();
 }
 
-class _ArchiveViewPageState
-    extends CameraViewState<ArchiveViewCubit, ArchiveViewPage> {
+class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewCubit,
+    ArchiveCameraViewCubit, ArchiveViewPage> {
   DateTime? _archiveDateTime;
 
   bool _filterCamera(Camera camera) => camera.archiveName.isNotEmpty;
+
+  @override
+  ArchiveCameraViewCubit createCubit(
+          PlayerStream playerStream, CameraViewData data) =>
+      ArchiveCameraViewCubit(playerStream, data);
 
   @override
   Iterable<Camera> getCameras(List<Camera> cameras) sync* {

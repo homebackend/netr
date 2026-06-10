@@ -10,9 +10,12 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:netr/cubit/viewer/camera_view_cubit.dart';
 
 import '../cubit/common.dart';
 import '../cubit/settings/app_settings_cubit.dart';
+import '../cubit/viewer/camera_view_state.dart';
 import '../cubit/viewer/view_cubit.dart';
 import '../cubit/viewer/view_state.dart';
 import '../models/camera.dart';
@@ -26,8 +29,8 @@ abstract class CameraViewPage extends StatefulWidget {
   const CameraViewPage(this.viewName, this.iconData, {super.key});
 }
 
-abstract class CameraViewState<C extends ViewCubit, T extends CameraViewPage>
-    extends State<T> {
+abstract class CameraViewPageState<C extends ViewCubit,
+    CC extends CameraViewCubit, T extends CameraViewPage> extends State<T> {
   final ScrollController _verticalController = ScrollController();
   final List<ScrollController> _horizontalControllers = [];
 
@@ -64,6 +67,9 @@ abstract class CameraViewState<C extends ViewCubit, T extends CameraViewPage>
   @protected
   List<Widget>? getAppBarActions();
 
+  @protected
+  CameraViewCubit createCubit(PlayerStream playerStream, CameraViewData data);
+
   Widget _buildCameraView(ViewState state) {
     return Scaffold(
       appBar: AppBar(
@@ -99,7 +105,18 @@ abstract class CameraViewState<C extends ViewCubit, T extends CameraViewPage>
 
   Widget _videoplayer(ViewUpdatedState state) {
     return LayoutBuilder(builder: (context, playerConstraints) {
-      return PlayerBase<C>(
+      return PlayerBase<C, CC>(
+        (PlayerStream p) => createCubit(
+          p,
+          CameraViewData(
+            state.selectedLocation!,
+            state.selectedCamera!,
+            state.cameraCredential(state.selectedCamera!)!,
+            quality: StreamQuality.high,
+            width: playerConstraints.maxWidth.toInt(),
+            height: playerConstraints.maxHeight.toInt(),
+          ),
+        ),
         playerConstraints.maxWidth,
         playerConstraints.maxHeight,
         state.selectedCamera!,

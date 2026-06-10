@@ -8,7 +8,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:media_kit/media_kit.dart';
 
+import '../cubit/viewer/camera_view_state.dart';
+import '../cubit/viewer/live_camera_view_cubit.dart';
 import '../cubit/viewer/live_view_cubit.dart';
 import '../models/camera.dart';
 import '../models/location.dart';
@@ -21,7 +24,13 @@ class LiveViewPage extends CameraViewPage {
   State<LiveViewPage> createState() => _LiveViewPageState();
 }
 
-class _LiveViewPageState extends CameraViewState<LiveViewCubit, LiveViewPage> {
+class _LiveViewPageState extends CameraViewPageState<LiveViewCubit,
+    LiveCameraViewCubit, LiveViewPage> {
+  @override
+  LiveCameraViewCubit createCubit(
+          PlayerStream playerStream, CameraViewData data) =>
+      LiveCameraViewCubit(playerStream, data);
+
   @override
   Iterable<Camera> getCameras(List<Camera> cameras) => cameras;
 
