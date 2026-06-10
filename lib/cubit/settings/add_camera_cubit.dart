@@ -110,6 +110,10 @@ class AddCameraCubitBase
     emit(state.copyWith(archiveName: archiveName));
   }
 
+  void updateArchiveIndex(String archiveIndex) {
+    emit(state.copyWith(archiveIndex: archiveIndex));
+  }
+
   @override
   Future<void> loadStateDefaults() async {
     await state.loadDefaults();

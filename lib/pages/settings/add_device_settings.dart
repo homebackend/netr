@@ -7,6 +7,7 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubit/settings/add_camera_cubit.dart';
@@ -45,6 +46,7 @@ class _AddDeviceSettingsState<T> extends State<AddDeviceSettings> {
   final _protocolController = TextEditingController();
   final _hostController = TextEditingController();
   final _portController = TextEditingController();
+  final _archiveIndexController = TextEditingController();
 
   @override
   void dispose() {
@@ -52,6 +54,7 @@ class _AddDeviceSettingsState<T> extends State<AddDeviceSettings> {
     _protocolController.dispose();
     _hostController.dispose();
     _portController.dispose();
+    _archiveIndexController.dispose();
     super.dispose();
   }
 
@@ -154,6 +157,8 @@ class _AddDeviceSettingsState<T> extends State<AddDeviceSettings> {
                 widget.verticalSpacing(),
                 TextFormField(
                   controller: _portController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   validator: (value) =>
                       widget.validatePort(value, mandatory: true),
                   onChanged: context.read<C>().updatePort,
@@ -194,17 +199,34 @@ class _AddDeviceSettingsState<T> extends State<AddDeviceSettings> {
                   _camera.credentialName = credentialName!;
                   context.read<C>().updateCredentialName(credentialName);
                 }),
-                widget.verticalSpacing(),
-                widget.deviceType == DeviceType.camera
-                    ? widget.autoDropDownMenu<AddNvrsCubit, Camera>(
-                        'Archive View NVR',
-                        state.archiveName,
-                        (archiveName) {
-                          _camera.archiveName = archiveName!;
-                          context.read<C>().updateArchiveName(archiveName);
-                        },
-                      )
-                    : Container(),
+                if (widget.deviceType == DeviceType.camera) ...[
+                  widget.verticalSpacing(),
+                  widget.autoDropDownMenu<AddNvrsCubit, Camera>(
+                    'Archive View NVR',
+                    state.archiveName,
+                    (archiveName) {
+                      _camera.archiveName = archiveName!;
+                      context.read<C>().updateArchiveName(archiveName);
+                    },
+                  ),
+                  widget.verticalSpacing(),
+                  TextFormField(
+                    controller: _archiveIndexController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    onChanged: context.read<C>().updateArchiveIndex,
+                    validator: (value) =>
+                        widget.validateArchiveIndex(value, mandatory: true),
+                    onSaved: (value) {
+                      _camera.archiveIndex = int.parse(value!);
+                    },
+                    decoration: widget.textFieldDecoration(
+                      'Archive Index',
+                      '1',
+                      Icons.play_circle_outline_sharp,
+                    ),
+                  ),
+                ],
               ],
             ),
           );
@@ -214,30 +236,52 @@ class _AddDeviceSettingsState<T> extends State<AddDeviceSettings> {
   }
 
   List<Widget> _getSubTitle(Camera camera) {
-    List<Widget> items = [];
-
-    if (widget.deviceType == DeviceType.camera) {
-      items.addAll([
-        widget.horizontalSpacing(),
-        Icon(
-          Icons.archive,
+    return [
+      widget.horizontalSpacing(),
+      Tooltip(
+        message: 'Device Type: ${switch (widget.deviceType) {
+          DeviceType.camera => "Camera",
+          DeviceType.nvr => "Network Video Recorder"
+        }}',
+        child: Icon(
+          switch (widget.deviceType) {
+            DeviceType.camera => Icons.camera,
+            DeviceType.nvr => Icons.history,
+          },
           color: camera.archiveName.isEmpty ? Colors.red : Colors.green,
         ),
-      ]);
-    }
-
-    items.addAll([
-      widget.horizontalSpacing(),
-      Icon(
-        Icons.location_city,
-        color: camera.locationName.isEmpty ? Colors.red : Colors.green,
       ),
       widget.horizontalSpacing(),
-      Icon(
-        Icons.lock,
-        color: camera.credentialName.isEmpty ? Colors.red : Colors.green,
+      Tooltip(
+        message: 'Configured Location: ${camera.locationName}',
+        child: Icon(
+          Icons.location_city,
+          color: camera.locationName.isEmpty ? Colors.red : Colors.green,
+        ),
       ),
-    ]);
-    return items;
+      widget.horizontalSpacing(),
+      Tooltip(
+        message: 'Configured Credential: ${camera.credentialName}',
+        child: Icon(
+          Icons.lock,
+          color: camera.credentialName.isEmpty ? Colors.red : Colors.green,
+        ),
+      ),
+      if (widget.deviceType == DeviceType.camera) ...[
+        widget.horizontalSpacing(),
+        Tooltip(
+          message: 'Archive View Available: ${camera.archiveName}',
+          child: Icon(
+            Icons.manage_history,
+            color: camera.archiveName.isEmpty ? Colors.red : Colors.green,
+          ),
+        ),
+        widget.horizontalSpacing(),
+        Tooltip(
+          message: 'Archive Index',
+          child: Text(camera.archiveIndex.toString()),
+        ),
+      ]
+    ];
   }
 }

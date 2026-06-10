@@ -41,7 +41,8 @@ class ArchiveViewCubit extends Cubit<ViewState> with ViewCubitMixin {
     return super.close();
   }
 
-  bool _criteria(Location l, Camera c) => c.archiveName.isEmpty;
+  bool _criteria(Location l, Camera c) =>
+      c.archiveName.isNotEmpty && c.archiveIndex >= 0;
 
   @override
   void next() => nextCamera(criteria: _criteria);

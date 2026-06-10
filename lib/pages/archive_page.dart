@@ -31,7 +31,8 @@ class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewCubit,
     ArchiveCameraViewCubit, ArchiveViewPage> {
   DateTime? _archiveDateTime;
 
-  bool _filterCamera(Camera camera) => camera.archiveName.isNotEmpty;
+  bool _filterCamera(Camera camera) =>
+      camera.archiveName.isNotEmpty && camera.archiveIndex >= 0;
 
   @override
   ArchiveCameraViewCubit createCubit(

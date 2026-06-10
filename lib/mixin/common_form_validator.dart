@@ -102,4 +102,25 @@ mixin CommonFormValidator {
 
     return null;
   }
+
+  String? validateArchiveIndex(
+    String? value, {
+    bool mandatory = false,
+  }) {
+    if (value == null || value.isEmpty) {
+      if (mandatory) {
+        return 'Value for archive index is mandatory';
+      } else {
+        return null;
+      }
+    }
+
+    try {
+      int.parse(value);
+    } catch (e) {
+      return 'Archive index must be a number';
+    }
+
+    return null;
+  }
 }

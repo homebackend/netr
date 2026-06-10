@@ -327,33 +327,42 @@ mixin SettingsCommon on FieldsCommon {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
-                onPressed: () {
-                  copyItem(index, item);
-                },
-                icon: Icon(
-                  Icons.copy,
-                  color: Colors.blue,
+              Tooltip(
+                message: 'Copy Item',
+                child: IconButton(
+                  onPressed: () {
+                    copyItem(index, item);
+                  },
+                  icon: Icon(
+                    Icons.copy,
+                    color: Colors.blue,
+                  ),
                 ),
               ),
-              IconButton(
-                onPressed: () {
-                  editItem(index, item);
-                },
-                icon: Icon(
-                  Icons.edit,
-                  color: Colors.blue,
+              Tooltip(
+                message: 'Edit Item',
+                child: IconButton(
+                  onPressed: () {
+                    editItem(index, item);
+                  },
+                  icon: Icon(
+                    Icons.edit,
+                    color: Colors.blue,
+                  ),
                 ),
               ),
             ],
           ),
-          leading: IconButton(
-            onPressed: () {
-              removeItem(index);
-            },
-            icon: Icon(
-              Icons.delete,
-              color: Colors.red,
+          leading: Tooltip(
+            message: 'Delete Item',
+            child: IconButton(
+              onPressed: () {
+                removeItem(index);
+              },
+              icon: Icon(
+                Icons.delete,
+                color: Colors.red,
+              ),
             ),
           ),
         );
