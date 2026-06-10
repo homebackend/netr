@@ -8,11 +8,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:netr/cubit/settings/app_settings_cubit.dart';
-import 'package:netr/cubit/settings/general_settings_cubit.dart';
-import 'package:netr/mixin/fields_common.dart';
-import 'package:netr/mixin/settings_common.dart';
-import 'package:netr/tool.dart';
+
+import '../../cubit/settings/app_settings_cubit.dart';
+import '../../cubit/settings/general_settings_cubit.dart';
+import '../../mixin/fields_common.dart';
+import '../../mixin/settings_common.dart';
+import '../../tool.dart';
 
 class GeneralSettings extends StatefulWidget with FieldsCommon, SettingsCommon {
   const GeneralSettings({super.key});

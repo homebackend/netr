@@ -11,10 +11,10 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_kit/media_kit.dart';
-import 'package:netr/cubit/viewer/camera_view_cubit.dart';
 
 import '../cubit/common.dart';
 import '../cubit/settings/app_settings_cubit.dart';
+import '../cubit/viewer/camera_view_cubit.dart';
 import '../cubit/viewer/camera_view_state.dart';
 import '../cubit/viewer/view_cubit.dart';
 import '../cubit/viewer/view_state.dart';

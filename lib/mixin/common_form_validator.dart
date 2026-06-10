@@ -8,9 +8,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:netr/models/settings_item.dart';
 
 import '../cubit/settings/settings_common_cubit.dart';
+import '../models/settings_item.dart';
 
 mixin CommonFormValidator {
   static final _regexIpAddress = RegExp(

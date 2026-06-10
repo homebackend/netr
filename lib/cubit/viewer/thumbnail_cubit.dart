@@ -8,8 +8,9 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:netr/models/camera.dart';
-import 'package:netr/models/location.dart';
+
+import '../../models/camera.dart';
+import '../../models/location.dart';
 
 part 'thumbnail_state.dart';
 

@@ -10,10 +10,10 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:encrypt/encrypt.dart';
-import 'package:netr/models/settings_item.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../mixin/encrypter.dart' as encrypter;
+import '../models/settings_item.dart';
 
 mixin Preferences {
   static const String keyCameras = 'cameras';

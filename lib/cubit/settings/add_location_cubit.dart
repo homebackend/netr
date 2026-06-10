@@ -13,10 +13,10 @@ import 'package:dartssh2_plus/dartssh2.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart' as geocoding;
-import 'package:netr/cubit/settings/settings_common_item_state.dart';
-import 'package:netr/models/location.dart';
 
+import '../../models/location.dart';
 import 'settings_common_item_cubit.dart';
+import 'settings_common_item_state.dart';
 
 part 'add_location_state.dart';
 

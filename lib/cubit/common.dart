@@ -8,8 +8,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:netr/cubit/viewer/archive_view_cubit.dart';
 
+import 'viewer/archive_view_cubit.dart';
 import 'viewer/live_view_cubit.dart';
 import 'viewer/view_state.dart';
 

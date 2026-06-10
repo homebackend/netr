@@ -10,8 +10,9 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:media_kit/media_kit.dart';
-import 'package:netr/helpers/string_helper.dart';
 import 'package:path_provider/path_provider.dart';
+
+import 'string_helper.dart';
 
 class ThumbnailManager {
   static bool thumbnailGenerationFailed = false;

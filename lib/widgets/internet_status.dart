@@ -8,7 +8,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:netr/cubit/mainwindow/internet_cubit.dart';
+
+import '../cubit/mainwindow/internet_cubit.dart';
 
 class InternetStatusWidget extends StatelessWidget {
   const InternetStatusWidget({super.key});

@@ -8,10 +8,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:netr/models/credential.dart';
 
 import '../../controllers/full_screen_controller.dart';
 import '../../models/camera.dart';
+import '../../models/credential.dart';
 import '../../models/location.dart';
 import '../viewer/view_cubit.dart';
 import '../viewer/view_state.dart';

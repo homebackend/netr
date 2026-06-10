@@ -8,16 +8,16 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:netr/cubit/startup/app_initialization_cubit.dart';
-import 'package:netr/tool.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app_home.dart';
 import 'cubit/settings/app_settings_cubit.dart';
 import 'cubit/settings/theme_cubit.dart';
+import 'cubit/startup/app_initialization_cubit.dart';
 import 'helpers/app_update_detailer.dart';
 import 'pages/update_app.dart';
 import 'pages/splash.dart';
+import 'tool.dart';
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
