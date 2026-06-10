@@ -1,19 +1,23 @@
 /*
- * Copyright (c) 2024 Neeraj Jakhar
+ * Copyright (c) 2026 Neeraj Jakhar
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-part of 'live_view_cubit.dart';
+import 'package:flutter/material.dart';
+
+import '../../models/camera.dart';
+import '../../models/credential.dart';
+import '../../models/location.dart';
 
 @immutable
-sealed class LiveViewState {}
+sealed class ViewState {}
 
-final class LiveViewInitialState extends LiveViewState {}
+final class ViewInitialState extends ViewState {}
 
-final class LiveViewUpdatedState extends LiveViewState {
+final class ViewUpdatedState extends ViewState {
   final List<Location> locations;
   final List<Credential> credentials;
   final List<Camera> cameras;
@@ -22,6 +26,7 @@ final class LiveViewUpdatedState extends LiveViewState {
 
   final Camera? selectedCamera;
   final Location? selectedLocation;
+  final bool archiveView;
   final bool fullScreen;
 
   final List<Camera> camerasWithoutLocation = [];
@@ -32,7 +37,7 @@ final class LiveViewUpdatedState extends LiveViewState {
   final Map<String, Camera> _mapCameras = {};
   final Map<String, Camera> _mapNvrs = {};
 
-  LiveViewUpdatedState(
+  ViewUpdatedState(
     this.locations,
     this.credentials,
     this.cameras,
@@ -40,6 +45,7 @@ final class LiveViewUpdatedState extends LiveViewState {
     this.isFreshState = true,
     this.selectedCamera,
     this.selectedLocation,
+    this.archiveView = false,
     this.fullScreen = false,
   }) {
     for (Location location in locations) {
@@ -88,14 +94,15 @@ final class LiveViewUpdatedState extends LiveViewState {
     return _mapNvrs[camera.archiveName];
   }
 
-  LiveViewUpdatedState copyWith({
+  ViewUpdatedState copyWith({
     bool? isFreshState,
     Camera? camera,
     Location? location,
+    bool? archiveView,
     bool? fullScreen,
     bool listView = false,
   }) {
-    return LiveViewUpdatedState(
+    return ViewUpdatedState(
       locations,
       credentials,
       cameras,
@@ -103,6 +110,7 @@ final class LiveViewUpdatedState extends LiveViewState {
       isFreshState: listView ? true : isFreshState ?? this.isFreshState,
       selectedCamera: listView ? null : camera ?? selectedCamera,
       selectedLocation: listView ? null : location ?? selectedLocation,
+      archiveView: archiveView ?? this.archiveView,
       fullScreen: fullScreen ?? this.fullScreen,
     );
   }

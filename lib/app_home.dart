@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Neeraj Jakhar
+ * Copyright (c) 2024-26 Neeraj Jakhar
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -13,6 +13,7 @@ import 'cubit/common.dart';
 import 'cubit/mainwindow/location_cubit.dart';
 import 'cubit/mainwindow/navigation_cubit.dart';
 import 'cubit/mainwindow/run_config_cubit.dart';
+import 'cubit/viewer/archive_view_cubit.dart';
 import 'cubit/viewer/live_view_cubit.dart';
 import 'pages/archive_page.dart';
 import 'constants.dart' as constants;
@@ -33,31 +34,24 @@ class AppHome extends StatelessWidget {
         BlocProvider(create: (_) => LocationCubit()..determinePosition()),
         BlocProvider(create: (_) => RunConfigCubit()),
         BlocProvider(create: (_) => LiveViewCubit()),
+        BlocProvider(
+          create: (_) => ArchiveViewCubit(BlocProvider.of<LiveViewCubit>(_)),
+        ),
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(
-        builder: (_, themeState) {
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            theme: themeState.data,
-            home: BlocBuilder<NavigationCubit, NavigationState>(
-              builder: (context, navState) {
-                return BlocBuilder<LiveViewCubit, LiveViewState>(
-                  buildWhen: CubitCommon.liveViewBuildWhen,
-                  builder: (context, lvState) {
-                    if (lvState is LiveViewUpdatedState && lvState.fullScreen) {
-                      return Scaffold(
-                        backgroundColor: Colors.black,
-                        body: LiveViewPage(),
-                      );
-                    } else {
-                      return _buildNavigationPage(context, navState);
-                    }
-                  },
-                );
-              },
+        builder: (_, themeState) => MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: themeState.data,
+          home: BlocBuilder<NavigationCubit, NavigationState>(
+            builder: (context, navState) => CubitCommon.cameraViewBlocBuilder(
+              Scaffold(
+                backgroundColor: Colors.black,
+                body: LiveViewPage(),
+              ),
+              _buildNavigationPage(context, navState),
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }

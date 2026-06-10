@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Neeraj Jakhar
+ * Copyright (c) 2024-26 Neeraj Jakhar
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,20 +15,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:netr/cubit/viewer/live_view_cubit.dart';
-import 'package:netr/cubit/viewer/thumbnail_cubit.dart';
-import 'package:netr/helpers/thumbnail_manager.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../cubit/viewer/live_camera_view_cubit.dart';
+import '../../cubit/viewer/thumbnail_cubit.dart';
 import '../../cubit/viewer/video_player_cubit.dart';
+import '../../cubit/viewer/view_cubit.dart';
+import '../../cubit/viewer/view_state.dart';
 import '../../cubit/viewer/viewer_keyboard_cubit.dart';
+import '../../helpers/thumbnail_manager.dart';
 import '../../models/camera.dart';
 import '../../models/credential.dart';
 import '../../models/location.dart';
 import '../../tool.dart';
 
-class PlayerBase extends StatefulWidget {
+class PlayerBase<C extends ViewCubit> extends StatefulWidget {
   final double maxWidth;
   final double maxHeight;
   final Camera camera;
@@ -52,10 +53,11 @@ class PlayerBase extends StatefulWidget {
   });
 
   @override
-  State<PlayerBase> createState() => _PlayerBaseState();
+  State<PlayerBase> createState() => _PlayerBaseState<C>();
 }
 
-class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
+class _PlayerBaseState<C extends ViewCubit> extends State<PlayerBase>
+    with WidgetsBindingObserver {
   final TransformationController _controller = TransformationController();
   late Player _player;
   late VideoController _videoController;
@@ -178,7 +180,7 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
                 } else if (state is ViewerKeyboardBackState) {
                   close(context);
                 } else if (state is ViewerKeyboardFullscreenState) {
-                  context.read<LiveViewCubit>().toggleFullScreen();
+                  context.read<C>().toggleFullScreen();
                 }
               },
             ),
@@ -316,12 +318,12 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
   Widget _getFullscreenButton(BuildContext context) {
     return createNavigatorButton(Icons.fullscreen, () async {
       _startHideTimer();
-      context.read<LiveViewCubit>().toggleFullScreen();
+      context.read<C>().toggleFullScreen();
     });
   }
 
   Future<void> close(BuildContext context) async {
-    context.read<LiveViewCubit>().back();
+    context.read<C>().back();
     await backButtonCleanup(context);
   }
 
@@ -340,11 +342,11 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
   }
 
   void next(BuildContext context) {
-    context.read<LiveViewCubit>().next();
+    context.read<C>().next();
   }
 
   void previous(BuildContext context) {
-    context.read<LiveViewCubit>().previous();
+    context.read<C>().previous();
   }
 
   Future<void> lockScreen() async {
@@ -374,7 +376,7 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
           _selectedCamera = "${location.name}/${camera.name}";
         });
         context
-            .read<LiveViewCubit>()
+            .read<C>()
             .updateSelectedCameraAndLocation(camera, location, false);
       },
       itemBuilder: (BuildContext context) {
@@ -542,9 +544,9 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
               }
             },
           ),
-          BlocListener<LiveViewCubit, LiveViewState>(
+          BlocListener<C, ViewState>(
             listener: (context, state) {
-              if (state is LiveViewUpdatedState &&
+              if (state is ViewUpdatedState &&
                   !state.isFreshState &&
                   state.selectedCamera != null &&
                   state.selectedLocation != null) {
