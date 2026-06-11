@@ -528,9 +528,10 @@ class _PlayerBaseState<C extends ViewCubit, CC extends CameraViewCubit>
                 open(state.url);
               } else if (state is CameraViewVideoState) {
                 if (state.state.width > 0 && state.state.height > 0) {
-                  context
-                      .read<VideoPlayerCubit>()
-                      .updateWidthHeight(state.state.width, state.state.height);
+                  context.read<VideoPlayerCubit>().updateWidthHeight(
+                        state.state.width.toInt(),
+                        state.state.height.toInt(),
+                      );
                 }
               } else if (state is CameraViewErrorState) {
                 log('Error during video play: ${state.error}');
@@ -547,14 +548,7 @@ class _PlayerBaseState<C extends ViewCubit, CC extends CameraViewCubit>
                   !state.isFreshState &&
                   state.selectedCamera != null &&
                   state.selectedLocation != null) {
-                context.read<CC>().updateCamera(
-                      state.selectedCamera!,
-                      state.selectedLocation!,
-                      state.cameraCredential(state.selectedCamera!)!,
-                      state.cameraNvr(
-                        state.selectedCamera!,
-                      ),
-                    );
+                context.read<CC>().updateCamera(state);
                 context.read<ThumbnailCubit>().generate(
                       location: state.selectedLocation,
                       camera: state.selectedCamera,

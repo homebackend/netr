@@ -47,34 +47,34 @@ class ThumbnailManager {
     String locationName,
     String cameraName,
   ) async {
-    try {
-      if (thumbnailGenerationFailed) {
-        log('Skipping thumbnail generation as it failed earlier');
-        return;
-      }
-
-      await Future.delayed(const Duration(seconds: 3));
-      if (player.state.width == null || player.state.width == 0) {
-        log('Thumbnail generation skipped');
-        return;
-      }
-
-      final Uint8List? bytes = await player.screenshot(format: 'image/jpeg');
-      if (bytes == null) {
-        thumbnailGenerationFailed = true;
-        return;
-      }
-
-      final String thumbnailFileLocation =
-          await ThumbnailManager.getThumbnailFilePath(
-        locationName,
-        cameraName,
-      );
-      log('New thumbnail created: $thumbnailFileLocation');
-      final File thumbnailFile = File(thumbnailFileLocation);
-      await thumbnailFile.writeAsBytes(bytes);
-    } catch (e) {
-      log("Thumbnail capture failed: $e");
+    if (thumbnailGenerationFailed) {
+      log('Skipping thumbnail generation as it failed earlier');
+      return;
     }
+    await Future.delayed(const Duration(seconds: 3), () async {
+      try {
+        if (player.state.width == null || player.state.width == 0) {
+          log('Thumbnail generation skipped');
+          return;
+        }
+
+        final Uint8List? bytes = await player.screenshot(format: 'image/jpeg');
+        if (bytes == null) {
+          thumbnailGenerationFailed = true;
+          return;
+        }
+
+        final String thumbnailFileLocation =
+            await ThumbnailManager.getThumbnailFilePath(
+          locationName,
+          cameraName,
+        );
+        log('New thumbnail created: $thumbnailFileLocation');
+        final File thumbnailFile = File(thumbnailFileLocation);
+        await thumbnailFile.writeAsBytes(bytes);
+      } catch (e) {
+        log("Thumbnail capture failed: $e");
+      }
+    });
   }
 }

@@ -23,14 +23,16 @@ class CameraViewData {
   final Credential credential;
   final Camera? archive;
   final StreamQuality quality;
-  final int width;
-  final int height;
+  final int cameraIndex;
+  final double width;
+  final double height;
 
   CameraViewData(
     this.location,
     this.camera,
     this.credential, {
     this.quality = StreamQuality.high,
+    this.cameraIndex = -1,
     this.width = 0,
     this.height = 0,
     this.archive,
@@ -41,14 +43,16 @@ class CameraViewData {
     Camera? camera,
     Credential? credential,
     StreamQuality? quality,
-    int? width,
-    int? height,
+    int? cameraIndex,
+    double? width,
+    double? height,
   }) {
     return CameraViewData(
       location ?? this.location,
       camera ?? this.camera,
       credential ?? this.credential,
       quality: quality ?? this.quality,
+      cameraIndex: cameraIndex ?? this.cameraIndex,
       width: width ?? this.width,
       height: height ?? this.height,
     );
@@ -66,14 +70,16 @@ final class CameraViewInitialState extends CameraViewState {
     Camera? camera,
     Credential? credential,
     StreamQuality? quality,
-    int? width,
-    int? height,
+    int? cameraInddex,
+    double? width,
+    double? height,
   }) {
     CameraViewData d = state.copyWith(
       location: location,
       camera: camera,
       credential: credential,
       quality: quality,
+      cameraIndex: cameraInddex,
       width: width,
       height: height,
     );
@@ -146,7 +152,7 @@ final class CameraViewPlayingState extends CameraViewInitialState {
 }
 
 final class CameraViewVideoState extends CameraViewInitialState {
-  CameraViewVideoState(CameraViewData state, {int? width, int? height})
+  CameraViewVideoState(CameraViewData state, {double? width, double? height})
       : super(state.copyWith(width: width, height: height));
 
   @override

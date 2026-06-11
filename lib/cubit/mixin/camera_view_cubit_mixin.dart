@@ -9,6 +9,7 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_kit/media_kit.dart';
 
@@ -56,7 +57,7 @@ mixin CameraViewCubitMixin on Cubit<CameraViewState>
         }
 
         log('Width is $width');
-        emit(CameraViewVideoState(d, width: width));
+        emit(CameraViewVideoState(d, width: width.toDouble()));
       });
 
       StreamSubscription heightStream = playerStream.height.listen((height) {
@@ -65,7 +66,7 @@ mixin CameraViewCubitMixin on Cubit<CameraViewState>
         }
 
         log('Height is $height');
-        emit(CameraViewVideoState(d, height: height));
+        emit(CameraViewVideoState(d, height: height.toDouble()));
       });
 
       return [
@@ -131,42 +132,25 @@ mixin CameraViewCubitMixin on Cubit<CameraViewState>
     if (state is CameraViewInitialState) {
       CameraViewInitialState s = state as CameraViewInitialState;
       return switch (s.state.quality) {
-        StreamQuality.high => _getHighPath(),
-        StreamQuality.low => _getLowPath(),
+        StreamQuality.high => getHighPath(),
+        StreamQuality.low => getLowPath(),
       };
     }
 
     return '';
   }
 
-  String _getHighPath() {
-    if (state is CameraViewInitialState) {
-      switch ((state as CameraViewInitialState).state.camera.cameraType) {
-        case CameraType.hikvision:
-          return '/Streaming/Channels/101/';
-      }
-    }
+  @protected
+  String getHighPath();
 
-    return '';
-  }
+  @protected
+  String getLowPath();
 
-  String _getLowPath() {
-    if (state is CameraViewInitialState) {
-      switch ((state as CameraViewInitialState).state.camera.cameraType) {
-        case CameraType.hikvision:
-          return '/Streaming/Channels/102/';
-      }
-    }
-
-    return '';
-  }
-
-  @override
-  Future<void> updateCamera(
-    Camera camera,
+  Future<void> updateCameraEmit(
     Location location,
+    Camera camera,
     Credential credential,
-    Camera? archive,
+    int? cameraIndex,
   ) async {
     if (state is CameraViewInitialState) {
       CameraViewInitialState s = state as CameraViewInitialState;
@@ -174,6 +158,7 @@ mixin CameraViewCubitMixin on Cubit<CameraViewState>
         camera: camera,
         location: location,
         credential: credential,
+        cameraInddex: cameraIndex,
       ));
     }
 

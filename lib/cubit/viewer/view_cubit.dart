@@ -30,8 +30,14 @@ abstract class ViewCubit extends Cubit<ViewState> {
     bool? fullScreen,
   });
 
+  /* This function is called by to emit the next camera.
+   * It emits the state corresponding to the next camera. */
   void next();
+
+  /* This function is called by to emit the previous camera.
+   * It emits the state corresponding to the previous camera. */
   void previous();
+
   void back();
   void toggleFullScreen();
 }

@@ -36,6 +36,7 @@ final class ViewUpdatedState extends ViewState {
   final Map<String, Credential> _mapCredentials = {};
   final Map<String, Camera> _mapCameras = {};
   final Map<String, Camera> _mapNvrs = {};
+  final Map<String, Credential> _mapNvrCredentials = {};
 
   ViewUpdatedState(
     this.locations,
@@ -92,6 +93,10 @@ final class ViewUpdatedState extends ViewState {
 
   Camera? cameraNvr(Camera camera) {
     return _mapNvrs[camera.archiveName];
+  }
+
+  Credential? cameraNvrCredential(Camera camera) {
+    return _mapNvrCredentials[cameraNvr(camera)!.name];
   }
 
   ViewUpdatedState copyWith({

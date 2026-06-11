@@ -8,22 +8,23 @@
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../models/camera.dart';
-import '../../models/credential.dart';
-import '../../models/location.dart';
 import 'camera_view_state.dart';
+import 'view_state.dart';
 
 abstract class CameraViewCubit extends Cubit<CameraViewState> {
   CameraViewCubit(super.initialState);
 
   String getUrlPath();
 
-  Future<void> updateCamera(
-    Camera camera,
-    Location location,
-    Credential credential,
-    Camera? archive,
-  );
+  /* This function is used to emit the url corresponding to the
+   * values passed as argument. This function gets triggered in
+   * response to ViewCubit.next() or ViewCubit.previous. The 
+   * arguments sent should correspond to the actual camera or 
+   * NVR as the case may be. This function internally calls 
+   * getStreamUrl() to emit the url. */
+  Future<void> updateCamera(ViewUpdatedState state);
 
+  /* This function is used to emit the url corresponding to the
+   * state stored in the cubit. */
   Future<void> getStreamUrl();
 }

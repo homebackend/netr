@@ -68,7 +68,12 @@ abstract class CameraViewPageState<C extends ViewCubit,
   List<Widget>? getAppBarActions();
 
   @protected
-  CameraViewCubit createCubit(PlayerStream playerStream, CameraViewData data);
+  CameraViewCubit createCubit(
+    PlayerStream playerStream,
+    ViewUpdatedState state,
+    double maxWidth,
+    double maxHeight,
+  );
 
   Widget _buildCameraView(ViewState state) {
     return Scaffold(
@@ -108,14 +113,9 @@ abstract class CameraViewPageState<C extends ViewCubit,
       return PlayerBase<C, CC>(
         (PlayerStream p) => createCubit(
           p,
-          CameraViewData(
-            state.selectedLocation!,
-            state.selectedCamera!,
-            state.cameraCredential(state.selectedCamera!)!,
-            quality: StreamQuality.high,
-            width: playerConstraints.maxWidth.toInt(),
-            height: playerConstraints.maxHeight.toInt(),
-          ),
+          state,
+          playerConstraints.maxWidth,
+          playerConstraints.maxHeight,
         ),
         playerConstraints.maxWidth,
         playerConstraints.maxHeight,
