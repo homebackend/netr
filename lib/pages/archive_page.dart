@@ -9,7 +9,11 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:netr/helpers/string_helper.dart';
+import 'package:netr/mixin/preferences.dart';
 
 import '../cubit/viewer/archive_camera_view_cubit.dart';
 import '../cubit/viewer/archive_view_cubit.dart';
@@ -29,8 +33,24 @@ class ArchiveViewPage extends CameraViewPage {
 }
 
 class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewCubit,
-    ArchiveCameraViewCubit, ArchiveViewPage> {
+    ArchiveCameraViewCubit, ArchiveViewPage> with Preferences {
   DateTime? _archiveDateTime;
+
+  @override
+  void initState() {
+    _load();
+    super.initState();
+  }
+
+  Future<void> _load() async {
+    String? archiveDateTime = await loadString(Preferences.keyArchiveDateTime);
+
+    if (archiveDateTime != null) {
+      setState(() {
+        _archiveDateTime = DateTime.tryParse(archiveDateTime);
+      });
+    }
+  }
 
   bool _filterCamera(Camera camera) =>
       camera.archiveName.isNotEmpty && camera.archiveIndex >= 0;
@@ -56,6 +76,14 @@ class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewCubit,
       );
 
   @override
+  void updateCubit(
+          ViewUpdatedState state,
+          Future<void> Function(ViewUpdatedState vuState,
+                  {DateTime? startDateTime})
+              updator) =>
+      updator(state, startDateTime: _archiveDateTime);
+
+  @override
   Iterable<Camera> getCameras(List<Camera> cameras) sync* {
     yield* cameras.where(_filterCamera);
   }
@@ -66,17 +94,19 @@ class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewCubit,
 
   @override
   void cameraTapHandler(BuildContext bc, Location l, Camera c, bool fs) async {
-    //LiveViewCubit lvc = bc.read<LiveViewCubit>();
-
+    ArchiveViewCubit cubit = bc.read<ArchiveViewCubit>();
     if (_archiveDateTime == null) {
       await _showDateTimePicker(bc);
       if (_archiveDateTime == null) return;
     }
 
-/*
-    lvc.updateSelectedCameraAndLocation(c, l, true,
-        fullScreen: fs, archiveView: true);
-        */
+    cubit.updateSelectedCameraAndLocation(
+      c,
+      l,
+      true,
+      fullScreen: fs,
+      archiveView: true,
+    );
   }
 
   @override
@@ -85,14 +115,16 @@ class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewCubit,
       createIconButton(
         Icons.edit_calendar,
         () => _showDateTimePicker(context),
-        'Pick Date Time',
+        _archiveDateTime == null
+            ? 'Pick Date Time'
+            : 'Picked Date Time: ${StringHelper.getOrdinalSuffix(_archiveDateTime!.day)}${DateFormat(' MMMM hh:mm a').format(_archiveDateTime!)}',
       )
     ];
   }
 
   Future<void> _showDateTimePicker(BuildContext bc) async {
     final DateTime now = DateTime.now();
-    _archiveDateTime = await DateTimePicker.pickDateTime(
+    DateTime? picked = await DateTimePicker.pickDateTime(
           bc,
           now: _archiveDateTime ?? now,
           firstDate: now.subtract(Duration(days: 30)),
@@ -100,6 +132,13 @@ class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewCubit,
           helpText: 'Select Date Time for Archive View',
         ) ??
         _archiveDateTime;
-    log(_archiveDateTime.toString());
+
+    if (picked != null) {
+      setState(() {
+        _archiveDateTime = picked;
+      });
+      saveString(Preferences.keyArchiveDateTime, _archiveDateTime.toString());
+      log(_archiveDateTime.toString());
+    }
   }
 }

@@ -6,6 +6,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -33,6 +35,7 @@ mixin ViewCubitMixin on Cubit<ViewState> implements ViewCubit {
     Location location,
     bool isFreshState, {
     bool? fullScreen,
+    bool? archiveView,
   }) {
     if (state is ViewUpdatedState) {
       if (fullScreen ?? false) {
@@ -40,11 +43,14 @@ mixin ViewCubitMixin on Cubit<ViewState> implements ViewCubit {
       }
 
       ViewUpdatedState state = this.state as ViewUpdatedState;
+      log('$cubitName: ${camera.name}');
       emit(state.copyWith(
-          camera: camera,
-          location: location,
-          isFreshState: isFreshState,
-          fullScreen: fullScreen ?? state.fullScreen));
+        camera: camera,
+        location: location,
+        isFreshState: isFreshState,
+        fullScreen: fullScreen ?? state.fullScreen,
+        archiveView: archiveView ?? state.archiveView,
+      ));
     }
   }
 

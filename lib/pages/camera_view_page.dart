@@ -15,7 +15,6 @@ import 'package:media_kit/media_kit.dart';
 import '../cubit/common.dart';
 import '../cubit/settings/app_settings_cubit.dart';
 import '../cubit/viewer/camera_view_cubit.dart';
-import '../cubit/viewer/camera_view_state.dart';
 import '../cubit/viewer/view_cubit.dart';
 import '../cubit/viewer/view_state.dart';
 import '../models/camera.dart';
@@ -45,7 +44,10 @@ abstract class CameraViewPageState<C extends ViewCubit,
 
   @override
   Widget build(BuildContext context) {
+    final mySpecificCubit = BlocProvider.of<C>(context);
+    log('${widget.viewName}: ${context.read<C>().cubitName} ${mySpecificCubit.cubitName}');
     return BlocBuilder<C, ViewState>(
+      bloc: mySpecificCubit,
       buildWhen: CubitCommon.viewBuildWhen,
       builder: (context, state) {
         return state is ViewUpdatedState && state.fullScreen
@@ -73,6 +75,13 @@ abstract class CameraViewPageState<C extends ViewCubit,
     ViewUpdatedState state,
     double maxWidth,
     double maxHeight,
+  );
+
+  @protected
+  void updateCubit(
+    ViewUpdatedState state,
+    Future<void> Function(ViewUpdatedState vuState, {DateTime? startDateTime})
+        updator,
   );
 
   Widget _buildCameraView(ViewState state) {
@@ -117,6 +126,7 @@ abstract class CameraViewPageState<C extends ViewCubit,
           playerConstraints.maxWidth,
           playerConstraints.maxHeight,
         ),
+        updateCubit,
         playerConstraints.maxWidth,
         playerConstraints.maxHeight,
         state.selectedCamera!,

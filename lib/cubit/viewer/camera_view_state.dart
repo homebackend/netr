@@ -26,6 +26,7 @@ class CameraViewData {
   final int cameraIndex;
   final double width;
   final double height;
+  final DateTime? startDateTime;
 
   CameraViewData(
     this.location,
@@ -36,6 +37,7 @@ class CameraViewData {
     this.width = 0,
     this.height = 0,
     this.archive,
+    this.startDateTime,
   });
 
   CameraViewData copyWith({
@@ -46,6 +48,7 @@ class CameraViewData {
     int? cameraIndex,
     double? width,
     double? height,
+    DateTime? startDateTime,
   }) {
     return CameraViewData(
       location ?? this.location,
@@ -55,6 +58,7 @@ class CameraViewData {
       cameraIndex: cameraIndex ?? this.cameraIndex,
       width: width ?? this.width,
       height: height ?? this.height,
+      startDateTime: startDateTime ?? this.startDateTime,
     );
   }
 }
@@ -73,6 +77,7 @@ final class CameraViewInitialState extends CameraViewState {
     int? cameraInddex,
     double? width,
     double? height,
+    DateTime? startDateTime,
   }) {
     CameraViewData d = state.copyWith(
       location: location,
@@ -82,6 +87,7 @@ final class CameraViewInitialState extends CameraViewState {
       cameraIndex: cameraInddex,
       width: width,
       height: height,
+      startDateTime: startDateTime,
     );
     return CameraViewInitialState(d);
   }

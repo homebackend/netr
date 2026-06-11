@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Neeraj Jakhar
+ * Copyright (c) 2024-26 Neeraj Jakhar
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -23,6 +23,7 @@ mixin Preferences {
   static const String keyLocations = 'locations';
   static const String keyNvrs = 'nvrs';
   static const String keyUseDarkTheme = 'useDarkTheme';
+  static const String keyArchiveDateTime = 'archiveDateTime';
 
   Future<List<T>> loadItems<T extends SettingsItem>(
       String keyItems, T Function(Map<String, dynamic>) itemFromMap,

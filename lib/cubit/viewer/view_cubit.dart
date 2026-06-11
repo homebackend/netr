@@ -16,6 +16,8 @@ import 'view_state.dart';
 abstract class ViewCubit extends Cubit<ViewState> {
   ViewCubit(super.initialState);
 
+  String get cubitName;
+
   void emitState(
     List<Location> locations,
     List<Camera> cameras,
@@ -28,6 +30,7 @@ abstract class ViewCubit extends Cubit<ViewState> {
     Location location,
     bool isFreshState, {
     bool? fullScreen,
+    bool? archiveView,
   });
 
   /* This function is called by to emit the next camera.

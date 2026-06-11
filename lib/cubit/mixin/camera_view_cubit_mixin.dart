@@ -15,9 +15,9 @@ import 'package:media_kit/media_kit.dart';
 
 import '../../models/camera.dart';
 import '../../models/credential.dart';
-import '../../models/location.dart';
 import '../viewer/camera_view_cubit.dart';
 import '../viewer/camera_view_state.dart';
+import '../viewer/view_state.dart';
 
 mixin CameraViewCubitMixin on Cubit<CameraViewState>
     implements CameraViewCubit {
@@ -146,19 +146,24 @@ mixin CameraViewCubitMixin on Cubit<CameraViewState>
   @protected
   String getLowPath();
 
-  Future<void> updateCameraEmit(
-    Location location,
-    Camera camera,
-    Credential credential,
-    int? cameraIndex,
-  ) async {
+  @protected
+  Camera getCamera(ViewUpdatedState state);
+
+  @protected
+  Credential getCredential(ViewUpdatedState state);
+
+  @override
+  Future<void> updateCamera(ViewUpdatedState vuState,
+      {DateTime? startDateTime}) async {
     if (state is CameraViewInitialState) {
       CameraViewInitialState s = state as CameraViewInitialState;
+      log('$cubitName: ${getCamera(vuState).name}');
       emit(s.copyWith(
-        camera: camera,
-        location: location,
-        credential: credential,
-        cameraInddex: cameraIndex,
+        camera: getCamera(vuState),
+        location: vuState.selectedLocation!,
+        credential: getCredential(vuState),
+        cameraInddex: vuState.selectedCamera!.archiveIndex,
+        startDateTime: startDateTime ?? s.state.startDateTime,
       ));
     }
 

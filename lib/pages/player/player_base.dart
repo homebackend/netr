@@ -42,8 +42,14 @@ class PlayerBase<C extends ViewCubit, CC extends CameraViewCubit>
   final String playerTitle;
   final String dialogText;
   final CameraViewCubit Function(PlayerStream playerStream) creator;
+  final void Function(
+    ViewUpdatedState state,
+    Future<void> Function(ViewUpdatedState vuState, {DateTime? startDateTime})
+        updator,
+  ) updator;
   const PlayerBase(
     this.creator,
+    this.updator,
     this.maxWidth,
     this.maxHeight,
     this.camera,
@@ -548,7 +554,7 @@ class _PlayerBaseState<C extends ViewCubit, CC extends CameraViewCubit>
                   !state.isFreshState &&
                   state.selectedCamera != null &&
                   state.selectedLocation != null) {
-                context.read<CC>().updateCamera(state);
+                widget.updator(state, context.read<CC>().updateCamera);
                 context.read<ThumbnailCubit>().generate(
                       location: state.selectedLocation,
                       camera: state.selectedCamera,

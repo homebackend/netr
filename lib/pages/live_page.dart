@@ -47,6 +47,14 @@ class _LiveViewPageState extends CameraViewPageState<LiveViewCubit,
       );
 
   @override
+  void updateCubit(
+          ViewUpdatedState state,
+          Future<void> Function(ViewUpdatedState vuState,
+                  {DateTime? startDateTime})
+              updator) =>
+      updator(state);
+
+  @override
   Iterable<Camera> getCameras(List<Camera> cameras) => cameras;
 
   @override

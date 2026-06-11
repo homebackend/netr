@@ -14,6 +14,8 @@ import 'view_state.dart';
 abstract class CameraViewCubit extends Cubit<CameraViewState> {
   CameraViewCubit(super.initialState);
 
+  String get cubitName;
+
   String getUrlPath();
 
   /* This function is used to emit the url corresponding to the
@@ -22,7 +24,8 @@ abstract class CameraViewCubit extends Cubit<CameraViewState> {
    * arguments sent should correspond to the actual camera or 
    * NVR as the case may be. This function internally calls 
    * getStreamUrl() to emit the url. */
-  Future<void> updateCamera(ViewUpdatedState state);
+  Future<void> updateCamera(ViewUpdatedState vuState,
+      {DateTime? startDateTime});
 
   /* This function is used to emit the url corresponding to the
    * state stored in the cubit. */

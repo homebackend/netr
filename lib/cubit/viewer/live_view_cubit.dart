@@ -20,6 +20,9 @@ class LiveViewCubit extends Cubit<ViewState> with ViewCubitMixin, Preferences {
     _load();
   }
 
+  @override
+  String get cubitName => 'LiveViewCubit';
+
   Future<void> _load() async {
     List<Camera> cameras =
         await loadItems(Preferences.keyCameras, Camera.fromJson);

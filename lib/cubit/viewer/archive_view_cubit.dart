@@ -36,6 +36,9 @@ class ArchiveViewCubit extends Cubit<ViewState> with ViewCubitMixin {
   }
 
   @override
+  String get cubitName => 'ArchiveViewCubit';
+
+  @override
   Future<void> close() {
     _liveViewSubscription.cancel();
     return super.close();
