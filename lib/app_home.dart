@@ -48,6 +48,10 @@ class AppHome extends StatelessWidget {
                 backgroundColor: Colors.black,
                 body: LiveViewPage(),
               ),
+              Scaffold(
+                backgroundColor: Colors.black,
+                body: ArchiveViewPage(),
+              ),
               _buildNavigationPage(context, navState),
             ),
           ),

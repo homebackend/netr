@@ -12,18 +12,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:media_kit/media_kit.dart';
-import 'package:netr/helpers/string_helper.dart';
-import 'package:netr/mixin/preferences.dart';
 
 import '../cubit/viewer/archive_camera_view_cubit.dart';
 import '../cubit/viewer/archive_view_cubit.dart';
 import '../cubit/viewer/camera_view_state.dart';
 import '../cubit/viewer/view_state.dart';
 import '../helpers/date_time_picker.dart';
+import '../helpers/string_helper.dart';
+import '../mixin/preferences.dart';
 import '../models/camera.dart';
 import '../models/location.dart';
 import '../tool.dart';
 import 'camera_view_page.dart';
+import 'player/archive_player.dart';
 
 class ArchiveViewPage extends CameraViewPage {
   const ArchiveViewPage({super.key}) : super('Archive View', Icons.history);
@@ -32,9 +33,19 @@ class ArchiveViewPage extends CameraViewPage {
   State<ArchiveViewPage> createState() => _ArchiveViewPageState();
 }
 
-class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewCubit,
-    ArchiveCameraViewCubit, ArchiveViewPage> with Preferences {
+class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewPage>
+    with Preferences {
   DateTime? _archiveDateTime;
+
+  @override
+  BlocBuilder blocBuilder({
+    required Widget Function(BuildContext, ViewState) builder,
+    bool Function(ViewState previous, ViewState current)? buildWhen,
+  }) =>
+      BlocBuilder<ArchiveViewCubit, ViewState>(
+        builder: builder,
+        buildWhen: buildWhen,
+      );
 
   @override
   void initState() {
@@ -61,19 +72,20 @@ class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewCubit,
    */
   @override
   ArchiveCameraViewCubit createCubit(PlayerStream playerStream,
-          ViewUpdatedState state, double maxWidth, double maxHeight) =>
-      ArchiveCameraViewCubit(
-        playerStream,
-        CameraViewData(
-          state.selectedLocation!,
-          state.cameraNvr(state.selectedCamera!)!,
-          state.cameraNvrCredential(state.selectedCamera!)!,
-          quality: StreamQuality.high,
-          cameraIndex: state.selectedCamera!.archiveIndex,
-          width: maxWidth,
-          height: maxHeight,
-        ),
-      );
+      ViewUpdatedState state, double maxWidth, double maxHeight) {
+    return ArchiveCameraViewCubit(
+      playerStream,
+      CameraViewData(
+        state.selectedLocation!,
+        state.cameraNvr(state.selectedCamera!)!,
+        state.cameraNvrCredential(state.selectedCamera!)!,
+        quality: StreamQuality.high,
+        cameraIndex: state.selectedCamera!.archiveIndex,
+        width: maxWidth,
+        height: maxHeight,
+      ),
+    );
+  }
 
   @override
   void updateCubit(
@@ -141,4 +153,33 @@ class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewCubit,
       log(_archiveDateTime.toString());
     }
   }
+
+  @override
+  ArchivePlayer getPlayer(
+    double maxWidth,
+    double maxHeight,
+    ViewUpdatedState state,
+    String playerTitle,
+    String dialogText,
+  ) =>
+      ArchivePlayer(
+        maxWidth,
+        maxHeight,
+        state.cameraNvr(state.selectedCamera!)!,
+        state.selectedLocation!,
+        state.cameraNvrCredential(state.selectedCamera!)!,
+        state.selectedCamera!.archiveIndex,
+        _archiveDateTime!,
+        state.cameras
+            .map(
+              (camera) => (
+                state.cameraNvr(camera)!,
+                state.cameraLocation(camera)!,
+                state.cameraNvrCredential(camera)!,
+              ),
+            )
+            .toList(),
+        playerTitle,
+        dialogText,
+      );
 }

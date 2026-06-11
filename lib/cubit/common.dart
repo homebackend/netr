@@ -40,16 +40,17 @@ class CubitCommon {
   }
 
   static Widget cameraViewBlocBuilder(
-      Widget successChild, Widget failureChild) {
+      Widget lvChild, Widget avChild, Widget otherChild) {
     return BlocBuilder<LiveViewCubit, ViewState>(
       buildWhen: viewBuildWhen,
       builder: (context, lvState) {
         return BlocBuilder<ArchiveViewCubit, ViewState>(
           buildWhen: viewBuildWhen,
-          builder: (context, avState) =>
-              isFullScreen(lvState) || isFullScreen(avState)
-                  ? successChild
-                  : failureChild,
+          builder: (context, avState) => isFullScreen(lvState)
+              ? lvChild
+              : isFullScreen(avState)
+                  ? avChild
+                  : otherChild,
         );
       },
     );

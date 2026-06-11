@@ -23,62 +23,58 @@ mixin CameraViewCubitMixin on Cubit<CameraViewState>
     implements CameraViewCubit {
   List<StreamSubscription> subscribe(PlayerStream playerStream) {
     if (state is CameraViewInitialState) {
-      CameraViewInitialState s = state as CameraViewInitialState;
-      CameraViewData d = s.state;
+      List<StreamSubscription> l = [];
 
-      StreamSubscription bufferingStream =
-          playerStream.buffering.listen((buffering) {
-        if (buffering) {
-          emit(CameraViewBufferingState(50.0, false, d));
-        } else {
-          emit(CameraViewBufferingState(100.0, true, d));
-        }
+      l.add(playerStream.buffering.listen((buffering) {
+        double done = buffering ? 50.0 : 100.0;
+        emit(CameraViewBufferingState(done, false, _data()));
       }, onError: (error) {
-        emit(CameraViewErrorState(error));
+        log('Error during buffering: $error');
+        //emit(CameraViewErrorState(error));
       }, onDone: () {
-        emit(CameraViewBufferingState(100.0, true, d));
-      });
+        emit(CameraViewBufferingState(100.0, true, _data()));
+      }));
 
-      StreamSubscription playingStream = playerStream.playing.listen((playing) {
-        emit(CameraViewPlayingState(playing, d));
+      l.add(playerStream.playing.listen((playing) {
+        emit(CameraViewPlayingState(playing, _data()));
       }, onError: (error) {
-        emit(CameraViewErrorState(error));
+        log('Error during playing: $error');
+        //emit(CameraViewErrorState(error));
       }, onDone: () {
         emit(CameraViewDoneState());
-      });
+      }));
 
-      StreamSubscription errorStream = playerStream.error.listen((error) {
-        emit(CameraViewErrorState(error));
-      });
+      l.add(playerStream.error.listen((error) {
+        log('Error reported: $error');
+        //emit(CameraViewErrorState(error));
+      }));
 
-      StreamSubscription widthStream = playerStream.width.listen((width) {
+      l.add(playerStream.width.listen((width) {
         if (width == null) {
           return;
         }
 
         log('Width is $width');
-        emit(CameraViewVideoState(d, width: width.toDouble()));
-      });
+        emit(CameraViewVideoState(_data(), width: width.toDouble()));
+      }));
 
-      StreamSubscription heightStream = playerStream.height.listen((height) {
+      l.add(playerStream.height.listen((height) {
         if (height == null) {
           return;
         }
 
         log('Height is $height');
-        emit(CameraViewVideoState(d, height: height.toDouble()));
-      });
+        emit(CameraViewVideoState(_data(), height: height.toDouble()));
+      }));
 
-      return [
-        bufferingStream,
-        playingStream,
-        errorStream,
-        widthStream,
-        heightStream,
-      ];
+      return l;
     }
 
     return [];
+  }
+
+  CameraViewData _data() {
+    return (state as CameraViewInitialState).state;
   }
 
   Future<void> closeStreams(List<StreamSubscription> subscriptions) async {

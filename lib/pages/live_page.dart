@@ -17,6 +17,7 @@ import '../cubit/viewer/view_state.dart';
 import '../models/camera.dart';
 import '../models/location.dart';
 import 'camera_view_page.dart';
+import 'player/live_player.dart';
 
 class LiveViewPage extends CameraViewPage {
   const LiveViewPage({super.key}) : super('Live View', Icons.videocam);
@@ -25,8 +26,17 @@ class LiveViewPage extends CameraViewPage {
   State<LiveViewPage> createState() => _LiveViewPageState();
 }
 
-class _LiveViewPageState extends CameraViewPageState<LiveViewCubit,
-    LiveCameraViewCubit, LiveViewPage> {
+class _LiveViewPageState extends CameraViewPageState<LiveViewPage> {
+  @override
+  BlocBuilder blocBuilder({
+    required Widget Function(BuildContext, ViewState) builder,
+    bool Function(ViewState previous, ViewState current)? buildWhen,
+  }) =>
+      BlocBuilder<LiveViewCubit, ViewState>(
+        builder: builder,
+        buildWhen: buildWhen,
+      );
+
   /* This function creates a cubit that will be used to switch
    * between the availble CCTVs. Note it sends the actual Camera
    * values corresponding to the CCTV has the live view.
@@ -71,4 +81,31 @@ class _LiveViewPageState extends CameraViewPageState<LiveViewCubit,
   List<Widget>? getAppBarActions() {
     return null;
   }
+
+  @override
+  LivePlayer getPlayer(
+    double maxWidth,
+    double maxHeight,
+    ViewUpdatedState state,
+    String playerTitle,
+    String dialogText,
+  ) =>
+      LivePlayer(
+        maxWidth,
+        maxHeight,
+        state.selectedCamera!,
+        state.selectedLocation!,
+        state.cameraCredential(state.selectedCamera!)!,
+        state.cameras
+            .map(
+              (camera) => (
+                camera,
+                state.cameraLocation(camera)!,
+                state.cameraCredential(camera)!,
+              ),
+            )
+            .toList(),
+        playerTitle,
+        dialogText,
+      );
 }

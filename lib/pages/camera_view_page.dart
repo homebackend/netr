@@ -15,7 +15,6 @@ import 'package:media_kit/media_kit.dart';
 import '../cubit/common.dart';
 import '../cubit/settings/app_settings_cubit.dart';
 import '../cubit/viewer/camera_view_cubit.dart';
-import '../cubit/viewer/view_cubit.dart';
 import '../cubit/viewer/view_state.dart';
 import '../models/camera.dart';
 import '../models/location.dart';
@@ -28,8 +27,7 @@ abstract class CameraViewPage extends StatefulWidget {
   const CameraViewPage(this.viewName, this.iconData, {super.key});
 }
 
-abstract class CameraViewPageState<C extends ViewCubit,
-    CC extends CameraViewCubit, T extends CameraViewPage> extends State<T> {
+abstract class CameraViewPageState<T extends CameraViewPage> extends State<T> {
   final ScrollController _verticalController = ScrollController();
   final List<ScrollController> _horizontalControllers = [];
 
@@ -44,18 +42,21 @@ abstract class CameraViewPageState<C extends ViewCubit,
 
   @override
   Widget build(BuildContext context) {
-    final mySpecificCubit = BlocProvider.of<C>(context);
-    log('${widget.viewName}: ${context.read<C>().cubitName} ${mySpecificCubit.cubitName}');
-    return BlocBuilder<C, ViewState>(
-      bloc: mySpecificCubit,
+    return blocBuilder(
       buildWhen: CubitCommon.viewBuildWhen,
-      builder: (context, state) {
+      builder: (BuildContext context, ViewState state) {
         return state is ViewUpdatedState && state.fullScreen
             ? _videoViewer(state)
             : _buildCameraView(state);
       },
     );
   }
+
+  @protected
+  BlocBuilder blocBuilder({
+    required Widget Function(BuildContext, ViewState) builder,
+    bool Function(ViewState previous, ViewState current)? buildWhen,
+  });
 
   @protected
   int getCameraCount(List<Camera> cameras);
@@ -82,6 +83,15 @@ abstract class CameraViewPageState<C extends ViewCubit,
     ViewUpdatedState state,
     Future<void> Function(ViewUpdatedState vuState, {DateTime? startDateTime})
         updator,
+  );
+
+  @protected
+  PlayerBase getPlayer(
+    double maxWidth,
+    double maxHeight,
+    ViewUpdatedState state,
+    String playerTitle,
+    String dialogText,
   );
 
   Widget _buildCameraView(ViewState state) {
@@ -117,41 +127,21 @@ abstract class CameraViewPageState<C extends ViewCubit,
     );
   }
 
-  Widget _videoplayer(ViewUpdatedState state) {
-    return LayoutBuilder(builder: (context, playerConstraints) {
-      return PlayerBase<C, CC>(
-        (PlayerStream p) => createCubit(
-          p,
-          state,
+  Widget _videoplayer(ViewUpdatedState state) => LayoutBuilder(
+        builder: (context, playerConstraints) => getPlayer(
           playerConstraints.maxWidth,
           playerConstraints.maxHeight,
+          state,
+          'Live Camera Viewer',
+          'Select a Camera',
         ),
-        updateCubit,
-        playerConstraints.maxWidth,
-        playerConstraints.maxHeight,
-        state.selectedCamera!,
-        state.selectedLocation!,
-        state.cameraCredential(state.selectedCamera!)!,
-        state.cameras
-            .map(
-              (camera) => (
-                camera,
-                state.cameraLocation(camera)!,
-                state.cameraCredential(camera)!,
-              ),
-            )
-            .toList(),
-        'Live Camera Viewer',
-        'Select a Camera',
       );
-    });
-  }
 
   Widget _videoViewer(ViewUpdatedState state) {
     return LayoutBuilder(
       builder: (context, constraints) {
         log('Viewer: ${constraints.maxWidth}x${constraints.maxHeight}');
-        return BlocBuilder<C, ViewState>(builder: (context, vState) {
+        return blocBuilder(builder: (context, vState) {
           return CubitCommon.isFullScreen(vState)
               ? SizedBox.expand(child: _videoplayer(state))
               : Column(

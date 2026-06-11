@@ -17,11 +17,9 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
-import '../../cubit/viewer/camera_view_cubit.dart';
 import '../../cubit/viewer/camera_view_state.dart';
 import '../../cubit/viewer/thumbnail_cubit.dart';
 import '../../cubit/viewer/video_player_cubit.dart';
-import '../../cubit/viewer/view_cubit.dart';
 import '../../cubit/viewer/view_state.dart';
 import '../../cubit/viewer/viewer_keyboard_cubit.dart';
 import '../../helpers/thumbnail_manager.dart';
@@ -30,8 +28,7 @@ import '../../models/credential.dart';
 import '../../models/location.dart';
 import '../../tool.dart';
 
-class PlayerBase<C extends ViewCubit, CC extends CameraViewCubit>
-    extends StatefulWidget {
+abstract class PlayerBase extends StatefulWidget {
   final double maxWidth;
   final double maxHeight;
   final Camera camera;
@@ -41,15 +38,7 @@ class PlayerBase<C extends ViewCubit, CC extends CameraViewCubit>
   final List<(Camera, Location, Credential)> cameras;
   final String playerTitle;
   final String dialogText;
-  final CameraViewCubit Function(PlayerStream playerStream) creator;
-  final void Function(
-    ViewUpdatedState state,
-    Future<void> Function(ViewUpdatedState vuState, {DateTime? startDateTime})
-        updator,
-  ) updator;
   const PlayerBase(
-    this.creator,
-    this.updator,
     this.maxWidth,
     this.maxHeight,
     this.camera,
@@ -61,13 +50,10 @@ class PlayerBase<C extends ViewCubit, CC extends CameraViewCubit>
     super.key,
     this.archive,
   });
-
-  @override
-  State<PlayerBase> createState() => _PlayerBaseState<C, CC>();
 }
 
-class _PlayerBaseState<C extends ViewCubit, CC extends CameraViewCubit>
-    extends State<PlayerBase> with WidgetsBindingObserver {
+abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
+    with WidgetsBindingObserver {
   final TransformationController _controller = TransformationController();
   late Player _player;
   late VideoController _videoController;
@@ -190,7 +176,7 @@ class _PlayerBaseState<C extends ViewCubit, CC extends CameraViewCubit>
                 } else if (state is ViewerKeyboardBackState) {
                   close(context);
                 } else if (state is ViewerKeyboardFullscreenState) {
-                  context.read<C>().toggleFullScreen();
+                  toggleFullScreen(context);
                 }
               },
             ),
@@ -328,12 +314,12 @@ class _PlayerBaseState<C extends ViewCubit, CC extends CameraViewCubit>
   Widget _getFullscreenButton(BuildContext context) {
     return createNavigatorButton(Icons.fullscreen, () async {
       _startHideTimer();
-      context.read<C>().toggleFullScreen();
+      toggleFullScreen(context);
     });
   }
 
   Future<void> close(BuildContext context) async {
-    context.read<C>().back();
+    back(context);
     await backButtonCleanup(context);
   }
 
@@ -349,14 +335,6 @@ class _PlayerBaseState<C extends ViewCubit, CC extends CameraViewCubit>
   Future<void> open(String url) async {
     await _player.stop();
     await _player.open(Media(url), play: true);
-  }
-
-  void next(BuildContext context) {
-    context.read<C>().next();
-  }
-
-  void previous(BuildContext context) {
-    context.read<C>().previous();
   }
 
   Future<void> lockScreen() async {
@@ -385,9 +363,7 @@ class _PlayerBaseState<C extends ViewCubit, CC extends CameraViewCubit>
         setState(() {
           _selectedCamera = "${location.name}/${camera.name}";
         });
-        context
-            .read<C>()
-            .updateSelectedCameraAndLocation(camera, location, false);
+        updateSelectedCameraAndLocation(context, camera, location, false);
       },
       itemBuilder: (BuildContext context) {
         return widget.cameras.indexed.map((pair) {
@@ -504,14 +480,12 @@ class _PlayerBaseState<C extends ViewCubit, CC extends CameraViewCubit>
         BlocProvider(
           create: (context) => VideoPlayerCubit(),
         ),
-        BlocProvider(
-          create: (context) => widget.creator(_player.stream) as CC,
-        ),
+        createViewBlocProvider(context, _player.stream),
       ],
       child: MultiBlocListener(
         listeners: [
-          BlocListener<CC, CameraViewState>(
-            listener: (context, state) {
+          createCameraViewBlocListener(
+            (context, state) {
               if (state is CameraViewBufferingState) {
                 if (state.bufferingDone) {
                   log('Buffering done');
@@ -548,13 +522,13 @@ class _PlayerBaseState<C extends ViewCubit, CC extends CameraViewCubit>
               }
             },
           ),
-          BlocListener<C, ViewState>(
-            listener: (context, state) {
+          createViewBlocListener(
+            (context, state) {
               if (state is ViewUpdatedState &&
                   !state.isFreshState &&
                   state.selectedCamera != null &&
                   state.selectedLocation != null) {
-                widget.updator(state, context.read<CC>().updateCamera);
+                updateCamera(context, state);
                 context.read<ThumbnailCubit>().generate(
                       location: state.selectedLocation,
                       camera: state.selectedCamera,
@@ -580,7 +554,7 @@ class _PlayerBaseState<C extends ViewCubit, CC extends CameraViewCubit>
                 ),
               );
             } else {
-              context.read<CC>().getStreamUrl();
+              getStreamUrl(context);
               return SizedBox(
                 width: 48,
                 height: 48,
@@ -596,4 +570,41 @@ class _PlayerBaseState<C extends ViewCubit, CC extends CameraViewCubit>
       ),
     );
   }
+
+  @protected
+  void toggleFullScreen(BuildContext context);
+
+  @protected
+  void back(BuildContext context);
+
+  @protected
+  void next(BuildContext context);
+
+  @protected
+  void previous(BuildContext context);
+
+  @protected
+  void updateSelectedCameraAndLocation(BuildContext context, Camera camera,
+      Location location, bool isFreshState);
+
+  @protected
+  void getStreamUrl(BuildContext context);
+
+  @protected
+  void updateCamera(BuildContext context, ViewUpdatedState state);
+
+  BlocProvider createViewBlocProvider(
+    BuildContext context,
+    PlayerStream playerStream,
+  );
+
+  @protected
+  BlocListener createViewBlocListener(
+    void Function(BuildContext context, ViewState state) listener,
+  );
+
+  @protected
+  BlocListener createCameraViewBlocListener(
+    void Function(BuildContext context, CameraViewState state) listener,
+  );
 }
