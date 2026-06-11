@@ -17,6 +17,7 @@ sealed class AddCameraState extends SettingsCommonItemState {
   String locationName;
   String credentialName;
   String archiveName;
+  String archiveIndex;
 
   AddCameraState(
     super.stateName, {
@@ -31,6 +32,7 @@ sealed class AddCameraState extends SettingsCommonItemState {
     this.locationName = '',
     this.credentialName = '',
     this.archiveName = '',
+    this.archiveIndex = '',
   }) : ipLocationNames = List.from(ipLocationNames);
 
   @override
@@ -44,6 +46,7 @@ sealed class AddCameraState extends SettingsCommonItemState {
     locationName = await loadString('$stateName.locationName') ?? '';
     credentialName = await loadString('$stateName.credentialName') ?? '';
     archiveName = await loadString('$stateName.archiveName') ?? '';
+    archiveIndex = await loadString('$stateName.archiveIndex') ?? '';
   }
 
   @override
@@ -57,6 +60,7 @@ sealed class AddCameraState extends SettingsCommonItemState {
     await saveString('$stateName.locationName', locationName);
     await saveString('$stateName.credentialName', credentialName);
     await saveString('$stateName.archiveName', archiveName);
+    await saveString('$stateName.archiveIndex', archiveIndex);
   }
 
   AddCameraState copyWith({
@@ -71,6 +75,7 @@ sealed class AddCameraState extends SettingsCommonItemState {
     String? locationName,
     String? credentialName,
     String? archiveName,
+    String? archiveIndex,
   });
 }
 
@@ -89,6 +94,7 @@ final class AddCameraUpdateState extends AddCameraState {
     super.locationName,
     super.credentialName,
     super.archiveName,
+    super.archiveIndex,
   });
 
   @override
@@ -104,6 +110,7 @@ final class AddCameraUpdateState extends AddCameraState {
     String? locationName,
     String? credentialName,
     String? archiveName,
+    String? archiveIndex,
   }) {
     return AddCameraUpdateState(
       stateName,
@@ -118,6 +125,7 @@ final class AddCameraUpdateState extends AddCameraState {
       locationName: locationName ?? this.locationName,
       credentialName: credentialName ?? this.credentialName,
       archiveName: archiveName ?? this.archiveName,
+      archiveIndex: archiveIndex ?? this.archiveIndex,
     );
   }
 }

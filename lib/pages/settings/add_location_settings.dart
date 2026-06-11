@@ -462,19 +462,26 @@ class _AddLocationSettingsState extends State<AddLocationSettings> {
 
   List<Widget> _getSubTitle(Location location) {
     return [
-      Icon(
-        Icons.location_on,
-        color: location.latitude > 0 && location.longitude > 0
-            ? Colors.green
-            : Colors.red,
+      Tooltip(
+        message: 'Location: ${location.latitude}, ${location.longitude}',
+        child: Icon(
+          Icons.location_on,
+          color: location.latitude > 0 && location.longitude > 0
+              ? Colors.green
+              : Colors.red,
+        ),
       ),
       widget.horizontalSpacing(),
       Text('within ${location.distance.name}'),
       widget.horizontalSpacing(size: 16.0),
-      Text(
-        'SSH:',
-        style: TextStyle(
-          fontSize: 16,
+      Tooltip(
+        message:
+            'Host: ${location.sshHost}, Port: ${location.sshPort}, User: ${location.sshUser}',
+        child: Text(
+          'SSH:',
+          style: TextStyle(
+            fontSize: 16,
+          ),
         ),
       ),
       widget.horizontalSpacing(),
@@ -483,9 +490,12 @@ class _AddLocationSettingsState extends State<AddLocationSettings> {
               location.sshPort! > 0 &&
               location.sshUser!.isNotEmpty &&
               location.sshPrivateKey!.isNotEmpty
-          ? Icon(
-              Icons.thumb_up,
-              color: Colors.green,
+          ? Tooltip(
+              message: 'Private Key: ${location.sshPrivateKey}',
+              child: Icon(
+                Icons.thumb_up,
+                color: Colors.green,
+              ),
             )
           : Icon(
               Icons.thumb_down,

@@ -131,7 +131,10 @@ class _AddCredentialSettingsState extends State<AddCredentialSettings> {
 
   List<Widget> _getSubTitle(Credential credential) {
     return [
-      Text('${credential.user}: ${"*" * credential.password.length}'),
+      Tooltip(
+        message: 'User: ${credential.user}, Password: ${credential.password}',
+        child: Text('${credential.user}: ${"*" * credential.password.length}'),
+      ),
     ];
   }
 }

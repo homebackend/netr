@@ -8,7 +8,8 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:netr/mixin/preferences.dart';
+
+import '../../mixin/preferences.dart';
 
 part 'app_settings_state.dart';
 

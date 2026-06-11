@@ -30,6 +30,7 @@ class Camera extends SettingsItem {
   static final String _keyLocationName = 'locationName';
   static final String _keyCredentialName = 'credentialName';
   static final String _keyArchiveName = 'archiveName';
+  static final String _keyArchiveIndex = 'archiveIndex';
 
   CameraType cameraType;
   String protocol;
@@ -39,6 +40,7 @@ class Camera extends SettingsItem {
   String locationName;
   String credentialName;
   String archiveName;
+  int archiveIndex;
 
   Camera(
     super.name, {
@@ -50,6 +52,7 @@ class Camera extends SettingsItem {
     this.locationName = '',
     this.credentialName = '',
     this.archiveName = '',
+    this.archiveIndex = -1,
   }) : ipLocationNames = List<String>.from(ipLocationNames);
 
   factory Camera.fromJson(Map<String, dynamic> map) {
@@ -64,6 +67,7 @@ class Camera extends SettingsItem {
       locationName: map[_keyLocationName] ?? '',
       credentialName: map[_keyCredentialName] ?? '',
       archiveName: map[_keyArchiveName] ?? '',
+      archiveIndex: map[_keyArchiveIndex] ?? -1,
     );
   }
 
@@ -79,6 +83,7 @@ class Camera extends SettingsItem {
       _keyLocationName: locationName,
       _keyCredentialName: credentialName,
       _keyArchiveName: archiveName,
+      _keyArchiveIndex: archiveIndex,
     };
   }
 
@@ -94,6 +99,7 @@ class Camera extends SettingsItem {
       locationName: locationName,
       credentialName: credentialName,
       archiveName: archiveName,
+      archiveIndex: archiveIndex,
     );
   }
 }

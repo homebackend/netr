@@ -10,8 +10,9 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:media_kit/media_kit.dart';
-import 'package:netr/helpers/string_helper.dart';
 import 'package:path_provider/path_provider.dart';
+
+import 'string_helper.dart';
 
 class ThumbnailManager {
   static bool thumbnailGenerationFailed = false;
@@ -46,34 +47,34 @@ class ThumbnailManager {
     String locationName,
     String cameraName,
   ) async {
-    try {
-      if (thumbnailGenerationFailed) {
-        log('Skipping thumbnail generation as it failed earlier');
-        return;
-      }
-
-      await Future.delayed(const Duration(seconds: 3));
-      if (player.state.width == null || player.state.width == 0) {
-        log('Thumbnail generation skipped');
-        return;
-      }
-
-      final Uint8List? bytes = await player.screenshot(format: 'image/jpeg');
-      if (bytes == null) {
-        thumbnailGenerationFailed = true;
-        return;
-      }
-
-      final String thumbnailFileLocation =
-          await ThumbnailManager.getThumbnailFilePath(
-        locationName,
-        cameraName,
-      );
-      log('New thumbnail created: $thumbnailFileLocation');
-      final File thumbnailFile = File(thumbnailFileLocation);
-      await thumbnailFile.writeAsBytes(bytes);
-    } catch (e) {
-      log("Thumbnail capture failed: $e");
+    if (thumbnailGenerationFailed) {
+      log('Skipping thumbnail generation as it failed earlier');
+      return;
     }
+    await Future.delayed(const Duration(seconds: 3), () async {
+      try {
+        if (player.state.width == null || player.state.width == 0) {
+          log('Thumbnail generation skipped');
+          return;
+        }
+
+        final Uint8List? bytes = await player.screenshot(format: 'image/jpeg');
+        if (bytes == null) {
+          thumbnailGenerationFailed = true;
+          return;
+        }
+
+        final String thumbnailFileLocation =
+            await ThumbnailManager.getThumbnailFilePath(
+          locationName,
+          cameraName,
+        );
+        log('New thumbnail created: $thumbnailFileLocation');
+        final File thumbnailFile = File(thumbnailFileLocation);
+        await thumbnailFile.writeAsBytes(bytes);
+      } catch (e) {
+        log("Thumbnail capture failed: $e");
+      }
+    });
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Neeraj Jakhar
+ * Copyright (c) 2024-26 Neeraj Jakhar
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -69,14 +69,13 @@ Widget createButton(String text, VoidCallback? handler,
   );
 }
 
-void showSnackBar(BuildContext context, String message) {
+void showSnackBar(BuildContext context, String message, {Duration? timeout}) {
   final snackBar = SnackBar(
     content: Text(message),
+    duration: timeout ?? const Duration(seconds: 3),
     action: SnackBarAction(
       label: 'Ok',
-      onPressed: () {
-        // Some code to undo the change.
-      },
+      onPressed: () {},
     ),
   );
   ScaffoldMessenger.of(context).hideCurrentSnackBar();

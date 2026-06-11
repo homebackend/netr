@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Neeraj Jakhar
+ * Copyright (c) 2024-26 Neeraj Jakhar
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,20 +15,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:netr/cubit/viewer/live_view_cubit.dart';
-import 'package:netr/cubit/viewer/thumbnail_cubit.dart';
-import 'package:netr/helpers/thumbnail_manager.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
-import '../../cubit/viewer/live_camera_view_cubit.dart';
+import '../../cubit/viewer/camera_view_state.dart';
+import '../../cubit/viewer/thumbnail_cubit.dart';
 import '../../cubit/viewer/video_player_cubit.dart';
+import '../../cubit/viewer/view_state.dart';
 import '../../cubit/viewer/viewer_keyboard_cubit.dart';
+import '../../helpers/thumbnail_manager.dart';
 import '../../models/camera.dart';
 import '../../models/credential.dart';
 import '../../models/location.dart';
 import '../../tool.dart';
 
-class PlayerBase extends StatefulWidget {
+abstract class PlayerBase extends StatefulWidget {
   final double maxWidth;
   final double maxHeight;
   final Camera camera;
@@ -50,12 +50,10 @@ class PlayerBase extends StatefulWidget {
     super.key,
     this.archive,
   });
-
-  @override
-  State<PlayerBase> createState() => _PlayerBaseState();
 }
 
-class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
+abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
+    with WidgetsBindingObserver {
   final TransformationController _controller = TransformationController();
   late Player _player;
   late VideoController _videoController;
@@ -178,7 +176,7 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
                 } else if (state is ViewerKeyboardBackState) {
                   close(context);
                 } else if (state is ViewerKeyboardFullscreenState) {
-                  context.read<LiveViewCubit>().toggleFullScreen();
+                  toggleFullScreen(context);
                 }
               },
             ),
@@ -316,12 +314,12 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
   Widget _getFullscreenButton(BuildContext context) {
     return createNavigatorButton(Icons.fullscreen, () async {
       _startHideTimer();
-      context.read<LiveViewCubit>().toggleFullScreen();
+      toggleFullScreen(context);
     });
   }
 
   Future<void> close(BuildContext context) async {
-    context.read<LiveViewCubit>().back();
+    back(context);
     await backButtonCleanup(context);
   }
 
@@ -337,14 +335,6 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
   Future<void> open(String url) async {
     await _player.stop();
     await _player.open(Media(url), play: true);
-  }
-
-  void next(BuildContext context) {
-    context.read<LiveViewCubit>().next();
-  }
-
-  void previous(BuildContext context) {
-    context.read<LiveViewCubit>().previous();
   }
 
   Future<void> lockScreen() async {
@@ -373,9 +363,7 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
         setState(() {
           _selectedCamera = "${location.name}/${camera.name}";
         });
-        context
-            .read<LiveViewCubit>()
-            .updateSelectedCameraAndLocation(camera, location, false);
+        updateSelectedCameraAndLocation(context, camera, location, false);
       },
       itemBuilder: (BuildContext context) {
         return widget.cameras.indexed.map((pair) {
@@ -492,22 +480,13 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
         BlocProvider(
           create: (context) => VideoPlayerCubit(),
         ),
-        BlocProvider(
-          create: (context) => LiveCameraViewCubit(
-            _player.stream,
-            widget.camera,
-            widget.location,
-            widget.credential,
-            StreamQuality.high,
-            archive: widget.archive,
-          ),
-        ),
+        createViewBlocProvider(context, _player.stream),
       ],
       child: MultiBlocListener(
         listeners: [
-          BlocListener<LiveCameraViewCubit, LiveCameraViewState>(
-            listener: (context, state) {
-              if (state is LiveCameraViewBufferingState) {
+          createCameraViewBlocListener(
+            (context, state) {
+              if (state is CameraViewBufferingState) {
                 if (state.bufferingDone) {
                   log('Buffering done');
                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -515,7 +494,7 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
                   log('Buffering: ${state.bufferingState}%');
                   showSnackBar(context, 'Buffering ${state.bufferingState}%');
                 }
-              } else if (state is LiveCameraViewPlayingState) {
+              } else if (state is CameraViewPlayingState) {
                 if (state.playing) {
                   lockScreen();
                   showSnackBar(context, 'Started playing');
@@ -523,39 +502,33 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
                   unlockScreen();
                   showSnackBar(context, 'Stopped playing');
                 }
-              } else if (state is LiveCameraViewUpdatedState) {
+              } else if (state is CameraViewUpdatedState) {
                 log('Opening url: ${state.url}');
                 _currentUrl = state.url;
                 open(state.url);
-              } else if (state is LiveCameraViewVideoState) {
-                if (state.width > 0 && state.height > 0) {
-                  context
-                      .read<VideoPlayerCubit>()
-                      .updateWidthHeight(state.width, state.height);
+              } else if (state is CameraViewVideoState) {
+                if (state.state.width > 0 && state.state.height > 0) {
+                  context.read<VideoPlayerCubit>().updateWidthHeight(
+                        state.state.width.toInt(),
+                        state.state.height.toInt(),
+                      );
                 }
-              } else if (state is LiveCameraViewErrorState) {
+              } else if (state is CameraViewErrorState) {
                 log('Error during video play: ${state.error}');
                 showSnackBar(context, 'Play error: ${state.error}');
                 close(context);
-              } else if (state is LiveCameraViewDoneState) {
+              } else if (state is CameraViewDoneState) {
                 close(context);
               }
             },
           ),
-          BlocListener<LiveViewCubit, LiveViewState>(
-            listener: (context, state) {
-              if (state is LiveViewUpdatedState &&
+          createViewBlocListener(
+            (context, state) {
+              if (state is ViewUpdatedState &&
                   !state.isFreshState &&
                   state.selectedCamera != null &&
                   state.selectedLocation != null) {
-                context.read<LiveCameraViewCubit>().updateCamera(
-                      state.selectedCamera!,
-                      state.selectedLocation!,
-                      state.cameraCredential(state.selectedCamera!)!,
-                      state.cameraNvr(
-                        state.selectedCamera!,
-                      ),
-                    );
+                updateCamera(context, state);
                 context.read<ThumbnailCubit>().generate(
                       location: state.selectedLocation,
                       camera: state.selectedCamera,
@@ -581,7 +554,7 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
                 ),
               );
             } else {
-              context.read<LiveCameraViewCubit>().getStreamUrl();
+              getStreamUrl(context);
               return SizedBox(
                 width: 48,
                 height: 48,
@@ -597,4 +570,41 @@ class _PlayerBaseState extends State<PlayerBase> with WidgetsBindingObserver {
       ),
     );
   }
+
+  @protected
+  void toggleFullScreen(BuildContext context);
+
+  @protected
+  void back(BuildContext context);
+
+  @protected
+  void next(BuildContext context);
+
+  @protected
+  void previous(BuildContext context);
+
+  @protected
+  void updateSelectedCameraAndLocation(BuildContext context, Camera camera,
+      Location location, bool isFreshState);
+
+  @protected
+  void getStreamUrl(BuildContext context);
+
+  @protected
+  void updateCamera(BuildContext context, ViewUpdatedState state);
+
+  BlocProvider createViewBlocProvider(
+    BuildContext context,
+    PlayerStream playerStream,
+  );
+
+  @protected
+  BlocListener createViewBlocListener(
+    void Function(BuildContext context, ViewState state) listener,
+  );
+
+  @protected
+  BlocListener createCameraViewBlocListener(
+    void Function(BuildContext context, CameraViewState state) listener,
+  );
 }

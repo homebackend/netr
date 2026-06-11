@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-26 Neeraj Jakhar
+ * Copyright (c) 2026 Neeraj Jakhar
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -9,24 +9,25 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:media_kit/media_kit.dart';
-import 'package:netr/models/credential.dart';
 
 import '../../models/camera.dart';
+import '../../models/credential.dart';
 import '../mixin/camera_view_cubit_mixin.dart';
 import 'camera_view_state.dart';
 import 'view_state.dart';
 
-class LiveCameraViewCubit extends Cubit<CameraViewState>
+class ArchiveCameraViewCubit extends Cubit<CameraViewState>
     with CameraViewCubitMixin {
   late List<StreamSubscription> subscriptions;
-  LiveCameraViewCubit(PlayerStream playerStream, CameraViewData data)
+  ArchiveCameraViewCubit(PlayerStream playerStream, CameraViewData data)
       : super(CameraViewInitialState(data)) {
     subscriptions = subscribe(playerStream);
   }
 
   @override
-  String get cubitName => 'LiveCameraViewCubit';
+  String get cubitName => 'ArchiveCameraViewCubit';
 
   @override
   Future<void> close() {
@@ -39,9 +40,10 @@ class LiveCameraViewCubit extends Cubit<CameraViewState>
   @override
   String getHighPath() {
     if (state is CameraViewInitialState) {
-      switch ((state as CameraViewInitialState).state.camera.cameraType) {
+      CameraViewInitialState s = state as CameraViewInitialState;
+      switch (s.state.camera.cameraType) {
         case CameraType.hikvision:
-          return '/Streaming/Channels/101/';
+          return '/Streaming/tracks/${s.state.cameraIndex}01?starttime=${DateFormat("yyyyMMdd'T'kkmm'00z'").format(s.state.startDateTime!)}';
       }
     }
 
@@ -50,23 +52,16 @@ class LiveCameraViewCubit extends Cubit<CameraViewState>
 
   @override
   String getLowPath() {
-    if (state is CameraViewInitialState) {
-      switch ((state as CameraViewInitialState).state.camera.cameraType) {
-        case CameraType.hikvision:
-          return '/Streaming/Channels/102/';
-      }
-    }
-
-    return '';
+    return getHighPath();
   }
 
   @override
   Camera getCamera(ViewUpdatedState state) {
-    return state.selectedCamera!;
+    return state.cameraNvr(state.selectedCamera!)!;
   }
 
   @override
   Credential getCredential(ViewUpdatedState state) {
-    return state.cameraCredential(state.selectedCamera!)!;
+    return state.cameraNvrCredential(state.selectedCamera!)!;
   }
 }

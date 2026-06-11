@@ -8,7 +8,8 @@
 
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:netr/helpers/thumbnail_manager.dart';
+
+import '../helpers/thumbnail_manager.dart';
 
 class ThumbnailWidget extends StatelessWidget {
   final String locationName;

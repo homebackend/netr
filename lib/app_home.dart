@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Neeraj Jakhar
+ * Copyright (c) 2024-26 Neeraj Jakhar
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -13,6 +13,7 @@ import 'cubit/common.dart';
 import 'cubit/mainwindow/location_cubit.dart';
 import 'cubit/mainwindow/navigation_cubit.dart';
 import 'cubit/mainwindow/run_config_cubit.dart';
+import 'cubit/viewer/archive_view_cubit.dart';
 import 'cubit/viewer/live_view_cubit.dart';
 import 'pages/archive_page.dart';
 import 'constants.dart' as constants;
@@ -33,31 +34,28 @@ class AppHome extends StatelessWidget {
         BlocProvider(create: (_) => LocationCubit()..determinePosition()),
         BlocProvider(create: (_) => RunConfigCubit()),
         BlocProvider(create: (_) => LiveViewCubit()),
+        BlocProvider(
+          create: (_) => ArchiveViewCubit(BlocProvider.of<LiveViewCubit>(_)),
+        ),
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(
-        builder: (_, themeState) {
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            theme: themeState.data,
-            home: BlocBuilder<NavigationCubit, NavigationState>(
-              builder: (context, navState) {
-                return BlocBuilder<LiveViewCubit, LiveViewState>(
-                  buildWhen: CubitCommon.liveViewBuildWhen,
-                  builder: (context, lvState) {
-                    if (lvState is LiveViewUpdatedState && lvState.fullScreen) {
-                      return Scaffold(
-                        backgroundColor: Colors.black,
-                        body: LiveViewPage(),
-                      );
-                    } else {
-                      return _buildNavigationPage(context, navState);
-                    }
-                  },
-                );
-              },
+        builder: (_, themeState) => MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: themeState.data,
+          home: BlocBuilder<NavigationCubit, NavigationState>(
+            builder: (context, navState) => CubitCommon.cameraViewBlocBuilder(
+              Scaffold(
+                backgroundColor: Colors.black,
+                body: LiveViewPage(),
+              ),
+              Scaffold(
+                backgroundColor: Colors.black,
+                body: ArchiveViewPage(),
+              ),
+              _buildNavigationPage(context, navState),
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
@@ -136,146 +134,3 @@ class AppHome extends StatelessWidget {
     );
   }
 }
-
-/*
-class Home extends StatefulWidget {
-  const Home({super.key});
-
-  @override
-  _HomeState createState() => _HomeState();
-}
-
-class _HomeState extends State<Home> {
-  bool _showHome = true;
-  bool _restoreHome = false;
-  ViewerMode? _viewerMode;
-  VideoStreamMode? _videoStreamMode;
-  VideoStreamType? _videoStreamType;
-  String? _videoQuality;
-  String? _location;
-  DateTime? _archiveDateTime;
-  PhotoCameraHelper? _photoCameraHelper;
-  HistoricalPhotoCameraHelper? _historicalPhotoCameraHelper;
-  StreamCameraHelper? _streamCameraHelper;
-  String? _selectedVideoCamera;
-  int? _selectedCameraIndex;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_showHome) {
-      void callback(bool showInstruction) {
-        setState(() {
-          _showHome = true;
-          _restoreHome = true;
-        });
-      }
-
-      BaseViewer? viewer;
-
-      switch (_viewerMode) {
-        case ViewerMode.picture:
-          viewer = PictureViewerHome(_photoCameraHelper!, _selectedVideoCamera,
-              _videoQuality, '', callback);
-          break;
-        case ViewerMode.pictureArchive:
-          var lastDateTime = DateFormat('yyyy-MM-dd-HH:mm')
-              .parse(_historicalPhotoCameraHelper!.getLatestImageTime());
-          viewer = PictureHistoricalViewerHome(
-              _historicalPhotoCameraHelper!,
-              lastDateTime,
-              _selectedCameraIndex!,
-              _selectedVideoCamera,
-              _videoQuality,
-              _location,
-              callback);
-          break;
-        case ViewerMode.inAppVideo:
-          if (_videoStreamType == VideoStreamType.live) {
-            if (_videoStreamMode == VideoStreamMode.streamDirect) {
-              viewer = DirectVideoViewerHome(_streamCameraHelper!,
-                  _selectedVideoCamera, _videoQuality, _location, callback);
-            } else {
-              viewer = SshVideoViewerHome(_streamCameraHelper!,
-                  _selectedVideoCamera, _videoQuality, _location, callback);
-            }
-          } else {
-            if (_videoStreamMode == VideoStreamMode.streamDirect) {
-              viewer = DirectArchiveVideoViewerHome(_streamCameraHelper!,
-                  _selectedVideoCamera, _location, _archiveDateTime!, callback);
-            } else {
-              viewer = SshArchiveVideoViewerHome(_streamCameraHelper!,
-                  _selectedVideoCamera, _location, _archiveDateTime!, callback);
-            }
-          }
-          break;
-        case ViewerMode.remoteVlc:
-          if (_videoStreamMode == VideoStreamMode.streamDirect) {
-            if (_videoStreamType == VideoStreamType.live) {
-              viewer = VlcDirectVideoViewerHome(_streamCameraHelper!,
-                  _selectedVideoCamera, _videoQuality, _location, callback);
-            } else {
-              viewer = VlcDirectArchiveVideoViewerHome(_streamCameraHelper!,
-                  _selectedVideoCamera, _location, _archiveDateTime, callback);
-            }
-          }
-          break;
-        case ViewerMode.none:
-        default:
-          viewer = null;
-          break;
-      }
-
-      if (viewer != null) {
-        return viewer;
-      }
-    }
-
-    void submitHandler(
-        ViewerMode viewerMode,
-        VideoStreamMode? videoStreamMode,
-        VideoStreamType? videoStreamType,
-        String videoQuality,
-        String? location,
-        DateTime? archiveDateTime,
-        String selectedVideoCamera,
-        int selectedCameraIndex,
-        PhotoCameraHelper? photoCameraHelper,
-        HistoricalPhotoCameraHelper? historicalPhotoCameraHelper,
-        StreamCameraHelper? streamCameraHelper) {
-      setState(() {
-        _showHome = false;
-        _viewerMode = viewerMode;
-        _videoStreamMode = videoStreamMode;
-        _videoStreamType = videoStreamType;
-        _videoQuality = videoQuality;
-        _location = location;
-        _archiveDateTime = archiveDateTime;
-        _selectedVideoCamera = selectedVideoCamera;
-        _selectedCameraIndex = selectedCameraIndex;
-        _photoCameraHelper = photoCameraHelper;
-        _historicalPhotoCameraHelper = historicalPhotoCameraHelper;
-        _streamCameraHelper = streamCameraHelper;
-      });
-    }
-
-    if (_restoreHome) {
-      _restoreHome = false;
-      return HomePage.restore(
-          submitHandler,
-          _viewerMode,
-          _videoStreamMode,
-          _videoStreamType,
-          _videoQuality,
-          _location,
-          _archiveDateTime,
-          _selectedVideoCamera,
-          _selectedCameraIndex,
-          _photoCameraHelper,
-          _historicalPhotoCameraHelper,
-          _streamCameraHelper);
-    }
-
-    return HomePage(submitHandler);
-  }
-}
-*/
