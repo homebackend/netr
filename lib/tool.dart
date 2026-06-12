@@ -73,6 +73,7 @@ void showSnackBar(BuildContext context, String message, {Duration? timeout}) {
   final snackBar = SnackBar(
     content: Text(message),
     duration: timeout ?? const Duration(seconds: 3),
+    persist: false,
     action: SnackBarAction(
       label: 'Ok',
       onPressed: () {},

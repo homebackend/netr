@@ -27,10 +27,10 @@ mixin CameraViewCubitMixin on Cubit<CameraViewState>
 
       l.add(playerStream.buffering.listen((buffering) {
         double done = buffering ? 50.0 : 100.0;
-        emit(CameraViewBufferingState(done, false, _data()));
+        emit(CameraViewBufferingState(done, buffering, _data()));
       }, onError: (error) {
         log('Error during buffering: $error');
-        //emit(CameraViewErrorState(error));
+        emit(CameraViewErrorState(error, _data()));
       }, onDone: () {
         emit(CameraViewBufferingState(100.0, true, _data()));
       }));
@@ -39,14 +39,14 @@ mixin CameraViewCubitMixin on Cubit<CameraViewState>
         emit(CameraViewPlayingState(playing, _data()));
       }, onError: (error) {
         log('Error during playing: $error');
-        //emit(CameraViewErrorState(error));
+        emit(CameraViewErrorState(error, _data()));
       }, onDone: () {
         emit(CameraViewDoneState());
       }));
 
       l.add(playerStream.error.listen((error) {
         log('Error reported: $error');
-        //emit(CameraViewErrorState(error));
+        emit(CameraViewErrorState(error, _data()));
       }));
 
       l.add(playerStream.width.listen((width) {

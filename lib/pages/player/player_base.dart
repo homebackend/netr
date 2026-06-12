@@ -190,40 +190,38 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
                 ? KeyEventResult.handled
                 : KeyEventResult.ignored,
             child: BlocBuilder<ViewerKeyboardCubit, ViewerKeyboardState>(
-              builder: (context, state) {
-                return Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Positioned.fill(
-                      child: InteractiveViewer(
-                        panEnabled: true,
-                        scaleEnabled: true,
-                        minScale: ViewerKeyboardCubit.minScale,
-                        maxScale: ViewerKeyboardCubit.maxScale,
-                        transformationController: _controller,
-                        onInteractionEnd: (ScaleEndDetails details) {
-                          final cubit = context.read<ViewerKeyboardCubit>();
-                          cubit.updateControllerValue(_controller.value);
-                          cubit.handleInteractionEnd(details);
-                        },
-                        child: isInitialized
-                            ? GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTap: _onTap,
-                                onSecondaryTap: _onTap,
-                                child: playerWidget(context),
-                              )
-                            : const Center(
-                                child: CircularProgressIndicator(
-                                  semanticsLabel: 'Loading',
-                                ),
+              builder: (context, state) => Stack(
+                alignment: Alignment.center,
+                children: [
+                  Positioned.fill(
+                    child: InteractiveViewer(
+                      panEnabled: true,
+                      scaleEnabled: true,
+                      minScale: ViewerKeyboardCubit.minScale,
+                      maxScale: ViewerKeyboardCubit.maxScale,
+                      transformationController: _controller,
+                      onInteractionEnd: (ScaleEndDetails details) {
+                        final cubit = context.read<ViewerKeyboardCubit>();
+                        cubit.updateControllerValue(_controller.value);
+                        cubit.handleInteractionEnd(details);
+                      },
+                      child: isInitialized
+                          ? GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: _onTap,
+                              onSecondaryTap: _onTap,
+                              child: playerWidget(context),
+                            )
+                          : const Center(
+                              child: CircularProgressIndicator(
+                                semanticsLabel: 'Loading',
                               ),
-                      ),
+                            ),
                     ),
-                    if (isInitialized) _buildInlineControlsOverlay(context),
-                  ],
-                );
-              },
+                  ),
+                  if (isInitialized) _buildInlineControlsOverlay(context),
+                ],
+              ),
             ),
           ),
         );
@@ -487,7 +485,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
           createCameraViewBlocListener(
             (context, state) {
               if (state is CameraViewBufferingState) {
-                if (state.bufferingDone) {
+                if (state.bufferingDone || state.bufferingState == 100.0) {
                   log('Buffering done');
                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
                 } else {
@@ -516,7 +514,10 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
               } else if (state is CameraViewErrorState) {
                 log('Error during video play: ${state.error}');
                 showSnackBar(context, 'Play error: ${state.error}');
-                close(context);
+                if (!['Failed to initialize a decoder for codec']
+                    .any((e) => state.error.contains(e))) {
+                  close(context);
+                }
               } else if (state is CameraViewDoneState) {
                 close(context);
               }

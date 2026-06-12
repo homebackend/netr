@@ -109,15 +109,17 @@ final class CameraViewUpdatedState extends CameraViewInitialState {
       CameraViewUpdatedState(url, d);
 }
 
-final class CameraViewErrorState extends CameraViewState {
+final class CameraViewErrorState extends CameraViewInitialState {
   final String error;
 
-  CameraViewErrorState(this.error);
+  CameraViewErrorState(this.error, super.state);
+
+  CameraViewErrorState copyWithLocal({String? error}) =>
+      CameraViewErrorState(error ?? this.error, state);
 
   @override
-  CameraViewState copyWith({String? error}) {
-    return CameraViewErrorState(error ?? this.error);
-  }
+  CameraViewState instantiateWith(CameraViewData d) =>
+      CameraViewErrorState(error, d);
 }
 
 final class CameraViewBufferingState extends CameraViewInitialState {

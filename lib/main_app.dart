@@ -6,6 +6,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:window_manager/window_manager.dart';
@@ -36,79 +38,83 @@ class MainApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           theme: themeState.data,
           home: ScaffoldMessenger(
-            child: Builder(
-              builder: (context) {
-                return MultiBlocListener(
-                  listeners: [
-                    BlocListener<AppInitializationCubit,
-                        AppInitializationStatus>(
-                      listenWhen: (_, current) =>
-                          current.state ==
-                          AppInitializationState.showUpdateDetails,
-                      listener: (context, status) {
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (dialogContext) => AppUpdateDialog(
-                            downloadUrl: status.downloadUrl,
-                            latestVersion: status.latestVersion,
-                            changeLog: status.changeLog,
-                          ),
-                        );
-                      },
-                    ),
-                    BlocListener<AppInitializationCubit,
-                        AppInitializationStatus>(
-                      listenWhen: (_, current) =>
-                          current.state ==
-                          AppInitializationState.updateCheckFailed,
-                      listener: (context, status) {
-                        showSnackBar(context, 'Unable to check for App update');
-                      },
-                    ),
-                    BlocListener<AppSettingsCubit, AppSettingsState>(
-                      listenWhen: (previous, _) =>
-                          isDesktopPlatform() &&
-                          previous is AppSettingsInitialState,
-                      listener: (context, state) {
-                        if (state is AppSettingsUpdateState) {
-                          if (state.startAppMaximized) {
-                            windowManager
-                                .waitUntilReadyToShow()
-                                .then((_) async {
-                              await windowManager.maximize();
-                            });
+            child: Scaffold(
+              body: Builder(
+                builder: (context) {
+                  return MultiBlocListener(
+                    listeners: [
+                      BlocListener<AppInitializationCubit,
+                          AppInitializationStatus>(
+                        listenWhen: (_, current) =>
+                            current.state ==
+                            AppInitializationState.showUpdateDetails,
+                        listener: (context, status) {
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (dialogContext) => AppUpdateDialog(
+                              downloadUrl: status.downloadUrl,
+                              latestVersion: status.latestVersion,
+                              changeLog: status.changeLog,
+                            ),
+                          );
+                        },
+                      ),
+                      BlocListener<AppInitializationCubit,
+                          AppInitializationStatus>(
+                        listenWhen: (_, current) =>
+                            current.state ==
+                            AppInitializationState.updateCheckFailed,
+                        listener: (_, status) {
+                          log('Error during check for App update: ${status.error}');
+                          showSnackBar(
+                              context, 'Unable to check for App update');
+                        },
+                      ),
+                      BlocListener<AppSettingsCubit, AppSettingsState>(
+                        listenWhen: (previous, _) =>
+                            isDesktopPlatform() &&
+                            previous is AppSettingsInitialState,
+                        listener: (context, state) {
+                          if (state is AppSettingsUpdateState) {
+                            if (state.startAppMaximized) {
+                              windowManager
+                                  .waitUntilReadyToShow()
+                                  .then((_) async {
+                                await windowManager.maximize();
+                              });
+                            }
                           }
+                        },
+                      ),
+                    ],
+                    child: BlocBuilder<AppInitializationCubit,
+                        AppInitializationStatus>(
+                      builder: (context, status) {
+                        switch (status.state) {
+                          case AppInitializationState.initialization:
+                            return const SplashScreen();
+                          case AppInitializationState.showUpdateDetails:
+                            return const AppHome();
+                          case AppInitializationState.updateApp:
+                            return UpdateApp(
+                              status.downloadUrl,
+                              status.latestVersion,
+                              status.changeLog,
+                              () => context
+                                  .read<AppInitializationCubit>()
+                                  .emitInitialized(),
+                            );
+                          case AppInitializationState.initialized:
+                            return const AppHome();
+                          case AppInitializationState.updateCheckFailed:
+                            return const AppHome();
                         }
                       },
                     ),
-                  ],
-                  child: BlocBuilder<AppInitializationCubit,
-                      AppInitializationStatus>(
-                    builder: (context, status) {
-                      switch (status.state) {
-                        case AppInitializationState.initialization:
-                          return const SplashScreen();
-                        case AppInitializationState.showUpdateDetails:
-                          return const AppHome();
-                        case AppInitializationState.updateApp:
-                          return UpdateApp(
-                            status.downloadUrl,
-                            status.latestVersion,
-                            status.changeLog,
-                            () => context
-                                .read<AppInitializationCubit>()
-                                .emitInitialized(),
-                          );
-                        case AppInitializationState.initialized:
-                          return const AppHome();
-                        case AppInitializationState.updateCheckFailed:
-                          return const AppHome();
-                      }
-                    },
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
         ),
