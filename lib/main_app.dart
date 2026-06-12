@@ -14,7 +14,7 @@ import 'app_home.dart';
 import 'cubit/settings/app_settings_cubit.dart';
 import 'cubit/settings/theme_cubit.dart';
 import 'cubit/startup/app_initialization_cubit.dart';
-import 'helpers/app_update_detailer.dart';
+import 'widgets/app_update_detailer.dart';
 import 'pages/update_app.dart';
 import 'pages/splash.dart';
 import 'tool.dart';

@@ -11,7 +11,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../constants.dart' as constants;
 import '../cubit/startup/app_update_cubit.dart';
-import '../helpers/app_update_detailer.dart';
+import '../widgets/app_update_detailer.dart';
 import '../tool.dart';
 
 class UpdateApp extends StatefulWidget {

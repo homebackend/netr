@@ -6,11 +6,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import 'dart:developer';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-class AppUpdateDialog extends StatelessWidget {
+import '../mixin/fields_common.dart';
+import 'copyable_text.dart';
+
+class AppUpdateDialog extends StatelessWidget with FieldsCommon {
   final String? downloadUrl;
   final String? latestVersion;
   final String? changeLog;
@@ -25,24 +26,6 @@ class AppUpdateDialog extends StatelessWidget {
     this.onProceed,
     this.onDismiss,
   });
-
-  Future<void> _launchDownloadUrl() async {
-    if (downloadUrl == null || downloadUrl!.isEmpty) {
-      log('Cannot launch download: URL is empty');
-      return;
-    }
-
-    final Uri url = Uri.parse(downloadUrl!);
-    try {
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-      } else {
-        throw 'Could not launch browser context for: $downloadUrl';
-      }
-    } catch (e) {
-      log('URL redirection failure: $e');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,29 +54,36 @@ class AppUpdateDialog extends StatelessWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 12),
+            verticalSpacing(size: 12),
             if (downloadUrl != null) ...[
-              GestureDetector(
-                onTap: _launchDownloadUrl,
-                child: Text(
-                  'Download Package Link 🔗',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.blue,
-                    decoration: TextDecoration.underline,
-                    fontWeight: FontWeight.w500,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    'Package Link:',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                ),
+                  horizontalSpacing(),
+                  Expanded(
+                    child: CopyableText(
+                      text: downloadUrl!,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
             ],
             const Divider(),
-            const SizedBox(height: 8),
+            verticalSpacing(),
             Text(
               'Changelog / Commits:',
               style: theme.textTheme.titleSmall
                   ?.copyWith(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
+            verticalSpacing(),
             Expanded(
               child: Container(
                 padding: const EdgeInsets.all(12),
@@ -103,13 +93,21 @@ class AppUpdateDialog extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: theme.colorScheme.outlineVariant),
                 ),
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Text(
-                    changeLog ?? 'No direct commit information provided.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontFamily: 'monospace',
-                      height: 1.4,
+                child: Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: IntrinsicHeight(
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        child: Text(
+                          changeLog ?? 'No direct commit information provided.',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontFamily: 'monospace',
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
