@@ -15,6 +15,7 @@ import 'cubit/mainwindow/navigation_cubit.dart';
 import 'cubit/mainwindow/run_config_cubit.dart';
 import 'cubit/viewer/archive_view_cubit.dart';
 import 'cubit/viewer/live_view_cubit.dart';
+import 'dialog/about_dialog.dart';
 import 'mixin/fields_common.dart';
 import 'pages/archive_page.dart';
 import 'constants.dart' as constants;
@@ -80,6 +81,20 @@ class AppHome extends StatelessWidget with FieldsCommon {
             ),
             showDarkLightSwitch(context),
             InternetStatusWidget(),
+            ElevatedButton.icon(
+              label: Text('About Netr'),
+              icon: Image.asset(
+                constants.appEyeIcon,
+                height: 20,
+              ),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  barrierDismissible: true,
+                  builder: (BuildContext context) => const AboutAppDialog(),
+                );
+              },
+            ),
           ],
         ),
       ),
