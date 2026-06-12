@@ -28,6 +28,7 @@ final class ViewUpdatedState extends ViewState {
   final Location? selectedLocation;
   final bool archiveView;
   final bool fullScreen;
+  final StreamQuality streamQuality;
 
   final List<Camera> camerasWithoutLocation = [];
 
@@ -47,6 +48,7 @@ final class ViewUpdatedState extends ViewState {
     this.selectedLocation,
     this.archiveView = false,
     this.fullScreen = false,
+    this.streamQuality = StreamQuality.high,
   }) {
     for (Location location in locations) {
       _mapLocations[location.name] = location;
@@ -105,6 +107,7 @@ final class ViewUpdatedState extends ViewState {
     bool? archiveView,
     bool? fullScreen,
     bool listView = false,
+    StreamQuality? streamQuality,
   }) {
     return ViewUpdatedState(
       locations,
@@ -116,6 +119,7 @@ final class ViewUpdatedState extends ViewState {
       selectedLocation: listView ? null : location ?? selectedLocation,
       archiveView: archiveView ?? this.archiveView,
       fullScreen: fullScreen ?? this.fullScreen,
+      streamQuality: streamQuality ?? this.streamQuality,
     );
   }
 }

@@ -33,6 +33,8 @@ abstract class ViewCubit extends Cubit<ViewState> {
     bool? archiveView,
   });
 
+  void updateStreamQuality(StreamQuality streamQuality);
+
   /* This function is called by to emit the next camera.
    * It emits the state corresponding to the next camera. */
   void next();

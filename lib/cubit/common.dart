@@ -17,7 +17,9 @@ class CubitCommon {
   static bool isFullScreen(ViewState s) =>
       s is ViewUpdatedState && s.fullScreen;
 
-  static bool viewBuildWhen(ViewState previous, current) {
+  static bool viewBuildWhen(ViewState previous, current,
+      {bool Function(ViewUpdatedState previous, ViewUpdatedState current)?
+          previousCurrentCheck}) {
     if (current is ViewUpdatedState) {
       if (current.isFreshState) {
         return true;
@@ -26,7 +28,9 @@ class CubitCommon {
       if (previous is ViewUpdatedState) {
         if (previous.selectedLocation?.name == current.selectedLocation?.name &&
             previous.selectedCamera?.name == current.selectedCamera?.name &&
-            previous.fullScreen == current.fullScreen) {
+            previous.fullScreen == current.fullScreen &&
+            (previousCurrentCheck == null ||
+                previousCurrentCheck(previous, current))) {
           return false;
         }
       }

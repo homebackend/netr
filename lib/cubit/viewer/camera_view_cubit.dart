@@ -8,6 +8,7 @@
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../models/camera.dart';
 import 'camera_view_state.dart';
 import 'view_state.dart';
 
@@ -17,6 +18,8 @@ abstract class CameraViewCubit extends Cubit<CameraViewState> {
   String get cubitName;
 
   String getUrlPath();
+
+  Future<void> updateStreamQuality(StreamQuality streamQuality);
 
   /* This function is used to emit the url corresponding to the
    * values passed as argument. This function gets triggered in
