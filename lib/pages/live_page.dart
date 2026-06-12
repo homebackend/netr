@@ -14,8 +14,10 @@ import '../cubit/viewer/camera_view_state.dart';
 import '../cubit/viewer/live_camera_view_cubit.dart';
 import '../cubit/viewer/live_view_cubit.dart';
 import '../cubit/viewer/view_state.dart';
+import '../mixin/fields_common.dart';
 import '../models/camera.dart';
 import '../models/location.dart';
+import '../widgets/stream_quality_selector.dart';
 import 'camera_view_page.dart';
 import 'player/live_player.dart';
 
@@ -26,7 +28,10 @@ class LiveViewPage extends CameraViewPage {
   State<LiveViewPage> createState() => _LiveViewPageState();
 }
 
-class _LiveViewPageState extends CameraViewPageState<LiveViewPage> {
+class _LiveViewPageState extends CameraViewPageState<LiveViewPage>
+    with FieldsCommon {
+  StreamQuality streamQuality = StreamQuality.high;
+
   @override
   BlocBuilder blocBuilder({
     required Widget Function(BuildContext, ViewState) builder,
@@ -78,11 +83,6 @@ class _LiveViewPageState extends CameraViewPageState<LiveViewPage> {
   }
 
   @override
-  List<Widget>? getAppBarActions() {
-    return null;
-  }
-
-  @override
   LivePlayer getPlayer(
     double maxWidth,
     double maxHeight,
@@ -96,6 +96,7 @@ class _LiveViewPageState extends CameraViewPageState<LiveViewPage> {
         state.selectedCamera!,
         state.selectedLocation!,
         state.cameraCredential(state.selectedCamera!)!,
+        state.streamQuality,
         state.cameras
             .map(
               (camera) => (
@@ -108,4 +109,20 @@ class _LiveViewPageState extends CameraViewPageState<LiveViewPage> {
         playerTitle,
         dialogText,
       );
+
+  @override
+  List<Widget> getAppBarActions() {
+    return [
+      Tooltip(
+        message: 'Stream Quality',
+        child: StreamQualitySelector(
+          value: streamQuality == StreamQuality.high,
+          onToggle: (value) {
+            streamQuality = value ? StreamQuality.high : StreamQuality.low;
+            context.read<LiveViewCubit>().updateStreamQuality(streamQuality);
+          },
+        ),
+      )
+    ];
+  }
 }

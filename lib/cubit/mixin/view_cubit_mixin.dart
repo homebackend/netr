@@ -36,6 +36,7 @@ mixin ViewCubitMixin on Cubit<ViewState> implements ViewCubit {
     bool isFreshState, {
     bool? fullScreen,
     bool? archiveView,
+    StreamQuality? streamQuality,
   }) {
     if (state is ViewUpdatedState) {
       if (fullScreen ?? false) {
@@ -50,6 +51,17 @@ mixin ViewCubitMixin on Cubit<ViewState> implements ViewCubit {
         isFreshState: isFreshState,
         fullScreen: fullScreen ?? state.fullScreen,
         archiveView: archiveView ?? state.archiveView,
+        streamQuality: streamQuality ?? state.streamQuality,
+      ));
+    }
+  }
+
+  @override
+  void updateStreamQuality(StreamQuality streamQuality) {
+    if (state is ViewUpdatedState) {
+      emit((state as ViewUpdatedState).copyWith(
+        streamQuality: streamQuality,
+        isFreshState: false,
       ));
     }
   }

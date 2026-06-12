@@ -15,6 +15,7 @@ import 'cubit/mainwindow/navigation_cubit.dart';
 import 'cubit/mainwindow/run_config_cubit.dart';
 import 'cubit/viewer/archive_view_cubit.dart';
 import 'cubit/viewer/live_view_cubit.dart';
+import 'mixin/fields_common.dart';
 import 'pages/archive_page.dart';
 import 'constants.dart' as constants;
 import 'cubit/settings/theme_cubit.dart';
@@ -23,7 +24,7 @@ import 'pages/location_page.dart';
 import 'pages/settings/settings_page.dart';
 import 'widgets/internet_status.dart';
 
-class AppHome extends StatelessWidget {
+class AppHome extends StatelessWidget with FieldsCommon {
   const AppHome({super.key});
 
   @override
@@ -123,12 +124,21 @@ class AppHome extends StatelessWidget {
   Widget showDarkLightSwitch(BuildContext context) {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, state) {
-        return Switch(
-          activeThumbColor: Colors.white,
-          value: state.data.brightness == Brightness.dark,
-          onChanged: (value) {
-            context.read<ThemeCubit>().toggleTheme(value);
-          },
+        return Tooltip(
+          message: 'Dark/Bright Theme',
+          child: Row(
+            children: [
+              Text('Dark Theme'),
+              horizontalSpacing(),
+              Switch(
+                activeThumbColor: Colors.white,
+                value: state.data.brightness == Brightness.dark,
+                onChanged: (value) {
+                  context.read<ThemeCubit>().toggleTheme(value);
+                },
+              ),
+            ],
+          ),
         );
       },
     );

@@ -19,12 +19,15 @@ import '../../models/location.dart';
 import 'player_base.dart';
 
 class LivePlayer extends PlayerBase {
+  final StreamQuality streamQuality;
+
   const LivePlayer(
       super.maxWidth,
       super.maxHeight,
       super.camera,
       super.location,
       super.credential,
+      this.streamQuality,
       super.cameras,
       super.playerTitle,
       super.dialogText,
@@ -78,7 +81,7 @@ class _LivePlayerState extends PlayerBaseState<LivePlayer> {
             widget.location,
             widget.camera,
             widget.credential,
-            quality: StreamQuality.high,
+            quality: widget.streamQuality,
             width: widget.maxWidth,
             height: widget.maxHeight,
           ),

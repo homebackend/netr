@@ -149,6 +149,14 @@ mixin CameraViewCubitMixin on Cubit<CameraViewState>
   Credential getCredential(ViewUpdatedState state);
 
   @override
+  Future<void> updateStreamQuality(StreamQuality streamQuality) async {
+    if (state is CameraViewInitialState) {
+      CameraViewInitialState s = state as CameraViewInitialState;
+      emit(s.copyWith(quality: streamQuality));
+    }
+  }
+
+  @override
   Future<void> updateCamera(ViewUpdatedState vuState,
       {DateTime? startDateTime}) async {
     if (state is CameraViewInitialState) {
@@ -159,6 +167,7 @@ mixin CameraViewCubitMixin on Cubit<CameraViewState>
         location: vuState.selectedLocation!,
         credential: getCredential(vuState),
         cameraInddex: vuState.selectedCamera!.archiveIndex,
+        quality: vuState.streamQuality,
         startDateTime: startDateTime ?? s.state.startDateTime,
       ));
     }

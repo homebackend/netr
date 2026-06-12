@@ -68,7 +68,7 @@ abstract class CameraViewPageState<T extends CameraViewPage> extends State<T> {
   void cameraTapHandler(BuildContext bc, Location l, Camera c, bool fs);
 
   @protected
-  List<Widget>? getAppBarActions();
+  List<Widget> getAppBarActions();
 
   @protected
   CameraViewCubit createCubit(
@@ -141,8 +141,8 @@ abstract class CameraViewPageState<T extends CameraViewPage> extends State<T> {
     return LayoutBuilder(
       builder: (context, constraints) {
         log('Viewer: ${constraints.maxWidth}x${constraints.maxHeight}');
-        return blocBuilder(builder: (context, vState) {
-          return CubitCommon.isFullScreen(vState)
+        return blocBuilder(
+          builder: (context, vState) => CubitCommon.isFullScreen(vState)
               ? SizedBox.expand(child: _videoplayer(state))
               : Column(
                   children: [
@@ -152,8 +152,8 @@ abstract class CameraViewPageState<T extends CameraViewPage> extends State<T> {
                       child: _videoplayer(state),
                     )
                   ],
-                );
-        });
+                ),
+        );
       },
     );
   }

@@ -122,7 +122,7 @@ class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewPage>
   }
 
   @override
-  List<Widget>? getAppBarActions() {
+  List<Widget> getAppBarActions() {
     return [
       createIconButton(
         Icons.edit_calendar,
