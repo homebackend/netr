@@ -501,9 +501,11 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
                   showSnackBar(context, 'Stopped playing');
                 }
               } else if (state is CameraViewUpdatedState) {
-                log('Opening url: ${state.url}');
-                _currentUrl = state.url;
-                open(state.url);
+                if (_currentUrl != state.url) {
+                  log('Opening url: ${state.url}');
+                  _currentUrl = state.url;
+                  open(state.url);
+                }
               } else if (state is CameraViewVideoState) {
                 if (state.state.width > 0 && state.state.height > 0) {
                   context.read<VideoPlayerCubit>().updateWidthHeight(
