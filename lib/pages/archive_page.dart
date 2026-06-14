@@ -11,11 +11,8 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:media_kit/media_kit.dart';
 
-import '../cubit/viewer/archive_camera_view_cubit.dart';
 import '../cubit/viewer/archive_view_cubit.dart';
-import '../cubit/viewer/camera_view_state.dart';
 import '../cubit/viewer/view_state.dart';
 import '../helpers/date_time_picker.dart';
 import '../helpers/string_helper.dart';
@@ -65,27 +62,6 @@ class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewPage>
 
   bool _filterCamera(Camera camera) =>
       camera.archiveName.isNotEmpty && camera.archiveIndex >= 0;
-
-  /* This function creates a cubit that will be used to switch
-   * between the availble CCTVs. Note it sends the actual NVR 
-   * values corresponding to the CCTV as NVR stores the archives.
-   */
-  @override
-  ArchiveCameraViewCubit createCubit(PlayerStream playerStream,
-      ViewUpdatedState state, double maxWidth, double maxHeight) {
-    return ArchiveCameraViewCubit(
-      playerStream,
-      CameraViewData(
-        state.selectedLocation!,
-        state.cameraNvr(state.selectedCamera!)!,
-        state.cameraNvrCredential(state.selectedCamera!)!,
-        quality: StreamQuality.high,
-        cameraIndex: state.selectedCamera!.archiveIndex,
-        width: maxWidth,
-        height: maxHeight,
-      ),
-    );
-  }
 
   @override
   void updateCubit(
@@ -153,6 +129,9 @@ class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewPage>
       log(_archiveDateTime.toString());
     }
   }
+
+  @override
+  bool isPlayerReady() => _archiveDateTime != null;
 
   @override
   ArchivePlayer getPlayer(

@@ -8,10 +8,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:media_kit/media_kit.dart';
 
-import '../cubit/viewer/camera_view_state.dart';
-import '../cubit/viewer/live_camera_view_cubit.dart';
 import '../cubit/viewer/live_view_cubit.dart';
 import '../cubit/viewer/view_state.dart';
 import '../mixin/fields_common.dart';
@@ -40,25 +37,6 @@ class _LiveViewPageState extends CameraViewPageState<LiveViewPage>
       BlocBuilder<LiveViewCubit, ViewState>(
         builder: builder,
         buildWhen: buildWhen,
-      );
-
-  /* This function creates a cubit that will be used to switch
-   * between the availble CCTVs. Note it sends the actual Camera
-   * values corresponding to the CCTV has the live view.
-   */
-  @override
-  LiveCameraViewCubit createCubit(PlayerStream playerStream,
-          ViewUpdatedState state, double maxWidth, double maxHeight) =>
-      LiveCameraViewCubit(
-        playerStream,
-        CameraViewData(
-          state.selectedLocation!,
-          state.selectedCamera!,
-          state.cameraCredential(state.selectedCamera!)!,
-          quality: StreamQuality.high,
-          width: maxWidth,
-          height: maxHeight,
-        ),
       );
 
   @override

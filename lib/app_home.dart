@@ -46,15 +46,15 @@ class AppHome extends StatelessWidget with FieldsCommon {
           theme: themeState.data,
           home: BlocBuilder<NavigationCubit, NavigationState>(
             builder: (context, navState) => CubitCommon.cameraViewBlocBuilder(
-              Scaffold(
+              () => Scaffold(
                 backgroundColor: Colors.black,
                 body: LiveViewPage(),
               ),
-              Scaffold(
+              () => Scaffold(
                 backgroundColor: Colors.black,
                 body: ArchiveViewPage(),
               ),
-              _buildNavigationPage(context, navState),
+              () => _buildNavigationPage(context, navState),
             ),
           ),
         ),
