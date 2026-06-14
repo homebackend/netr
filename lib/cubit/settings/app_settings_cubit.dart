@@ -16,15 +16,19 @@ part 'app_settings_state.dart';
 class AppSettingsCubit extends Cubit<AppSettingsState> with Preferences {
   static final String _keyStartAppMaximized = 'startAppMaximized';
   static final String _keyPlayVideoFullscreen = 'playVideoFullscreen';
+  static final String _keyEnableAutoScreenCapture = 'enableAutoScreenCapture';
 
   AppSettingsCubit() : super(AppSettingsInitialState());
 
   Future<void> load() async {
     bool startAppMaximized = await loadBool(_keyStartAppMaximized) ?? false;
     bool playVideoFullScreen = await loadBool(_keyPlayVideoFullscreen) ?? false;
+    bool enableAutoScreenCapture =
+        await loadBool(_keyEnableAutoScreenCapture) ?? true;
     emit(AppSettingsUpdateState(
       startAppMaximized: startAppMaximized,
       playVideoFullscreen: playVideoFullScreen,
+      enableAutoScreenCapture: enableAutoScreenCapture,
     ));
   }
 
@@ -41,6 +45,14 @@ class AppSettingsCubit extends Cubit<AppSettingsState> with Preferences {
       await saveBool(_keyPlayVideoFullscreen, value);
       emit((state as AppSettingsUpdateState)
           .copyWith(playVideoFullscreen: value));
+    }
+  }
+
+  void setEnableAutoScreenCapture(bool value) async {
+    if (state is AppSettingsUpdateState) {
+      await saveBool(_keyEnableAutoScreenCapture, value);
+      emit((state as AppSettingsUpdateState)
+          .copyWith(enableAutoScreenCapture: value));
     }
   }
 }

@@ -17,6 +17,7 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+import '../../cubit/settings/app_settings_cubit.dart';
 import '../../cubit/viewer/camera_view_state.dart';
 import '../../cubit/viewer/thumbnail_cubit.dart';
 import '../../cubit/viewer/video_player_cubit.dart';
@@ -87,11 +88,13 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
       isInitialized = true;
     });
 
-    ThumbnailManager.generateCctvThumbnail(
-      _player,
-      widget.location.name,
-      widget.camera.name,
-    );
+    if (context.read<AppSettingsCubit>().state.enableAutoScreenCapture) {
+      ThumbnailManager.generateCctvThumbnail(
+        _player,
+        widget.location.name,
+        widget.camera.name,
+      );
+    }
   }
 
   @override
@@ -140,6 +143,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
           ),
         ),
         BlocProvider(create: (_) => ThumbnailCubit()),
+        //createViewBlocProvider(context, _player.stream),
       ],
       child: Builder(builder: (nestedContext) {
         return MultiBlocListener(
@@ -148,7 +152,11 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
               listener: (context, state) {
                 if (state is ThumbnailGeneratorState &&
                     state.location != null &&
-                    state.camera != null) {
+                    state.camera != null &&
+                    context
+                        .read<AppSettingsCubit>()
+                        .state
+                        .enableAutoScreenCapture) {
                   ThumbnailManager.generateCctvThumbnail(
                     _player,
                     state.location!.name,
