@@ -6,15 +6,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:media_kit/media_kit.dart';
 
 import '../cubit/common.dart';
 import '../cubit/settings/app_settings_cubit.dart';
-import '../cubit/viewer/camera_view_cubit.dart';
 import '../cubit/viewer/view_state.dart';
 import '../models/camera.dart';
 import '../models/location.dart';
@@ -71,14 +67,6 @@ abstract class CameraViewPageState<T extends CameraViewPage> extends State<T> {
   List<Widget> getAppBarActions();
 
   @protected
-  CameraViewCubit createCubit(
-    PlayerStream playerStream,
-    ViewUpdatedState state,
-    double maxWidth,
-    double maxHeight,
-  );
-
-  @protected
   void updateCubit(
     ViewUpdatedState state,
     Future<void> Function(ViewUpdatedState vuState, {DateTime? startDateTime})
@@ -93,6 +81,9 @@ abstract class CameraViewPageState<T extends CameraViewPage> extends State<T> {
     String playerTitle,
     String dialogText,
   );
+
+  @protected
+  bool isPlayerReady() => true;
 
   Widget _buildCameraView(ViewState state) {
     return Scaffold(
@@ -127,34 +118,33 @@ abstract class CameraViewPageState<T extends CameraViewPage> extends State<T> {
     );
   }
 
-  Widget _videoplayer(ViewUpdatedState state) => LayoutBuilder(
-        builder: (context, playerConstraints) => getPlayer(
-          playerConstraints.maxWidth,
-          playerConstraints.maxHeight,
-          state,
-          'Live Camera Viewer',
-          'Select a Camera',
-        ),
-      );
+  Widget _videoplayer(ViewUpdatedState state) => isPlayerReady()
+      ? LayoutBuilder(
+          builder: (context, playerConstraints) => getPlayer(
+            playerConstraints.maxWidth,
+            playerConstraints.maxHeight,
+            state,
+            'Live Camera Viewer',
+            'Select a Camera',
+          ),
+        )
+      : CircularProgressIndicator(
+          semanticsValue: 'Loading',
+        );
 
   Widget _videoViewer(ViewUpdatedState state) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        log('Viewer: ${constraints.maxWidth}x${constraints.maxHeight}');
-        return blocBuilder(
-          builder: (context, vState) => CubitCommon.isFullScreen(vState)
-              ? SizedBox.expand(child: _videoplayer(state))
-              : Column(
-                  children: [
-                    _getCameraHeader(state.selectedCamera!.name),
-                    SizedBox(height: 8),
-                    Expanded(
-                      child: _videoplayer(state),
-                    )
-                  ],
-                ),
-        );
-      },
+    return blocBuilder(
+      builder: (context, vState) => CubitCommon.isFullScreen(vState)
+          ? SizedBox.expand(child: _videoplayer(state))
+          : Column(
+              children: [
+                _getCameraHeader(state.selectedCamera!.name),
+                SizedBox(height: 8),
+                Expanded(
+                  child: _videoplayer(state),
+                )
+              ],
+            ),
     );
   }
 

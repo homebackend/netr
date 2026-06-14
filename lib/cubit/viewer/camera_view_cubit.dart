@@ -32,5 +32,5 @@ abstract class CameraViewCubit extends Cubit<CameraViewState> {
 
   /* This function is used to emit the url corresponding to the
    * state stored in the cubit. */
-  Future<void> getStreamUrl();
+  Future<void> getStreamUrl({String? cameraName, String? locationName});
 }

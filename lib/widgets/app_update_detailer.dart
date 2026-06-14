@@ -57,7 +57,7 @@ class AppUpdateDialog extends StatelessWidget with FieldsCommon {
             verticalSpacing(size: 12),
             if (downloadUrl != null) ...[
               Row(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisSize: MainAxisSize.max,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
@@ -93,19 +93,17 @@ class AppUpdateDialog extends StatelessWidget with FieldsCommon {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: theme.colorScheme.outlineVariant),
                 ),
-                child: Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: IntrinsicHeight(
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        child: Text(
-                          changeLog ?? 'No direct commit information provided.',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontFamily: 'monospace',
-                            height: 1.4,
-                          ),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: IntrinsicHeight(
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      child: Text(
+                        changeLog ?? 'No direct commit information provided.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontFamily: 'monospace',
+                          height: 1.4,
                         ),
                       ),
                     ),
