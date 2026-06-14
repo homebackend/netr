@@ -11,10 +11,10 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:media_kit/media_kit.dart';
 
 import '../../models/camera.dart';
 import '../../models/credential.dart';
+import '../../services/vlc_wrapper/video_interface.dart';
 import '../viewer/camera_view_cubit.dart';
 import '../viewer/camera_view_state.dart';
 import '../viewer/view_state.dart';

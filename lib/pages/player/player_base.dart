@@ -13,8 +13,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_video/media_kit_video.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../cubit/viewer/camera_view_state.dart';
@@ -26,6 +24,7 @@ import '../../helpers/thumbnail_manager.dart';
 import '../../models/camera.dart';
 import '../../models/credential.dart';
 import '../../models/location.dart';
+import '../../services/vlc_wrapper/video_interface.dart';
 import '../../tool.dart';
 
 abstract class PlayerBase extends StatefulWidget {
@@ -64,8 +63,11 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
   bool _controlsVisible = true;
   bool _isStopped = false;
   Timer? _hideTimer;
+  bool _urlLoaded = false;
   String? _currentUrl;
   String? _selectedCamera;
+  Timer? _countdownTimer;
+  int _countDownValue = 10;
 
   @override
   void initState() {
@@ -97,6 +99,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
   @override
   void dispose() {
     _hideTimer?.cancel();
+    _countdownTimer?.cancel();
     _keyboardFocusNode.dispose();
     _controller.dispose();
     _player.dispose();
@@ -115,6 +118,29 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
 
   void _stopHideTimer() {
     _hideTimer?.cancel();
+  }
+
+  void _startErrorTimer(BuildContext context) {
+    _stopErrorTimer();
+    setState(() {
+      _countDownValue = 10;
+    });
+
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_countDownValue <= 1) {
+        _stopErrorTimer();
+        next(context);
+      } else {
+        setState(() {
+          _countDownValue--;
+        });
+      }
+    });
+  }
+
+  void _stopErrorTimer() {
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
   }
 
   void _toggleControls() {
@@ -140,6 +166,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
           ),
         ),
         BlocProvider(create: (_) => ThumbnailCubit()),
+        createViewBlocProvider(context, _player.stream),
       ],
       child: Builder(builder: (nestedContext) {
         return MultiBlocListener(
@@ -192,37 +219,41 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
                 ? KeyEventResult.handled
                 : KeyEventResult.ignored,
             child: BlocBuilder<ViewerKeyboardCubit, ViewerKeyboardState>(
-              builder: (context, state) => Stack(
-                alignment: Alignment.center,
-                children: [
-                  Positioned.fill(
-                    child: InteractiveViewer(
-                      panEnabled: true,
-                      scaleEnabled: true,
-                      minScale: ViewerKeyboardCubit.minScale,
-                      maxScale: ViewerKeyboardCubit.maxScale,
-                      transformationController: _controller,
-                      onInteractionEnd: (ScaleEndDetails details) {
-                        final cubit = context.read<ViewerKeyboardCubit>();
-                        cubit.updateControllerValue(_controller.value);
-                        cubit.handleInteractionEnd(details);
-                      },
-                      child: isInitialized
-                          ? GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: _onTap,
-                              onSecondaryTap: _onTap,
-                              child: playerWidget(context),
-                            )
-                          : const Center(
-                              child: CircularProgressIndicator(
-                                semanticsLabel: 'Loading',
+              builder: (context, state) => createCameraErrorViewBlocBuilder(
+                (context, errState) => Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Positioned.fill(
+                      child: InteractiveViewer(
+                        panEnabled: true,
+                        scaleEnabled: true,
+                        minScale: ViewerKeyboardCubit.minScale,
+                        maxScale: ViewerKeyboardCubit.maxScale,
+                        transformationController: _controller,
+                        onInteractionEnd: (ScaleEndDetails details) {
+                          final cubit = context.read<ViewerKeyboardCubit>();
+                          cubit.updateControllerValue(_controller.value);
+                          cubit.handleInteractionEnd(details);
+                        },
+                        child: isInitialized
+                            ? GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: _onTap,
+                                onSecondaryTap: _onTap,
+                                child: playerWidget(context),
+                              )
+                            : const Center(
+                                child: CircularProgressIndicator(
+                                  semanticsLabel: 'Loading',
+                                ),
                               ),
-                            ),
+                      ),
                     ),
-                  ),
-                  if (isInitialized) _buildInlineControlsOverlay(context),
-                ],
+                    if (isInitialized) _buildInlineControlsOverlay(context),
+                    if (errState is CameraViewErrorState)
+                      _showPlayerError(context, errState),
+                  ],
+                ),
               ),
             ),
           ),
@@ -480,12 +511,18 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
         BlocProvider(
           create: (context) => VideoPlayerCubit(),
         ),
-        createViewBlocProvider(context, _player.stream),
+        //createViewBlocProvider(context, _player.stream),
       ],
       child: MultiBlocListener(
         listeners: [
           createCameraViewBlocListener(
             (context, state) {
+              if (state is! CameraViewErrorState) {
+                // If any state comes stop the error countdown timer.
+                // Not this can happen if any camera gives a temporary
+                // error which resolves itself in some time.
+                _stopErrorTimer();
+              }
               if (state is CameraViewBufferingState) {
                 if (state.bufferingDone || state.bufferingState == 100.0) {
                   log('Buffering done');
@@ -521,7 +558,8 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
                 showSnackBar(context, 'Play error: ${state.error}');
                 if (!['Failed to initialize a decoder for codec']
                     .any((e) => state.error.contains(e))) {
-                  close(context);
+                  _startErrorTimer(context);
+                  //close(context);
                 }
               } else if (state is CameraViewDoneState) {
                 close(context);
@@ -560,7 +598,10 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
                 ),
               );
             } else {
-              getStreamUrl(context);
+              if (isInitialized && !_urlLoaded) {
+                _urlLoaded = true;
+                getStreamUrl(context);
+              }
               return SizedBox(
                 width: 48,
                 height: 48,
@@ -572,6 +613,61 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
               );
             }
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _showPlayerError(BuildContext context, CameraViewErrorState errState) {
+    return Container(
+      color: Colors.black.withValues(alpha: 0.85),
+      alignment: Alignment.center,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.redAccent, size: 56),
+            const SizedBox(height: 16),
+            Text(
+              '$_selectedCamera has encountered error(s)',
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            Text(
+              errState.error,
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Switching to next camera in ${_countDownValue}s...',
+              style: const TextStyle(color: Colors.amber, fontSize: 14),
+            ),
+            const SizedBox(height: 64),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back,
+                      color: Colors.white, size: 36),
+                  onPressed: () => back(context),
+                ),
+                const SizedBox(width: 32),
+                IconButton(
+                  icon: const Icon(Icons.skip_previous,
+                      color: Colors.white, size: 40),
+                  onPressed: () => previous(context),
+                ),
+                const SizedBox(width: 32),
+                IconButton(
+                  icon: const Icon(Icons.skip_next,
+                      color: Colors.white, size: 40),
+                  onPressed: () => next(context),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -612,5 +708,10 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
   @protected
   BlocListener createCameraViewBlocListener(
     void Function(BuildContext context, CameraViewState state) listener,
+  );
+
+  @protected
+  BlocBuilder createCameraErrorViewBlocBuilder(
+    Widget Function(BuildContext context, CameraViewState state) builder,
   );
 }

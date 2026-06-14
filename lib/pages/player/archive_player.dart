@@ -8,7 +8,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:media_kit/media_kit.dart';
 
 import '../../cubit/viewer/archive_camera_view_cubit.dart';
 import '../../cubit/viewer/archive_view_cubit.dart';
@@ -16,6 +15,7 @@ import '../../cubit/viewer/camera_view_state.dart';
 import '../../cubit/viewer/view_state.dart';
 import '../../models/camera.dart';
 import '../../models/location.dart';
+import '../../services/vlc_wrapper/video_interface.dart';
 import 'player_base.dart';
 
 class ArchivePlayer extends PlayerBase {
@@ -102,4 +102,13 @@ class _ArchivePlayerState extends PlayerBaseState<ArchivePlayer> {
           ),
         ),
       );
+
+  @override
+  BlocBuilder<ArchiveCameraViewCubit, CameraViewState>
+      createCameraErrorViewBlocBuilder(
+              Widget Function(BuildContext context, CameraViewState state)
+                  builder) =>
+          BlocBuilder<ArchiveCameraViewCubit, CameraViewState>(
+            builder: builder,
+          );
 }

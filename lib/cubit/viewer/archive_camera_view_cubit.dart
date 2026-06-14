@@ -10,10 +10,10 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:media_kit/media_kit.dart';
 
 import '../../models/camera.dart';
 import '../../models/credential.dart';
+import '../../services/vlc_wrapper/video_interface.dart';
 import '../mixin/camera_view_cubit_mixin.dart';
 import 'camera_view_state.dart';
 import 'view_state.dart';

@@ -9,9 +9,9 @@
 import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:media_kit/media_kit.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../services/vlc_wrapper/video_interface.dart';
 import 'string_helper.dart';
 
 class ThumbnailManager {
