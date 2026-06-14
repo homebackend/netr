@@ -63,6 +63,20 @@ class _GeneralSettingsState extends State<GeneralSettings> {
                   ],
                 ),
                 Row(
+                  children: [
+                    Switch(
+                      value: appState.enableAutoScreenCapture,
+                      onChanged: (value) {
+                        context
+                            .read<AppSettingsCubit>()
+                            .setEnableAutoScreenCapture(value);
+                      },
+                    ),
+                    widget.horizontalSpacing(),
+                    const Text('Enable Auto Screen Capture'),
+                  ],
+                ),
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     state.exportInProgress
