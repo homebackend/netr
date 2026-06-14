@@ -144,6 +144,7 @@ class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewPage>
       ArchivePlayer(
         maxWidth,
         maxHeight,
+        state.selectedCamera!.name,
         state.cameraNvr(state.selectedCamera!)!,
         state.selectedLocation!,
         state.cameraNvrCredential(state.selectedCamera!)!,
@@ -152,6 +153,7 @@ class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewPage>
         state.cameras
             .map(
               (camera) => (
+                camera,
                 state.cameraNvr(camera)!,
                 state.cameraLocation(camera)!,
                 state.cameraNvrCredential(camera)!,

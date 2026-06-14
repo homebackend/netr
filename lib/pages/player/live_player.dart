@@ -24,6 +24,7 @@ class LivePlayer extends PlayerBase {
   const LivePlayer(
       super.maxWidth,
       super.maxHeight,
+      super.cameraName,
       super.camera,
       super.location,
       super.credential,

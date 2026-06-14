@@ -31,16 +31,18 @@ import '../../tool.dart';
 abstract class PlayerBase extends StatefulWidget {
   final double maxWidth;
   final double maxHeight;
+  final String cameraName;
   final Camera camera;
   final Location location;
   final Credential credential;
   final Camera? archive;
-  final List<(Camera, Location, Credential)> cameras;
+  final List<(Camera, Camera, Location, Credential)> cameras;
   final String playerTitle;
   final String dialogText;
   const PlayerBase(
     this.maxWidth,
     this.maxHeight,
+    this.cameraName,
     this.camera,
     this.location,
     this.credential,
@@ -77,7 +79,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
     );
     _player = Player(configuration: playerConfiguration);
     _videoController = VideoController(_player);
-    _selectedCamera = "${widget.location.name}/${widget.camera.name}";
+    _selectedCamera = "${widget.location.name}/${widget.cameraName}";
 
     _startHideTimer();
     WidgetsBinding.instance.addObserver(this);
@@ -357,15 +359,15 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
       onCanceled: () => _startHideTimer(),
       onSelected: (String index) async {
         _startHideTimer();
-        var (camera, location, _) = widget.cameras[int.parse(index)];
+        var (original, camera, location, _) = widget.cameras[int.parse(index)];
         setState(() {
-          _selectedCamera = "${location.name}/${camera.name}";
+          _selectedCamera = "${location.name}/${original.name}";
         });
-        updateSelectedCameraAndLocation(context, camera, location, false);
+        updateSelectedCameraAndLocation(context, original, location, false);
       },
       itemBuilder: (BuildContext context) {
         return widget.cameras.indexed.map((pair) {
-          var (index, (camera, location, credential)) = pair;
+          var (index, (original, camera, location, credential)) = pair;
           return PopupMenuItem<String>(
             value: index.toString(),
             child: ListTile(
@@ -373,7 +375,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.videocam, color: Colors.blue),
               title: Text(
-                "${location.name}/${camera.name}",
+                "${location.name}/${original.name}",
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
               ),
@@ -502,7 +504,8 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
                 }
               } else if (state is CameraViewUpdatedState) {
                 if (_currentUrl != state.url) {
-                  log('Opening url: ${state.url}');
+                  log('Opening url: ${state.url} for ${state.locationName}/${state.cameraName}');
+                  _selectedCamera = '${state.locationName}/${state.cameraName}';
                   _currentUrl = state.url;
                   open(state.url);
                 }

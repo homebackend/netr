@@ -71,6 +71,7 @@ class _LiveViewPageState extends CameraViewPageState<LiveViewPage>
       LivePlayer(
         maxWidth,
         maxHeight,
+        state.selectedCamera!.name,
         state.selectedCamera!,
         state.selectedLocation!,
         state.cameraCredential(state.selectedCamera!)!,
@@ -78,6 +79,7 @@ class _LiveViewPageState extends CameraViewPageState<LiveViewPage>
         state.cameras
             .map(
               (camera) => (
+                camera,
                 camera,
                 state.cameraLocation(camera)!,
                 state.cameraCredential(camera)!,

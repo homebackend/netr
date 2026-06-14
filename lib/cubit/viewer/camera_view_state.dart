@@ -18,6 +18,8 @@ abstract class CameraViewState {
 }
 
 class CameraViewData {
+  final String cameraName;
+  final String locationName;
   final Camera camera;
   final Location location;
   final Credential credential;
@@ -38,9 +40,14 @@ class CameraViewData {
     this.height = 0,
     this.archive,
     this.startDateTime,
-  });
+    String? cameraName,
+    String? locationName,
+  })  : cameraName = cameraName ?? camera.name,
+        locationName = locationName ?? location.name;
 
   CameraViewData copyWith({
+    String? cameraName,
+    String? locationName,
     Location? location,
     Camera? camera,
     Credential? credential,
@@ -51,6 +58,8 @@ class CameraViewData {
     DateTime? startDateTime,
   }) {
     return CameraViewData(
+      cameraName: cameraName ?? (camera ?? this.camera).name,
+      locationName: locationName ?? (location ?? this.location).name,
       location ?? this.location,
       camera ?? this.camera,
       credential ?? this.credential,
@@ -70,6 +79,8 @@ final class CameraViewInitialState extends CameraViewState {
 
   @override
   CameraViewState copyWith({
+    String? cameraName,
+    String? locationName,
     Location? location,
     Camera? camera,
     Credential? credential,
@@ -80,6 +91,8 @@ final class CameraViewInitialState extends CameraViewState {
     DateTime? startDateTime,
   }) {
     CameraViewData d = state.copyWith(
+      cameraName: cameraName,
+      locationName: locationName,
       location: location,
       camera: camera,
       credential: credential,
@@ -98,15 +111,20 @@ final class CameraViewInitialState extends CameraViewState {
 
 final class CameraViewUpdatedState extends CameraViewInitialState {
   final String url;
+  final String cameraName;
+  final String locationName;
 
-  CameraViewUpdatedState(this.url, super.state);
+  CameraViewUpdatedState(
+      this.url, this.cameraName, this.locationName, super.state);
 
-  CameraViewUpdatedState copyWithLocal({String? url}) =>
-      CameraViewUpdatedState(url ?? this.url, state);
+  CameraViewUpdatedState copyWithLocal(
+          {String? url, String? locationName, String? cameraName}) =>
+      CameraViewUpdatedState(url ?? this.url, cameraName ?? this.cameraName,
+          locationName ?? this.locationName, state);
 
   @override
   CameraViewState instantiateWith(CameraViewData d) =>
-      CameraViewUpdatedState(url, d);
+      CameraViewUpdatedState(url, cameraName, locationName, d);
 }
 
 final class CameraViewErrorState extends CameraViewInitialState {

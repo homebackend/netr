@@ -25,6 +25,7 @@ class ArchivePlayer extends PlayerBase {
   const ArchivePlayer(
       super.maxWidth,
       super.maxHeight,
+      super.cameraName,
       super.camera,
       super.location,
       super.credential,
@@ -44,8 +45,9 @@ class _ArchivePlayerState extends PlayerBaseState<ArchivePlayer> {
   void back(BuildContext context) => context.read<ArchiveViewCubit>().back();
 
   @override
-  void getStreamUrl(BuildContext context) =>
-      context.read<ArchiveCameraViewCubit>().getStreamUrl();
+  void getStreamUrl(BuildContext context) => context
+      .read<ArchiveCameraViewCubit>()
+      .getStreamUrl(cameraName: widget.cameraName);
 
   @override
   void next(BuildContext context) => context.read<ArchiveViewCubit>().next();

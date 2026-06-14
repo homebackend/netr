@@ -161,8 +161,9 @@ mixin CameraViewCubitMixin on Cubit<CameraViewState>
       {DateTime? startDateTime}) async {
     if (state is CameraViewInitialState) {
       CameraViewInitialState s = state as CameraViewInitialState;
-      log('$cubitName: ${getCamera(vuState).name}');
       emit(s.copyWith(
+        cameraName: vuState.selectedCamera!.name,
+        locationName: vuState.selectedLocation!.name,
         camera: getCamera(vuState),
         location: vuState.selectedLocation!,
         credential: getCredential(vuState),
@@ -176,13 +177,14 @@ mixin CameraViewCubitMixin on Cubit<CameraViewState>
   }
 
   @override
-  Future<void> getStreamUrl() async {
+  Future<void> getStreamUrl({String? cameraName, String? locationName}) async {
     if (state is CameraViewInitialState) {
       String url =
           '${_getProtocol()}://${_getCredential()}${_getHost()}:${_getPort()}${getUrlPath()}';
       log('Url: $url');
-      emit(
-          CameraViewUpdatedState(url, (state as CameraViewInitialState).state));
+      CameraViewInitialState s = state as CameraViewInitialState;
+      emit(CameraViewUpdatedState(url, cameraName ?? s.state.cameraName,
+          locationName ?? s.state.locationName, s.state));
     }
   }
 }
