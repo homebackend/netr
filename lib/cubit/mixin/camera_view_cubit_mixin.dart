@@ -14,14 +14,21 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../models/camera.dart';
 import '../../models/credential.dart';
-import '../../services/vlc_wrapper/video_interface.dart';
 import '../viewer/camera_view_cubit.dart';
 import '../viewer/camera_view_state.dart';
 import '../viewer/view_state.dart';
 
+abstract class CameraPlayerStream {
+  Stream<bool> get buffering;
+  Stream<bool> get playing;
+  Stream<dynamic> get error;
+  Stream<int?> get width;
+  Stream<int?> get height;
+}
+
 mixin CameraViewCubitMixin on Cubit<CameraViewState>
     implements CameraViewCubit {
-  List<StreamSubscription> subscribe(PlayerStream playerStream) {
+  List<StreamSubscription> subscribe(CameraPlayerStream playerStream) {
     if (state is CameraViewInitialState) {
       List<StreamSubscription> l = [];
 

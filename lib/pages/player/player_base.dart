@@ -13,18 +13,18 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:netr/pages/player/lib_helper.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+import '../../cubit/mixin/camera_view_cubit_mixin.dart';
 import '../../cubit/viewer/camera_view_state.dart';
 import '../../cubit/viewer/thumbnail_cubit.dart';
 import '../../cubit/viewer/video_player_cubit.dart';
 import '../../cubit/viewer/view_state.dart';
 import '../../cubit/viewer/viewer_keyboard_cubit.dart';
-import '../../helpers/thumbnail_manager.dart';
 import '../../models/camera.dart';
 import '../../models/credential.dart';
 import '../../models/location.dart';
-import '../../services/vlc_wrapper/video_interface.dart';
 import '../../tool.dart';
 
 abstract class PlayerBase extends StatefulWidget {
@@ -54,10 +54,9 @@ abstract class PlayerBase extends StatefulWidget {
 }
 
 abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver
+    implements LibHelper {
   final TransformationController _controller = TransformationController();
-  late Player _player;
-  late VideoController _videoController;
   final FocusNode _keyboardFocusNode = FocusNode();
   bool isInitialized = false;
   bool _controlsVisible = true;
@@ -73,14 +72,6 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
   void initState() {
     super.initState();
 
-    PlayerConfiguration playerConfiguration = PlayerConfiguration(
-      logLevel: MPVLogLevel.info,
-      title: widget.playerTitle,
-      bufferSize: 1024 * 32,
-      osc: true,
-    );
-    _player = Player(configuration: playerConfiguration);
-    _videoController = VideoController(_player);
     _selectedCamera = "${widget.location.name}/${widget.cameraName}";
 
     _startHideTimer();
@@ -89,11 +80,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
       isInitialized = true;
     });
 
-    ThumbnailManager.generateCctvThumbnail(
-      _player,
-      widget.location.name,
-      widget.camera.name,
-    );
+    initLibHelper();
   }
 
   @override
@@ -102,7 +89,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
     _countdownTimer?.cancel();
     _keyboardFocusNode.dispose();
     _controller.dispose();
-    _player.dispose();
+    disposeLibHelper();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -166,7 +153,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
           ),
         ),
         BlocProvider(create: (_) => ThumbnailCubit()),
-        createViewBlocProvider(context, _player.stream),
+        createViewBlocProvider(context, stream),
       ],
       child: Builder(builder: (nestedContext) {
         return MultiBlocListener(
@@ -176,11 +163,8 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
                 if (state is ThumbnailGeneratorState &&
                     state.location != null &&
                     state.camera != null) {
-                  ThumbnailManager.generateCctvThumbnail(
-                    _player,
-                    state.location!.name,
-                    state.camera!.name,
-                  );
+                  startThumbnailGeneration(
+                      state.camera!.name, state.location!.name);
                 }
               },
             ),
@@ -240,7 +224,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
                                 behavior: HitTestBehavior.opaque,
                                 onTap: _onTap,
                                 onSecondaryTap: _onTap,
-                                child: playerWidget(context),
+                                child: _playerWidget(context),
                               )
                             : const Center(
                                 child: CircularProgressIndicator(
@@ -267,6 +251,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
     _toggleControls();
   }
 
+  @protected
   List<Widget> getNavigators(BuildContext context) {
     List<Widget> navigators = <Widget>[];
     navigators.add(_getPlayButton(context));
@@ -295,7 +280,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
     return createNavigatorButton(Icons.stop, () async {
       try {
         _startHideTimer();
-        await _player.stop();
+        stop(context);
         _isStopped = true;
       } on Exception catch (e) {
         showSnackBar(context, 'Error during stop: $e');
@@ -349,31 +334,54 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
     });
   }
 
+  @override
+  @protected
+  String get cameraName => widget.cameraName;
+
+  @override
+  @protected
+  String get locationName => widget.location.name;
+
+  @override
+  @protected
+  double get maxHeight => widget.maxHeight;
+
+  @override
+  @protected
+  double get maxWidth => widget.maxWidth;
+
+  @override
+  @protected
+  String get playerTitle => widget.playerTitle;
+
+  @protected
   Future<void> close(BuildContext context) async {
     back(context);
     await backButtonCleanup(context);
   }
 
+  @protected
   Future<void> backButtonCleanup(BuildContext context) async {
-    await _player.stop();
+    await stop(context);
     await unlockScreen();
   }
 
-  Future<void> togglePlay() async {
-    await _player.playOrPause();
-  }
+  @override
+  @protected
+  Future<void> togglePlay();
 
-  Future<void> open(String url) async {
-    await _player.stop();
-    await _player.open(Media(url), play: true);
-  }
+  @override
+  @protected
+  Future<void> open(String url);
 
+  @protected
   Future<void> lockScreen() async {
     if (kIsWeb || !Platform.isLinux) {
       await WakelockPlus.enable();
     }
   }
 
+  @protected
   Future<void> unlockScreen() async {
     if (kIsWeb || !Platform.isLinux) {
       await WakelockPlus.disable();
@@ -503,8 +511,8 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
     );
   }
 
-  Widget playerWidget(BuildContext context) {
-    log('${MediaQuery.of(context).size.width} x ${MediaQuery.of(context).size.width * 9.0 / 16.0}');
+  Widget _playerWidget(BuildContext context) {
+    log('playerWidget ${MediaQuery.of(context).size.width} x ${MediaQuery.of(context).size.width * 9.0 / 16.0}');
 
     return MultiBlocProvider(
       providers: [
@@ -582,37 +590,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
           ),
         ],
         child: BlocBuilder<VideoPlayerCubit, VideoPlayerState>(
-          builder: (context, state) {
-            if (state.width > 0 && state.height > 0) {
-              return SizedBox(
-                width: widget.maxWidth,
-                height: widget.maxHeight,
-                child: Center(
-                  child: AspectRatio(
-                    aspectRatio: state.aspectRatio,
-                    child: Video(
-                      controller: _videoController,
-                      controls: null,
-                    ),
-                  ),
-                ),
-              );
-            } else {
-              if (isInitialized && !_urlLoaded) {
-                _urlLoaded = true;
-                getStreamUrl(context);
-              }
-              return SizedBox(
-                width: 48,
-                height: 48,
-                child: Center(
-                  child: CircularProgressIndicator(
-                    semanticsLabel: 'Waiting for video',
-                  ),
-                ),
-              );
-            }
-          },
+          builder: createVideoWidget,
         ),
       ),
     );
@@ -682,17 +660,43 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
     );
   }
 
+  @override
+  @protected
+  void initCamera() {
+    if (isInitialized && !_urlLoaded) {
+      _urlLoaded = true;
+      log('Calling getStreamUrl');
+      getStreamUrl(context);
+    }
+  }
+
+  @override
+  @protected
+  void startThumbnailGeneration(String cameraName, String locationName);
+
+  @protected
   @protected
   void toggleFullScreen(BuildContext context);
 
   @protected
+  @protected
   void back(BuildContext context);
 
+  @protected
   @protected
   void next(BuildContext context);
 
   @protected
+  @protected
   void previous(BuildContext context);
+
+  @override
+  @protected
+  Future<void> stop(BuildContext context);
+
+  @override
+  @protected
+  Widget createVideoWidget(BuildContext context, VideoPlayerState state);
 
   @protected
   void updateSelectedCameraAndLocation(BuildContext context, Camera camera,
@@ -704,9 +708,10 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
   @protected
   void updateCamera(BuildContext context, ViewUpdatedState state);
 
+  @protected
   BlocProvider createViewBlocProvider(
     BuildContext context,
-    PlayerStream playerStream,
+    CameraPlayerStream playerStream,
   );
 
   @protected

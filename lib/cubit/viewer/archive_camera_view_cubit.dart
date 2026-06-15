@@ -13,7 +13,6 @@ import 'package:intl/intl.dart';
 
 import '../../models/camera.dart';
 import '../../models/credential.dart';
-import '../../services/vlc_wrapper/video_interface.dart';
 import '../mixin/camera_view_cubit_mixin.dart';
 import 'camera_view_state.dart';
 import 'view_state.dart';
@@ -21,7 +20,7 @@ import 'view_state.dart';
 class ArchiveCameraViewCubit extends Cubit<CameraViewState>
     with CameraViewCubitMixin {
   late List<StreamSubscription> subscriptions;
-  ArchiveCameraViewCubit(PlayerStream playerStream, CameraViewData data)
+  ArchiveCameraViewCubit(CameraPlayerStream playerStream, CameraViewData data)
       : super(CameraViewInitialState(data)) {
     subscriptions = subscribe(playerStream);
   }

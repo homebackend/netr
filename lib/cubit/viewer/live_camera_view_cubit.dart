@@ -12,7 +12,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:netr/models/credential.dart';
 
 import '../../models/camera.dart';
-import '../../services/vlc_wrapper/video_interface.dart';
 import '../mixin/camera_view_cubit_mixin.dart';
 import 'camera_view_state.dart';
 import 'view_state.dart';
@@ -20,7 +19,7 @@ import 'view_state.dart';
 class LiveCameraViewCubit extends Cubit<CameraViewState>
     with CameraViewCubitMixin {
   late List<StreamSubscription> subscriptions;
-  LiveCameraViewCubit(PlayerStream playerStream, CameraViewData data)
+  LiveCameraViewCubit(CameraPlayerStream playerStream, CameraViewData data)
       : super(CameraViewInitialState(data)) {
     subscriptions = subscribe(playerStream);
   }

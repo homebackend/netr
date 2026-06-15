@@ -117,12 +117,19 @@ class Video extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vlc = controller.player.vlcController;
-
-    if (vlc == null) {
+    if (!controller.player._isVlcInitialized) {
+      log('XXXXXXXX Not initialized');
       return const Center(child: CircularProgressIndicator());
     }
 
+    final vlc = controller.player.vlcController;
+
+    if (vlc == null) {
+      log('XXXXXXXX is null');
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    log('XXXXXXXXXXXXXXXX');
     return VlcPlayer(
       controller: vlc,
       aspectRatio: vlc.value.size.width > 0
@@ -204,11 +211,14 @@ class Player {
       log('OnInitListener');
       _isVlcControllerInitialized = true;
     });
+    log('Setting _isVlcInitialized true');
     _isVlcInitialized = true;
   }
 
   void _onVlcStateChanged() {
-    if (_vlcController != null && _vlcController!.value.isInitialized) {
+    log('in _onVlcStateChanged');
+    if (_vlcController != null /* && _vlcController!.value.isInitialized*/) {
+      log('YYYYYYYYYYYYYYYYYYYYYYYYYYY');
       final value = _vlcController!.value;
 
       stream._playingController.add(value.isPlaying);
@@ -245,7 +255,8 @@ class Player {
     }
   }
 
-  Future<Uint8List?> screenshot({String format = 'image/jpeg'}) async {
+  Future<Uint8List?> screenshot(String s,
+      {String format = 'image/jpeg'}) async {
     if (_vlcController == null) return null;
     return await _vlcController!.takeSnapshot();
   }
