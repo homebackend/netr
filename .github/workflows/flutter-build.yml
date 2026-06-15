@@ -73,6 +73,22 @@ jobs:
             --dart-define=GH_OWNER=$GITHUB_REPOSITORY_OWNER \
             --dart-define=GH_REPO=${GITHUB_REPOSITORY#*/}
 
+      - name: Sign Android APK
+        if: matrix.target == 'apk'
+        uses: r0adkll/sign-android-release@v1
+        id: sign_android_apk
+        with:
+          releaseDirectory: build/app/outputs/flutter-apk
+          signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
+          alias: ${{ secrets.ANDROID_ALIAS }}
+          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+
+      - name: Overwrite Unsigned APK with Signed APK
+        if: matrix.target == 'apk'
+        run: |
+          mv "${{ steps.sign_android_apk.outputs.signedReleaseFile }}" build/app/outputs/flutter-apk/app-release.apk
+
       - name: Package Linux Target
         if: matrix.target == 'linux'
         run: |
