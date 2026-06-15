@@ -83,6 +83,8 @@ jobs:
           alias: ${{ secrets.ANDROID_ALIAS }}
           keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        env:
+          BUILD_TOOLS_VERSION: "34.0.0"  
 
       - name: Overwrite Unsigned APK with Signed APK
         if: matrix.target == 'apk'
