@@ -23,7 +23,7 @@ abstract class LibHelper {
   void disposeLibHelper();
   void startThumbnailGeneration(String cameraName, String locationName);
   CameraPlayerStream get stream;
-  Future<void> open(String url);
+  Future<void> open(BuildContext context, String url);
   Future<void> stop(BuildContext context);
   Future<void> togglePlay();
   Widget createVideoWidget(BuildContext context, VideoPlayerState state);

@@ -79,7 +79,7 @@ mixin PlayerMediaKit implements LibHelper {
   CameraPlayerStream get stream => CameraPlayerStreamMediaKit(_player.stream);
 
   @override
-  Future<void> open(String url) async {
+  Future<void> open(BuildContext context, String url) async {
     await _player.stop();
     await _player.open(Media(url), play: true);
   }

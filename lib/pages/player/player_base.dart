@@ -268,7 +268,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
       try {
         _startHideTimer();
         if (_isStopped && _currentUrl != null) {
-          open(_currentUrl!);
+          open(context, _currentUrl!);
         }
       } on Exception catch (e) {
         showSnackBar(context, 'Error during play: $e');
@@ -365,14 +365,6 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
     await stop(context);
     await unlockScreen();
   }
-
-  @override
-  @protected
-  Future<void> togglePlay();
-
-  @override
-  @protected
-  Future<void> open(String url);
 
   @protected
   Future<void> lockScreen() async {
@@ -552,7 +544,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
                   log('Opening url: ${state.url} for ${state.locationName}/${state.cameraName}');
                   _selectedCamera = '${state.locationName}/${state.cameraName}';
                   _currentUrl = state.url;
-                  open(state.url);
+                  open(context, state.url);
                 }
               } else if (state is CameraViewVideoState) {
                 if (state.state.width > 0 && state.state.height > 0) {

@@ -9,7 +9,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_vlc_player/flutter_vlc_player.dart';
+import 'package:flutter_vlc_player_16kb/flutter_vlc_player.dart';
 import 'package:netr/helpers/thumbnail_manager.dart';
 
 import '../../cubit/mixin/camera_view_cubit_mixin.dart';
@@ -56,12 +56,12 @@ mixin PlayerVlcPlayer implements LibHelper {
   @override
   void initLibHelper(BuildContext context) {
     _playerStream = CameraPlayerStreamVlcPlayer();
-    initCamera(context);
   }
 
   @override
   void disposeLibHelper() {
     if (_videoPlayerController != null) {
+      _videoPlayerController!.removeListener(_playerListener);
       _videoPlayerController!.stopRendererScanning();
       _videoPlayerController!.dispose();
     }
@@ -81,15 +81,19 @@ mixin PlayerVlcPlayer implements LibHelper {
   CameraPlayerStreamVlcPlayer get stream => _playerStream;
 
   @override
-  Future<void> open(String url) async {
+  Future<void> open(BuildContext context, String url) async {
     if (!_isVlcIntialized || _videoPlayerController == null) {
       if (_videoPlayerController == null) {
-        _videoPlayerController = VlcPlayerController.network(url,
-            autoPlay: true, options: VlcPlayerOptions());
+        _videoPlayerController = VlcPlayerController.network(
+          "",
+          autoPlay: false,
+          options: VlcPlayerOptions(),
+        );
         _videoPlayerController!.addOnInitListener(() {
           _isVlcIntialized = true;
+          _videoPlayerController!.setMediaFromNetwork(url, autoPlay: true);
+          _videoPlayerController!.addListener(_playerListener);
         });
-        _videoPlayerController!.addListener(_playerListener);
       }
       return;
     }
@@ -117,7 +121,7 @@ mixin PlayerVlcPlayer implements LibHelper {
 
   @override
   Widget createVideoWidget(BuildContext context, VideoPlayerState state) {
-    if (_isVlcIntialized && _videoPlayerController != null) {
+    if (_videoPlayerController != null) {
       return VlcPlayer(
         controller: _videoPlayerController!,
         aspectRatio: 16 / 9,
@@ -125,11 +129,15 @@ mixin PlayerVlcPlayer implements LibHelper {
       );
     }
 
+    initCamera(context);
     return _createPlaceholder();
   }
 
-  Widget _createPlaceholder() =>
-      const Center(child: CircularProgressIndicator());
+  Widget _createPlaceholder() => const Center(
+        child: Column(
+          children: [CircularProgressIndicator(), Text('Loading View')],
+        ),
+      );
 
   void _playerListener() {
     if (_isVlcIntialized && _videoPlayerController != null) {
