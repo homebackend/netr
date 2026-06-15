@@ -12,10 +12,12 @@ part of 'app_settings_cubit.dart';
 sealed class AppSettingsState {
   final bool startAppMaximized;
   final bool playVideoFullscreen;
+  final bool enableAutoScreenCapture;
 
   const AppSettingsState({
     this.startAppMaximized = false,
     this.playVideoFullscreen = false,
+    this.enableAutoScreenCapture = true,
   });
 }
 
@@ -25,15 +27,19 @@ final class AppSettingsUpdateState extends AppSettingsState {
   const AppSettingsUpdateState({
     super.startAppMaximized = false,
     super.playVideoFullscreen = false,
+    super.enableAutoScreenCapture = true,
   });
 
   AppSettingsState copyWith({
     bool? startAppMaximized,
     bool? playVideoFullscreen,
+    bool? enableAutoScreenCapture,
   }) {
     return AppSettingsUpdateState(
       startAppMaximized: startAppMaximized ?? this.startAppMaximized,
       playVideoFullscreen: playVideoFullscreen ?? this.playVideoFullscreen,
+      enableAutoScreenCapture:
+          enableAutoScreenCapture ?? this.enableAutoScreenCapture,
     );
   }
 }
