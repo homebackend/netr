@@ -651,19 +651,28 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
                 IconButton(
                   icon: const Icon(Icons.arrow_back,
                       color: Colors.white, size: 36),
-                  onPressed: () => back(context),
+                  onPressed: () {
+                    _stopErrorTimer();
+                    back(context);
+                  },
                 ),
                 const SizedBox(width: 32),
                 IconButton(
                   icon: const Icon(Icons.skip_previous,
                       color: Colors.white, size: 40),
-                  onPressed: () => previous(context),
+                  onPressed: () {
+                    _stopErrorTimer();
+                    previous(context);
+                  },
                 ),
                 const SizedBox(width: 32),
                 IconButton(
                   icon: const Icon(Icons.skip_next,
                       color: Colors.white, size: 40),
-                  onPressed: () => next(context),
+                  onPressed: () {
+                    _stopErrorTimer();
+                    next(context);
+                  },
                 ),
               ],
             ),
