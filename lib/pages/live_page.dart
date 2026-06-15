@@ -18,7 +18,7 @@ import '../models/camera.dart';
 import '../models/location.dart';
 import '../widgets/stream_quality_selector.dart';
 import 'camera_view_page.dart';
-import 'player/live_player.dart';
+import 'player/live_players.dart';
 import 'player/live_player_base.dart';
 
 class LiveViewPage extends CameraViewPage {

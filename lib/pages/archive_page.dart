@@ -22,7 +22,7 @@ import '../models/camera.dart';
 import '../models/location.dart';
 import '../tool.dart';
 import 'camera_view_page.dart';
-import 'player/archive_player.dart';
+import 'player/archive_players.dart';
 import 'player/archive_player_base.dart';
 
 class ArchiveViewPage extends CameraViewPage {
