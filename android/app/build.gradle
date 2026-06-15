@@ -16,6 +16,12 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 
+    packagingOptions {
+       // Fixes duplicate libraries build issue, 
+       // when your project uses more than one plugin that depend on C++ libs.
+        pickFirst 'lib/**/libc++_shared.so'
+    }
+
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_1_8
     }
@@ -42,6 +48,9 @@ android {
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.debug
             minifyEnabled true
+            proguardFiles getDefaultProguardFile(
+                 'proguard-android-optimize.txt'),
+                 'proguard-rules.pro'
         }
     }
 }

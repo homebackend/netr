@@ -9,7 +9,6 @@
 import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:media_kit/media_kit.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'string_helper.dart';
@@ -43,9 +42,9 @@ class ThumbnailManager {
   }
 
   static Future<void> generateCctvThumbnail(
-    Player player,
-    String locationName,
     String cameraName,
+    String locationName,
+    Future<Uint8List?> Function() screenshot,
   ) async {
     if (thumbnailGenerationFailed) {
       log('Skipping thumbnail generation as it failed earlier');
@@ -53,12 +52,7 @@ class ThumbnailManager {
     }
     await Future.delayed(const Duration(seconds: 3), () async {
       try {
-        if (player.state.width == null || player.state.width == 0) {
-          log('Thumbnail generation skipped');
-          return;
-        }
-
-        final Uint8List? bytes = await player.screenshot(format: 'image/jpeg');
+        final Uint8List? bytes = await screenshot();
         if (bytes == null) {
           thumbnailGenerationFailed = true;
           return;

@@ -8,8 +8,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:media_kit/media_kit.dart';
 
+import '../../cubit/mixin/camera_view_cubit_mixin.dart';
 import '../../cubit/viewer/archive_camera_view_cubit.dart';
 import '../../cubit/viewer/archive_view_cubit.dart';
 import '../../cubit/viewer/camera_view_state.dart';
@@ -18,29 +18,39 @@ import '../../models/camera.dart';
 import '../../models/location.dart';
 import 'player_base.dart';
 
-class ArchivePlayer extends PlayerBase {
+abstract class ArchivePlayerBase extends PlayerBase {
   final int archiveIndex;
   final DateTime startDateTime;
 
-  const ArchivePlayer(
-      super.maxWidth,
-      super.maxHeight,
-      super.cameraName,
-      super.camera,
-      super.location,
-      super.credential,
-      this.archiveIndex,
-      this.startDateTime,
-      super.cameras,
-      super.playerTitle,
-      super.dialogText,
-      {super.key});
-
-  @override
-  State<ArchivePlayer> createState() => _ArchivePlayerState();
+  ArchivePlayerBase(double maxWidth, double maxHeight, ViewUpdatedState state,
+      DateTime archiveDateTime, String playerTitle, String dialogText,
+      {super.key})
+      : archiveIndex = state.selectedCamera!.archiveIndex,
+        startDateTime = archiveDateTime!,
+        super(
+          maxWidth,
+          maxHeight,
+          state.selectedCamera!.name,
+          state.cameraNvr(state.selectedCamera!)!,
+          state.selectedLocation!,
+          state.cameraNvrCredential(state.selectedCamera!)!,
+          state.cameras
+              .map(
+                (camera) => (
+                  camera,
+                  state.cameraNvr(camera)!,
+                  state.cameraLocation(camera)!,
+                  state.cameraNvrCredential(camera)!,
+                ),
+              )
+              .toList(),
+          playerTitle,
+          dialogText,
+        );
 }
 
-class _ArchivePlayerState extends PlayerBaseState<ArchivePlayer> {
+abstract class ArchivePlayerBaseState<T extends ArchivePlayerBase>
+    extends PlayerBaseState<T> {
   @override
   void back(BuildContext context) => context.read<ArchiveViewCubit>().back();
 
@@ -86,7 +96,7 @@ class _ArchivePlayerState extends PlayerBaseState<ArchivePlayer> {
 
   @override
   BlocProvider<ArchiveCameraViewCubit> createViewBlocProvider(
-          BuildContext context, PlayerStream playerStream) =>
+          BuildContext context, CameraPlayerStream playerStream) =>
       BlocProvider(
         create: (context) => ArchiveCameraViewCubit(
           playerStream,
@@ -102,4 +112,13 @@ class _ArchivePlayerState extends PlayerBaseState<ArchivePlayer> {
           ),
         ),
       );
+
+  @override
+  BlocBuilder<ArchiveCameraViewCubit, CameraViewState>
+      createCameraErrorViewBlocBuilder(
+              Widget Function(BuildContext context, CameraViewState state)
+                  builder) =>
+          BlocBuilder<ArchiveCameraViewCubit, CameraViewState>(
+            builder: builder,
+          );
 }

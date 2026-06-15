@@ -20,6 +20,7 @@ abstract class CameraViewState {
 class CameraViewData {
   final String cameraName;
   final String locationName;
+  final int count;
   final Camera camera;
   final Location location;
   final Credential credential;
@@ -34,6 +35,7 @@ class CameraViewData {
     this.location,
     this.camera,
     this.credential, {
+    this.count = 0,
     this.quality = StreamQuality.high,
     this.cameraIndex = -1,
     this.width = 0,
@@ -44,6 +46,19 @@ class CameraViewData {
     String? locationName,
   })  : cameraName = cameraName ?? camera.name,
         locationName = locationName ?? location.name;
+
+  Map<String, dynamic> toJson() => {
+        'location': location.toJson(),
+        'camera': camera.toJson(),
+        'credential': credential.toJson(),
+        'count': count,
+        'quality': quality.toString(),
+        'cameraIndex': cameraIndex,
+        'width': width,
+        'height': height,
+        'archive': archive == null ? '' : archive!.toJson(),
+        'startDateTime': startDateTime.toString(),
+      };
 
   CameraViewData copyWith({
     String? cameraName,
@@ -60,6 +75,7 @@ class CameraViewData {
     return CameraViewData(
       cameraName: cameraName ?? (camera ?? this.camera).name,
       locationName: locationName ?? (location ?? this.location).name,
+      count: count + 1,
       location ?? this.location,
       camera ?? this.camera,
       credential ?? this.credential,
@@ -107,6 +123,8 @@ final class CameraViewInitialState extends CameraViewState {
 
   CameraViewState instantiateWith(CameraViewData d) =>
       CameraViewInitialState(d);
+
+  Map<String, dynamic> toJson() => {'state': state.toJson()};
 }
 
 final class CameraViewUpdatedState extends CameraViewInitialState {
@@ -138,6 +156,9 @@ final class CameraViewErrorState extends CameraViewInitialState {
   @override
   CameraViewState instantiateWith(CameraViewData d) =>
       CameraViewErrorState(error, d);
+
+  @override
+  Map<String, dynamic> toJson() => {'error': error, ...super.toJson()};
 }
 
 final class CameraViewBufferingState extends CameraViewInitialState {
@@ -161,6 +182,13 @@ final class CameraViewBufferingState extends CameraViewInitialState {
   @override
   CameraViewBufferingState instantiateWith(CameraViewData d) =>
       CameraViewBufferingState(bufferingState, bufferingDone, d);
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'bufferingState': bufferingState,
+        'bufferingDone': bufferingDone,
+        ...super.toJson()
+      };
 }
 
 final class CameraViewPlayingState extends CameraViewInitialState {
@@ -175,6 +203,9 @@ final class CameraViewPlayingState extends CameraViewInitialState {
   @override
   CameraViewPlayingState instantiateWith(CameraViewData d) =>
       CameraViewPlayingState(playing, d);
+
+  @override
+  Map<String, dynamic> toJson() => {'playing': playing, ...super.toJson()};
 }
 
 final class CameraViewVideoState extends CameraViewInitialState {

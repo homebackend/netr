@@ -7,6 +7,7 @@
  */
 
 import 'dart:convert';
+import 'dart:developer';
 import 'package:crypto/crypto.dart';
 
 class StringHelper {
@@ -30,5 +31,11 @@ class StringHelper {
       default:
         return '${day}th';
     }
+  }
+
+  static void logMapRecursively(String name, Map<String, dynamic> map) {
+    const JsonEncoder encoder = JsonEncoder.withIndent('  ');
+    final String prettyString = encoder.convert(map);
+    log(prettyString, name: name);
   }
 }

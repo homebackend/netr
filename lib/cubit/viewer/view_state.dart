@@ -13,7 +13,9 @@ import '../../models/credential.dart';
 import '../../models/location.dart';
 
 @immutable
-sealed class ViewState {}
+sealed class ViewState {
+  Map<String, dynamic> toJson() => {};
+}
 
 final class ViewInitialState extends ViewState {}
 
@@ -78,6 +80,20 @@ final class ViewUpdatedState extends ViewState {
     for (Camera nvr in nvrs) {
       _mapNvrs[nvr.name] = nvr;
     }
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'isFreshState': isFreshState,
+      'selectedCamera':
+          selectedCamera == null ? 'null' : selectedCamera!.toJson(),
+      'selectedLocation':
+          selectedLocation == null ? 'null' : selectedLocation!.toJson(),
+      'archiveView': archiveView,
+      'fullScreen': fullScreen,
+      'streamQuality': streamQuality.toString(),
+    };
   }
 
   List<Camera> locationCamera(Location location) {

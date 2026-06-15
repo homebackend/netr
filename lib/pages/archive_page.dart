@@ -7,6 +7,7 @@
  */
 
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -21,7 +22,8 @@ import '../models/camera.dart';
 import '../models/location.dart';
 import '../tool.dart';
 import 'camera_view_page.dart';
-import 'player/archive_player.dart';
+import 'player/archive_players.dart';
+import 'player/archive_player_base.dart';
 
 class ArchiveViewPage extends CameraViewPage {
   const ArchiveViewPage({super.key}) : super('Archive View', Icons.history);
@@ -134,33 +136,28 @@ class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewPage>
   bool isPlayerReady() => _archiveDateTime != null;
 
   @override
-  ArchivePlayer getPlayer(
+  ArchivePlayerBase getPlayer(
     double maxWidth,
     double maxHeight,
     ViewUpdatedState state,
     String playerTitle,
     String dialogText,
   ) =>
-      ArchivePlayer(
-        maxWidth,
-        maxHeight,
-        state.selectedCamera!.name,
-        state.cameraNvr(state.selectedCamera!)!,
-        state.selectedLocation!,
-        state.cameraNvrCredential(state.selectedCamera!)!,
-        state.selectedCamera!.archiveIndex,
-        _archiveDateTime!,
-        state.cameras
-            .map(
-              (camera) => (
-                camera,
-                state.cameraNvr(camera)!,
-                state.cameraLocation(camera)!,
-                state.cameraNvrCredential(camera)!,
-              ),
+      Platform.isAndroid
+          ? AndroidArchivePlayer(
+              maxWidth,
+              maxHeight,
+              state,
+              _archiveDateTime!,
+              playerTitle,
+              dialogText,
             )
-            .toList(),
-        playerTitle,
-        dialogText,
-      );
+          : DesktopArchivePlayer(
+              maxWidth,
+              maxHeight,
+              state,
+              _archiveDateTime!,
+              playerTitle,
+              dialogText,
+            );
 }

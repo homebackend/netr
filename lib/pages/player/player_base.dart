@@ -13,21 +13,19 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_video/media_kit_video.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
-import '../../cubit/settings/app_settings_cubit.dart';
+import '../../cubit/mixin/camera_view_cubit_mixin.dart';
 import '../../cubit/viewer/camera_view_state.dart';
 import '../../cubit/viewer/thumbnail_cubit.dart';
 import '../../cubit/viewer/video_player_cubit.dart';
 import '../../cubit/viewer/view_state.dart';
 import '../../cubit/viewer/viewer_keyboard_cubit.dart';
-import '../../helpers/thumbnail_manager.dart';
 import '../../models/camera.dart';
 import '../../models/credential.dart';
 import '../../models/location.dart';
 import '../../tool.dart';
+import 'lib_helper.dart';
 
 abstract class PlayerBase extends StatefulWidget {
   final double maxWidth;
@@ -56,30 +54,24 @@ abstract class PlayerBase extends StatefulWidget {
 }
 
 abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver
+    implements LibHelper {
   final TransformationController _controller = TransformationController();
-  late Player _player;
-  late VideoController _videoController;
   final FocusNode _keyboardFocusNode = FocusNode();
   bool isInitialized = false;
   bool _controlsVisible = true;
   bool _isStopped = false;
   Timer? _hideTimer;
+  bool _urlLoaded = false;
   String? _currentUrl;
   String? _selectedCamera;
+  Timer? _countdownTimer;
+  int _countDownValue = 10;
 
   @override
   void initState() {
     super.initState();
 
-    PlayerConfiguration playerConfiguration = PlayerConfiguration(
-      logLevel: MPVLogLevel.info,
-      title: widget.playerTitle,
-      bufferSize: 1024 * 32,
-      osc: true,
-    );
-    _player = Player(configuration: playerConfiguration);
-    _videoController = VideoController(_player);
     _selectedCamera = "${widget.location.name}/${widget.cameraName}";
 
     _startHideTimer();
@@ -88,21 +80,16 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
       isInitialized = true;
     });
 
-    if (context.read<AppSettingsCubit>().state.enableAutoScreenCapture) {
-      ThumbnailManager.generateCctvThumbnail(
-        _player,
-        widget.location.name,
-        widget.camera.name,
-      );
-    }
+    initLibHelper(context);
   }
 
   @override
   void dispose() {
     _hideTimer?.cancel();
+    _countdownTimer?.cancel();
     _keyboardFocusNode.dispose();
     _controller.dispose();
-    _player.dispose();
+    disposeLibHelper();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -118,6 +105,29 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
 
   void _stopHideTimer() {
     _hideTimer?.cancel();
+  }
+
+  void _startErrorTimer(BuildContext context) {
+    _stopErrorTimer();
+    setState(() {
+      _countDownValue = 10;
+    });
+
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_countDownValue <= 1) {
+        _stopErrorTimer();
+        next(context);
+      } else {
+        setState(() {
+          _countDownValue--;
+        });
+      }
+    });
+  }
+
+  void _stopErrorTimer() {
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
   }
 
   void _toggleControls() {
@@ -143,7 +153,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
           ),
         ),
         BlocProvider(create: (_) => ThumbnailCubit()),
-        //createViewBlocProvider(context, _player.stream),
+        createViewBlocProvider(context, stream),
       ],
       child: Builder(builder: (nestedContext) {
         return MultiBlocListener(
@@ -152,16 +162,9 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
               listener: (context, state) {
                 if (state is ThumbnailGeneratorState &&
                     state.location != null &&
-                    state.camera != null &&
-                    context
-                        .read<AppSettingsCubit>()
-                        .state
-                        .enableAutoScreenCapture) {
-                  ThumbnailManager.generateCctvThumbnail(
-                    _player,
-                    state.location!.name,
-                    state.camera!.name,
-                  );
+                    state.camera != null) {
+                  startThumbnailGeneration(
+                      state.camera!.name, state.location!.name);
                 }
               },
             ),
@@ -200,37 +203,41 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
                 ? KeyEventResult.handled
                 : KeyEventResult.ignored,
             child: BlocBuilder<ViewerKeyboardCubit, ViewerKeyboardState>(
-              builder: (context, state) => Stack(
-                alignment: Alignment.center,
-                children: [
-                  Positioned.fill(
-                    child: InteractiveViewer(
-                      panEnabled: true,
-                      scaleEnabled: true,
-                      minScale: ViewerKeyboardCubit.minScale,
-                      maxScale: ViewerKeyboardCubit.maxScale,
-                      transformationController: _controller,
-                      onInteractionEnd: (ScaleEndDetails details) {
-                        final cubit = context.read<ViewerKeyboardCubit>();
-                        cubit.updateControllerValue(_controller.value);
-                        cubit.handleInteractionEnd(details);
-                      },
-                      child: isInitialized
-                          ? GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: _onTap,
-                              onSecondaryTap: _onTap,
-                              child: playerWidget(context),
-                            )
-                          : const Center(
-                              child: CircularProgressIndicator(
-                                semanticsLabel: 'Loading',
+              builder: (context, state) => createCameraErrorViewBlocBuilder(
+                (context, errState) => Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Positioned.fill(
+                      child: InteractiveViewer(
+                        panEnabled: true,
+                        scaleEnabled: true,
+                        minScale: ViewerKeyboardCubit.minScale,
+                        maxScale: ViewerKeyboardCubit.maxScale,
+                        transformationController: _controller,
+                        onInteractionEnd: (ScaleEndDetails details) {
+                          final cubit = context.read<ViewerKeyboardCubit>();
+                          cubit.updateControllerValue(_controller.value);
+                          cubit.handleInteractionEnd(details);
+                        },
+                        child: isInitialized
+                            ? GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: _onTap,
+                                onSecondaryTap: _onTap,
+                                child: _playerWidget(context),
+                              )
+                            : const Center(
+                                child: CircularProgressIndicator(
+                                  semanticsLabel: 'Loading',
+                                ),
                               ),
-                            ),
+                      ),
                     ),
-                  ),
-                  if (isInitialized) _buildInlineControlsOverlay(context),
-                ],
+                    if (isInitialized) _buildInlineControlsOverlay(context),
+                    if (errState is CameraViewErrorState)
+                      _showPlayerError(context, errState),
+                  ],
+                ),
               ),
             ),
           ),
@@ -244,6 +251,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
     _toggleControls();
   }
 
+  @protected
   List<Widget> getNavigators(BuildContext context) {
     List<Widget> navigators = <Widget>[];
     navigators.add(_getPlayButton(context));
@@ -260,7 +268,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
       try {
         _startHideTimer();
         if (_isStopped && _currentUrl != null) {
-          open(_currentUrl!);
+          open(context, _currentUrl!);
         }
       } on Exception catch (e) {
         showSnackBar(context, 'Error during play: $e');
@@ -272,7 +280,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
     return createNavigatorButton(Icons.stop, () async {
       try {
         _startHideTimer();
-        await _player.stop();
+        stop(context);
         _isStopped = true;
       } on Exception catch (e) {
         showSnackBar(context, 'Error during stop: $e');
@@ -326,31 +334,46 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
     });
   }
 
+  @override
+  @protected
+  String get cameraName => widget.cameraName;
+
+  @override
+  @protected
+  String get locationName => widget.location.name;
+
+  @override
+  @protected
+  double get maxHeight => widget.maxHeight;
+
+  @override
+  @protected
+  double get maxWidth => widget.maxWidth;
+
+  @override
+  @protected
+  String get playerTitle => widget.playerTitle;
+
+  @protected
   Future<void> close(BuildContext context) async {
     back(context);
     await backButtonCleanup(context);
   }
 
+  @protected
   Future<void> backButtonCleanup(BuildContext context) async {
-    await _player.stop();
+    await stop(context);
     await unlockScreen();
   }
 
-  Future<void> togglePlay() async {
-    await _player.playOrPause();
-  }
-
-  Future<void> open(String url) async {
-    await _player.stop();
-    await _player.open(Media(url), play: true);
-  }
-
+  @protected
   Future<void> lockScreen() async {
     if (kIsWeb || !Platform.isLinux) {
       await WakelockPlus.enable();
     }
   }
 
+  @protected
   Future<void> unlockScreen() async {
     if (kIsWeb || !Platform.isLinux) {
       await WakelockPlus.disable();
@@ -480,20 +503,26 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
     );
   }
 
-  Widget playerWidget(BuildContext context) {
-    log('${MediaQuery.of(context).size.width} x ${MediaQuery.of(context).size.width * 9.0 / 16.0}');
+  Widget _playerWidget(BuildContext context) {
+    log('playerWidget ${MediaQuery.of(context).size.width} x ${MediaQuery.of(context).size.width * 9.0 / 16.0}');
 
     return MultiBlocProvider(
       providers: [
         BlocProvider(
           create: (context) => VideoPlayerCubit(),
         ),
-        createViewBlocProvider(context, _player.stream),
+        //createViewBlocProvider(context, _player.stream),
       ],
       child: MultiBlocListener(
         listeners: [
           createCameraViewBlocListener(
             (context, state) {
+              if (state is! CameraViewErrorState) {
+                // If any state comes stop the error countdown timer.
+                // Not this can happen if any camera gives a temporary
+                // error which resolves itself in some time.
+                _stopErrorTimer();
+              }
               if (state is CameraViewBufferingState) {
                 if (state.bufferingDone || state.bufferingState == 100.0) {
                   log('Buffering done');
@@ -515,7 +544,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
                   log('Opening url: ${state.url} for ${state.locationName}/${state.cameraName}');
                   _selectedCamera = '${state.locationName}/${state.cameraName}';
                   _currentUrl = state.url;
-                  open(state.url);
+                  open(context, state.url);
                 }
               } else if (state is CameraViewVideoState) {
                 if (state.state.width > 0 && state.state.height > 0) {
@@ -529,7 +558,8 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
                 showSnackBar(context, 'Play error: ${state.error}');
                 if (!['Failed to initialize a decoder for codec']
                     .any((e) => state.error.contains(e))) {
-                  close(context);
+                  _startErrorTimer(context);
+                  //close(context);
                 }
               } else if (state is CameraViewDoneState) {
                 close(context);
@@ -552,50 +582,113 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
           ),
         ],
         child: BlocBuilder<VideoPlayerCubit, VideoPlayerState>(
-          builder: (context, state) {
-            if (state.width > 0 && state.height > 0) {
-              return SizedBox(
-                width: widget.maxWidth,
-                height: widget.maxHeight,
-                child: Center(
-                  child: AspectRatio(
-                    aspectRatio: state.aspectRatio,
-                    child: Video(
-                      controller: _videoController,
-                      controls: null,
-                    ),
-                  ),
-                ),
-              );
-            } else {
-              getStreamUrl(context);
-              return SizedBox(
-                width: 48,
-                height: 48,
-                child: Center(
-                  child: CircularProgressIndicator(
-                    semanticsLabel: 'Waiting for video',
-                  ),
-                ),
-              );
-            }
-          },
+          builder: createVideoWidget,
         ),
       ),
     );
   }
 
+  Widget _showPlayerError(BuildContext context, CameraViewErrorState errState) {
+    return Container(
+      color: Colors.black.withValues(alpha: 0.85),
+      alignment: Alignment.center,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.redAccent, size: 56),
+            const SizedBox(height: 16),
+            Text(
+              '$_selectedCamera has encountered error(s)',
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            Text(
+              errState.error,
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Switching to next camera in ${_countDownValue}s...',
+              style: const TextStyle(color: Colors.amber, fontSize: 14),
+            ),
+            const SizedBox(height: 64),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back,
+                      color: Colors.white, size: 36),
+                  onPressed: () {
+                    _stopErrorTimer();
+                    back(context);
+                  },
+                ),
+                const SizedBox(width: 32),
+                IconButton(
+                  icon: const Icon(Icons.skip_previous,
+                      color: Colors.white, size: 40),
+                  onPressed: () {
+                    _stopErrorTimer();
+                    previous(context);
+                  },
+                ),
+                const SizedBox(width: 32),
+                IconButton(
+                  icon: const Icon(Icons.skip_next,
+                      color: Colors.white, size: 40),
+                  onPressed: () {
+                    _stopErrorTimer();
+                    next(context);
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  @protected
+  void initCamera(BuildContext context) {
+    if (isInitialized && !_urlLoaded) {
+      _urlLoaded = true;
+      log('Calling getStreamUrl');
+      getStreamUrl(context);
+    }
+  }
+
+  @override
+  @protected
+  void startThumbnailGeneration(String cameraName, String locationName);
+
+  @protected
   @protected
   void toggleFullScreen(BuildContext context);
 
   @protected
+  @protected
   void back(BuildContext context);
 
+  @protected
   @protected
   void next(BuildContext context);
 
   @protected
+  @protected
   void previous(BuildContext context);
+
+  @override
+  @protected
+  Future<void> stop(BuildContext context);
+
+  @override
+  @protected
+  Widget createVideoWidget(BuildContext context, VideoPlayerState state);
 
   @protected
   void updateSelectedCameraAndLocation(BuildContext context, Camera camera,
@@ -607,9 +700,10 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
   @protected
   void updateCamera(BuildContext context, ViewUpdatedState state);
 
+  @protected
   BlocProvider createViewBlocProvider(
     BuildContext context,
-    PlayerStream playerStream,
+    CameraPlayerStream playerStream,
   );
 
   @protected
@@ -620,5 +714,10 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
   @protected
   BlocListener createCameraViewBlocListener(
     void Function(BuildContext context, CameraViewState state) listener,
+  );
+
+  @protected
+  BlocBuilder createCameraErrorViewBlocBuilder(
+    Widget Function(BuildContext context, CameraViewState state) builder,
   );
 }

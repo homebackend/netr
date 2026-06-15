@@ -6,6 +6,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -16,7 +18,8 @@ import '../models/camera.dart';
 import '../models/location.dart';
 import '../widgets/stream_quality_selector.dart';
 import 'camera_view_page.dart';
-import 'player/live_player.dart';
+import 'player/live_players.dart';
+import 'player/live_player_base.dart';
 
 class LiveViewPage extends CameraViewPage {
   const LiveViewPage({super.key}) : super('Live View', Icons.videocam);
@@ -61,34 +64,28 @@ class _LiveViewPageState extends CameraViewPageState<LiveViewPage>
   }
 
   @override
-  LivePlayer getPlayer(
+  LivePlayerBase getPlayer(
     double maxWidth,
     double maxHeight,
     ViewUpdatedState state,
     String playerTitle,
     String dialogText,
   ) =>
-      LivePlayer(
-        maxWidth,
-        maxHeight,
-        state.selectedCamera!.name,
-        state.selectedCamera!,
-        state.selectedLocation!,
-        state.cameraCredential(state.selectedCamera!)!,
-        state.streamQuality,
-        state.cameras
-            .map(
-              (camera) => (
-                camera,
-                camera,
-                state.cameraLocation(camera)!,
-                state.cameraCredential(camera)!,
-              ),
+      Platform.isAndroid
+          ? AndroidLivePlayer(
+              maxWidth,
+              maxHeight,
+              state,
+              playerTitle,
+              dialogText,
             )
-            .toList(),
-        playerTitle,
-        dialogText,
-      );
+          : DesktopLivePlayer(
+              maxWidth,
+              maxHeight,
+              state,
+              playerTitle,
+              dialogText,
+            );
 
   @override
   List<Widget> getAppBarActions() {

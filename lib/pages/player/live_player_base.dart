@@ -8,8 +8,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:media_kit/media_kit.dart';
 
+import '../../cubit/mixin/camera_view_cubit_mixin.dart';
 import '../../cubit/viewer/camera_view_state.dart';
 import '../../cubit/viewer/live_camera_view_cubit.dart';
 import '../../cubit/viewer/live_view_cubit.dart';
@@ -18,27 +18,37 @@ import '../../models/camera.dart';
 import '../../models/location.dart';
 import 'player_base.dart';
 
-class LivePlayer extends PlayerBase {
+abstract class LivePlayerBase extends PlayerBase {
   final StreamQuality streamQuality;
 
-  const LivePlayer(
-      super.maxWidth,
-      super.maxHeight,
-      super.cameraName,
-      super.camera,
-      super.location,
-      super.credential,
-      this.streamQuality,
-      super.cameras,
-      super.playerTitle,
-      super.dialogText,
-      {super.key});
-
-  @override
-  State<LivePlayer> createState() => _LivePlayerState();
+  LivePlayerBase(double maxWidth, double maxHeight, ViewUpdatedState state,
+      String playerTitle, String dialogText,
+      {super.key})
+      : streamQuality = state.streamQuality,
+        super(
+          maxWidth,
+          maxHeight,
+          state.selectedCamera!.name,
+          state.selectedCamera!,
+          state.selectedLocation!,
+          state.cameraCredential(state.selectedCamera!)!,
+          state.cameras
+              .map(
+                (camera) => (
+                  camera,
+                  camera,
+                  state.cameraLocation(camera)!,
+                  state.cameraCredential(camera)!,
+                ),
+              )
+              .toList(),
+          playerTitle,
+          dialogText,
+        );
 }
 
-class _LivePlayerState extends PlayerBaseState<LivePlayer> {
+abstract class LivePlayerBaseState<T extends LivePlayerBase>
+    extends PlayerBaseState<T> {
   @override
   void toggleFullScreen(BuildContext context) =>
       context.read<LiveViewCubit>().toggleFullScreen();
@@ -74,7 +84,7 @@ class _LivePlayerState extends PlayerBaseState<LivePlayer> {
 
   @override
   BlocProvider<LiveCameraViewCubit> createViewBlocProvider(
-          BuildContext context, PlayerStream playerStream) =>
+          BuildContext context, CameraPlayerStream playerStream) =>
       BlocProvider(
         create: (context) => LiveCameraViewCubit(
           playerStream,
@@ -101,4 +111,13 @@ class _LivePlayerState extends PlayerBaseState<LivePlayer> {
                   listener) =>
           BlocListener<LiveCameraViewCubit, CameraViewState>(
               listener: listener);
+
+  @override
+  BlocBuilder<LiveCameraViewCubit, CameraViewState>
+      createCameraErrorViewBlocBuilder(
+              Widget Function(BuildContext context, CameraViewState state)
+                  builder) =>
+          BlocBuilder<LiveCameraViewCubit, CameraViewState>(
+            builder: builder,
+          );
 }

@@ -20,8 +20,8 @@ import 'tool.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  MediaKit.ensureInitialized();
   if (isDesktopPlatform()) {
+    MediaKit.ensureInitialized();
     await windowManager.ensureInitialized();
     windowManager.waitUntilReadyToShow().then((_) async {
       await windowManager.setTitle(constants.appName);

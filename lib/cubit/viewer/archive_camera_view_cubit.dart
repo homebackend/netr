@@ -10,7 +10,6 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:media_kit/media_kit.dart';
 
 import '../../models/camera.dart';
 import '../../models/credential.dart';
@@ -21,7 +20,7 @@ import 'view_state.dart';
 class ArchiveCameraViewCubit extends Cubit<CameraViewState>
     with CameraViewCubitMixin {
   late List<StreamSubscription> subscriptions;
-  ArchiveCameraViewCubit(PlayerStream playerStream, CameraViewData data)
+  ArchiveCameraViewCubit(CameraPlayerStream playerStream, CameraViewData data)
       : super(CameraViewInitialState(data)) {
     subscriptions = subscribe(playerStream);
   }
