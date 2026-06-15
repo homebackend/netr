@@ -43,7 +43,7 @@ mixin PlayerMediaKit implements LibHelper {
   late VideoController _videoController;
 
   @override
-  void initLibHelper() {
+  void initLibHelper(BuildContext context) {
     PlayerConfiguration playerConfiguration = PlayerConfiguration(
       logLevel: MPVLogLevel.info,
       title: playerTitle,
@@ -111,7 +111,7 @@ mixin PlayerMediaKit implements LibHelper {
         ),
       );
     } else {
-      initCamera();
+      initCamera(context);
       return SizedBox(
         width: 48,
         height: 48,

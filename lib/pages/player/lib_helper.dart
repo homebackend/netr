@@ -18,8 +18,8 @@ abstract class LibHelper {
   double get maxWidth;
   double get maxHeight;
 
-  void initCamera();
-  void initLibHelper();
+  void initCamera(BuildContext context);
+  void initLibHelper(BuildContext context);
   void disposeLibHelper();
   void startThumbnailGeneration(String cameraName, String locationName);
   CameraPlayerStream get stream;

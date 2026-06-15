@@ -54,9 +54,9 @@ mixin PlayerVlcPlayer implements LibHelper {
   VlcPlayerController? _videoPlayerController;
 
   @override
-  void initLibHelper() {
+  void initLibHelper(BuildContext context) {
     _playerStream = CameraPlayerStreamVlcPlayer();
-    initCamera();
+    initCamera(context);
   }
 
   @override
