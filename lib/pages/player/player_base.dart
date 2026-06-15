@@ -13,7 +13,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:netr/pages/player/lib_helper.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../cubit/mixin/camera_view_cubit_mixin.dart';
@@ -26,6 +25,7 @@ import '../../models/camera.dart';
 import '../../models/credential.dart';
 import '../../models/location.dart';
 import '../../tool.dart';
+import 'lib_helper.dart';
 
 abstract class PlayerBase extends StatefulWidget {
   final double maxWidth;
