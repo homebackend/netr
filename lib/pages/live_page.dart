@@ -9,6 +9,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../cubit/settings/app_settings_cubit.dart';
 import '../cubit/viewer/live_view_cubit.dart';
 import '../cubit/viewer/view_state.dart';
 import '../mixin/fields_common.dart';
@@ -50,10 +51,22 @@ class _LiveViewPageState extends CameraViewPageState<LiveViewPage>
       updator(state);
 
   @override
-  Iterable<Camera> getCameras(List<Camera> cameras) => cameras;
+  bool filterCamera(Camera camera) {
+    String expectedName = camera.locationName;
+    AppSettingsState s = context.read<AppSettingsCubit>().state;
+    if (s is AppSettingsUpdateState && s.selectedLocation != null) {
+      expectedName = s.selectedLocation!;
+    }
+    return camera.ipLocationNames.any((l) => l == expectedName) ||
+        hasSSHAccess(camera);
+  }
 
   @override
-  int getCameraCount(List<Camera> cameras) => cameras.length;
+  bool hasSSHAccess(Camera camera) {
+    ViewState s = context.read<LiveViewCubit>().state;
+    return s is ViewUpdatedState &&
+        s.cameraIpLocations(camera).any((l) => l.useSshForNonLocal);
+  }
 
   @override
   void cameraTapHandler(BuildContext bc, Location l, Camera c, bool fs) {
@@ -87,8 +100,9 @@ class _LiveViewPageState extends CameraViewPageState<LiveViewPage>
             );
 
   @override
-  List<Widget> getAppBarActions() {
+  List<Widget> getAppBarActions(BuildContext bc, AppSettingsState appSettings) {
     return [
+      ...super.getAppBarActions(bc, appSettings),
       Tooltip(
         message: 'Stream Quality',
         child: StreamQualitySelector(
@@ -100,5 +114,13 @@ class _LiveViewPageState extends CameraViewPageState<LiveViewPage>
         ),
       )
     ];
+  }
+
+  @override
+  List<String> getLocations() {
+    ViewState s = context.read<LiveViewCubit>().state;
+    return s is ViewUpdatedState
+        ? s.locations.map((location) => location.name).toList()
+        : [];
   }
 }

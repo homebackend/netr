@@ -96,25 +96,22 @@ final class ViewUpdatedState extends ViewState {
     };
   }
 
-  List<Camera> locationCamera(Location location) {
-    return _mapLocationCamera[location]!;
-  }
+  Camera? nameCamera(String cameraName) => _mapCameras[cameraName];
+  Location? nameLocation(String locationName) => _mapLocations[locationName];
 
-  Location? cameraLocation(Camera camera) {
-    return _mapLocations[camera.locationName];
-  }
+  Location? cameraLocation(Camera camera) => nameLocation(camera.locationName);
+  Camera? cameraNvr(Camera camera) => _mapNvrs[camera.archiveName];
+  Credential? cameraCredential(Camera camera) =>
+      _mapCredentials[camera.credentialName];
+  Credential? cameraNvrCredential(Camera camera) =>
+      cameraCredential(cameraNvr(selectedCamera!)!);
 
-  Credential? cameraCredential(Camera camera) {
-    return _mapCredentials[camera.credentialName];
-  }
-
-  Camera? cameraNvr(Camera camera) {
-    return _mapNvrs[camera.archiveName];
-  }
-
-  Credential? cameraNvrCredential(Camera camera) {
-    return cameraCredential(cameraNvr(selectedCamera!)!);
-  }
+  List<Location> cameraIpLocations(Camera camera) => camera.ipLocationNames
+      .map((l) => nameLocation(l))
+      .whereType<Location>()
+      .toList();
+  List<Camera> locationCameras(Location location) =>
+      _mapLocationCamera[location]!;
 
   ViewUpdatedState copyWith({
     bool? isFreshState,

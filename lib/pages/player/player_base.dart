@@ -354,7 +354,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
 
   @protected
   Future<void> close(BuildContext context) async {
-    back(context);
+    quit(context);
     await backButtonCleanup(context);
   }
 
