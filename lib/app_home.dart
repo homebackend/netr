@@ -36,7 +36,7 @@ class AppHome extends StatelessWidget with FieldsCommon, ApplicationLifeCycle {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => NavigationCubit()),
-        BlocProvider(create: (_) => LocationCubit()..determinePosition()),
+        //BlocProvider(create: (_) => LocationCubit()..determinePosition()),
         BlocProvider(create: (_) => RunConfigCubit()),
         BlocProvider(create: (_) => LiveViewCubit()),
         BlocProvider(
