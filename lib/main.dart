@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Neeraj Jakhar
+ * Copyright (c) 2024-26 Neeraj Jakhar
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -14,6 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'constants.dart' as constants;
+import 'desktop_home_screen.dart';
 import 'main_app.dart';
 import 'mixin/encrypter.dart' as encrypter;
 import 'tool.dart';
@@ -27,6 +28,7 @@ void main() async {
       await windowManager.setTitle(constants.appName);
       await windowManager.center();
       await windowManager.show();
+      await windowManager.setPreventClose(true);
     });
   }
   await Settings.init(cacheProvider: SharePreferenceCache());
@@ -42,5 +44,7 @@ void main() async {
     );
   }
 
-  return runApp(const MainApp());
+  return isDesktopPlatform()
+      ? runApp(const MaterialApp(home: DesktopHomeScreen()))
+      : runApp(const MainApp());
 }

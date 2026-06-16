@@ -16,20 +16,23 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Expanded(
-            child: Center(
-              child: Image(
-                fit: BoxFit.contain,
-                image: AssetImage(constants.appIcon),
+      child: PopScope(
+        canPop: false,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Expanded(
+              child: Center(
+                child: Image(
+                  fit: BoxFit.contain,
+                  image: AssetImage(constants.appIcon),
+                ),
               ),
             ),
-          ),
-          SizedBox(height: 20),
-          CircularProgressIndicator()
-        ],
+            SizedBox(height: 20),
+            CircularProgressIndicator()
+          ],
+        ),
       ),
     );
   }

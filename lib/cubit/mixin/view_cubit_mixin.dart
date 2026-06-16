@@ -109,8 +109,10 @@ mixin ViewCubitMixin on Cubit<ViewState> implements ViewCubit {
       ViewUpdatedState state = this.state as ViewUpdatedState;
       if (state.fullScreen) {
         FullScreenController.exit();
+        emit(state.copyWith(fullScreen: false));
+      } else {
+        emit(state.copyWith(listView: true, fullScreen: false));
       }
-      emit(state.copyWith(listView: true, fullScreen: false));
     }
   }
 
