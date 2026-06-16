@@ -52,6 +52,7 @@ mixin PlayerVlcPlayer implements LibHelper {
   bool _isVlcIntialized = false;
   late CameraPlayerStreamVlcPlayer _playerStream;
   VlcPlayerController? _videoPlayerController;
+  VlcPlayerValue? _value;
 
   @override
   void initLibHelper(BuildContext context) {
@@ -143,19 +144,34 @@ mixin PlayerVlcPlayer implements LibHelper {
     if (_isVlcIntialized && _videoPlayerController != null) {
       final value = _videoPlayerController!.value;
 
-      _playerStream._playingController.add(value.isPlaying);
+      if (_value != null && _value!.isPlaying != value.isPlaying) {
+        _playerStream._playingController.add(value.isPlaying);
+      }
 
-      final isBufferingNow = value.playingState == PlayingState.buffering;
-      _playerStream._bufferingController.add(isBufferingNow);
+      if (_value != null && _value!.isBuffering != value.isBuffering) {
+        _playerStream._bufferingController.add(value.isBuffering);
+      }
 
       if (value.hasError) {
-        _playerStream._errorController.add(value.errorDescription);
+        if (_value != null &&
+            _value!.errorDescription != value.errorDescription) {
+          _playerStream._errorController.add(value.errorDescription);
+        }
       }
 
       if (value.size.width > 0) {
-        _playerStream._widthController.add(value.size.width.toInt());
-        _playerStream._heightController.add(value.size.height.toInt());
+        if (_value!.size.width != value.size.width) {
+          _playerStream._widthController.add(value.size.width.toInt());
+        }
       }
+
+      if (value.size.height > 0) {
+        if (_value!.size.height != value.size.height) {
+          _playerStream._heightController.add(value.size.height.toInt());
+        }
+      }
+
+      _value = value.copyWith();
     }
   }
 }
