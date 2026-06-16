@@ -123,8 +123,8 @@ class AppHome extends StatelessWidget with FieldsCommon, ApplicationLifeCycle {
           body: switch (navState.index) {
             0 => LiveViewPage(),
             1 => ArchiveViewPage(),
-            2 => LocationPage(),
-            3 => SettingsPage(),
+            //2 => LocationPage(),
+            2 => SettingsPage(),
             int() => Container(),
           },
           bottomNavigationBar: NavigationBar(
@@ -143,11 +143,11 @@ class AppHome extends StatelessWidget with FieldsCommon, ApplicationLifeCycle {
                 selectedIcon: Icon(Icons.archive),
                 label: 'Archive View',
               ),
-              NavigationDestination(
+              /*NavigationDestination(
                 icon: Icon(Icons.location_city_outlined),
                 selectedIcon: Icon(Icons.location_city),
                 label: 'Location',
-              ),
+              ),*/
               NavigationDestination(
                 icon: Icon(Icons.settings_outlined),
                 selectedIcon: Icon(Icons.settings),
