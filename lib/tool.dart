@@ -6,7 +6,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import 'dart:io' show Platform;
+import 'dart:developer';
+import 'dart:io' show Platform, File;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -120,21 +121,30 @@ bool isStringEmptyOrNull(String? value) {
   return value == null || value.isNotEmpty;
 }
 
-bool isDesktopPlatform() {
-  return !kIsWeb &&
-      (Platform.isLinux || Platform.isWindows || Platform.isMacOS);
-}
+bool isDesktopPlatform() =>
+    !kIsWeb && (isLinuxPlatform() || isWindowsPlatform() || isMacOSPlatform());
+bool isWindowsPlatform() => Platform.isWindows;
+bool isLinuxPlatform() => Platform.isLinux;
+bool isMacOSPlatform() => Platform.isMacOS;
+bool isMobilePlatform() => !kIsWeb && (isAndroidPlatform() || isIOSPlatform());
+bool isAndroidPlatform() => !kIsWeb && Platform.isAndroid;
+bool isIOSPlatform() => !kIsWeb && Platform.isIOS;
+bool isWebPlatform() => kIsWeb;
 
-bool isMobilePlatform() {
-  return !kIsWeb && (Platform.isAndroid || Platform.isIOS);
-}
+bool isArchLinuxDistribution() {
+  try {
+    final File osReleaseFile = File('/etc/os-release');
+    if (osReleaseFile.existsSync()) {
+      final String contents = osReleaseFile.readAsStringSync().toLowerCase();
 
-bool isAndroidPlatform() {
-  return !kIsWeb && Platform.isAndroid;
-}
-
-bool isWebPlatform() {
-  return kIsWeb;
+      return contents.contains('id=arch') ||
+          contents.contains('id=manjaro') ||
+          contents.contains('id_like=arch');
+    }
+  } catch (e) {
+    log('Failed inspecting system distribution configuration settings: $e');
+  }
+  return false;
 }
 
 enum ViewerMode {

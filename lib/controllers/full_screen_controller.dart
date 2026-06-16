@@ -7,24 +7,24 @@
  */
 
 import 'dart:developer';
-import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:window_manager/window_manager.dart';
+
+import '../tool.dart';
 
 class FullScreenController {
   static Future<void> enter() async {
     log("Entering fullscreen mode");
 
-    if (kIsWeb) return;
+    if (isWebPlatform()) return;
 
-    if (Platform.isAndroid || Platform.isIOS) {
+    if (isMobilePlatform()) {
       await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
       await SystemChrome.setPreferredOrientations([
         DeviceOrientation.landscapeLeft,
         DeviceOrientation.landscapeRight,
       ]);
-    } else if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+    } else if (isDesktopPlatform()) {
       await windowManager.setFullScreen(true);
     }
   }
@@ -32,14 +32,14 @@ class FullScreenController {
   static Future<void> exit() async {
     log("Exiting fullscreen mode");
 
-    if (kIsWeb) return;
+    if (isWebPlatform()) return;
 
-    if (Platform.isAndroid || Platform.isIOS) {
+    if (isMobilePlatform()) {
       await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
       await SystemChrome.setPreferredOrientations([
         DeviceOrientation.portraitUp,
       ]);
-    } else if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+    } else if (isDesktopPlatform()) {
       await windowManager.setFullScreen(false);
     }
   }

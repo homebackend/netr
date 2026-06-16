@@ -8,10 +8,9 @@
 
 import 'dart:convert';
 import 'dart:developer';
-import 'dart:io' show Platform, File;
 
-import 'package:http/http.dart' as http;
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pub_semver/pub_semver.dart';
 
@@ -33,7 +32,7 @@ class AppInitializationCubit extends Cubit<AppInitializationStatus> {
 
   Future<void> initialize() async {
     emit(AppInitializationStatus(AppInitializationState.initialization));
-    if (isMobilePlatform() || _isDesktopPlatform()) {
+    if (isMobilePlatform() || isDesktopPlatform()) {
       await checkUpdateRequired();
     } else {
       emitInitialized();
@@ -183,31 +182,15 @@ class AppInitializationCubit extends Cubit<AppInitializationStatus> {
   }
 
   String _determineTargetAssetName() {
-    if (Platform.isAndroid) return 'netr-android.apk';
-    if (Platform.isWindows) return 'netr-windows-x64.zip';
-    if (Platform.isLinux) {
-      if (_isArchLinuxDistribution()) {
+    if (isAndroidPlatform()) return 'netr-android.apk';
+    if (isWindowsPlatform()) return 'netr-windows-x64.zip';
+    if (isLinuxPlatform()) {
+      if (isArchLinuxDistribution()) {
         return 'netr-linux-x64.pkg.tar.zst';
       }
       return 'netr-linux-x64.tar.gz';
     }
     return '';
-  }
-
-  bool _isArchLinuxDistribution() {
-    try {
-      final File osReleaseFile = File('/etc/os-release');
-      if (osReleaseFile.existsSync()) {
-        final String contents = osReleaseFile.readAsStringSync().toLowerCase();
-
-        return contents.contains('id=arch') ||
-            contents.contains('id=manjaro') ||
-            contents.contains('id_like=arch');
-      }
-    } catch (e) {
-      log('Failed inspecting system distribution configuration settings: $e');
-    }
-    return false;
   }
 
   Future<String> _generateCommitChangelog({
@@ -251,7 +234,7 @@ class AppInitializationCubit extends Cubit<AppInitializationStatus> {
     required String changelog,
     required String downloadLink,
   }) {
-    AppInitializationState state = Platform.isAndroid
+    AppInitializationState state = isAndroidPlatform()
         ? AppInitializationState.updateApp
         : AppInitializationState.showUpdateDetails;
 
@@ -270,7 +253,4 @@ class AppInitializationCubit extends Cubit<AppInitializationStatus> {
     final String cleanTag = tag.startsWith('v') ? tag.substring(1) : tag;
     return Version.parse(cleanTag);
   }
-
-  bool _isDesktopPlatform() =>
-      Platform.isWindows || Platform.isLinux || Platform.isMacOS;
 }
