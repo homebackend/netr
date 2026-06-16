@@ -76,40 +76,50 @@ class _GeneralSettingsState extends State<GeneralSettings> {
                     const Text('Enable Auto Screen Capture'),
                   ],
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    state.exportInProgress
-                        ? CircularProgressIndicator()
-                        : ElevatedButton.icon(
-                            label: Text('Export'),
-                            icon: Icon(Icons.save),
-                            onPressed: () {
-                              context.read<GeneralSettingsCubit>().exportFile();
-                            },
-                          ),
-                    SizedBox(width: 16),
-                    state.shareInProgress
-                        ? CircularProgressIndicator()
-                        : ElevatedButton.icon(
-                            label: Text('Share'),
-                            icon: Icon(Icons.share),
-                            onPressed: () {
-                              context.read<GeneralSettingsCubit>().shareFile();
-                            },
-                          ),
-                    SizedBox(width: 16),
-                    state.importInProgress
-                        ? CircularProgressIndicator()
-                        : ElevatedButton.icon(
-                            label: Text('Import'),
-                            icon: Icon(Icons.file_open),
-                            onPressed: () {
-                              context.read<GeneralSettingsCubit>().importFile();
-                            },
-                          ),
-                  ],
-                )
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      state.exportInProgress
+                          ? CircularProgressIndicator()
+                          : ElevatedButton.icon(
+                              label: Text('Export'),
+                              icon: Icon(Icons.save),
+                              onPressed: () {
+                                context
+                                    .read<GeneralSettingsCubit>()
+                                    .exportFile();
+                              },
+                            ),
+                      SizedBox(width: 16),
+                      state.shareInProgress
+                          ? CircularProgressIndicator()
+                          : ElevatedButton.icon(
+                              label: Text('Share'),
+                              icon: Icon(Icons.share),
+                              onPressed: () {
+                                context
+                                    .read<GeneralSettingsCubit>()
+                                    .shareFile();
+                              },
+                            ),
+                      SizedBox(width: 16),
+                      state.importInProgress
+                          ? CircularProgressIndicator()
+                          : ElevatedButton.icon(
+                              label: Text('Import'),
+                              icon: Icon(Icons.file_open),
+                              onPressed: () {
+                                context
+                                    .read<GeneralSettingsCubit>()
+                                    .importFile();
+                              },
+                            ),
+                    ],
+                  ),
+                ),
               ],
             ),
           );
