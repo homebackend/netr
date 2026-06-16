@@ -26,7 +26,7 @@ abstract class ArchivePlayerBase extends PlayerBase {
       DateTime archiveDateTime, String playerTitle, String dialogText,
       {super.key})
       : archiveIndex = state.selectedCamera!.archiveIndex,
-        startDateTime = archiveDateTime!,
+        startDateTime = archiveDateTime,
         super(
           maxWidth,
           maxHeight,
