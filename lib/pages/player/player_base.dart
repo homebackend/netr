@@ -8,9 +8,7 @@
 
 import 'dart:async';
 import 'dart:developer';
-import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -368,14 +366,14 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
 
   @protected
   Future<void> lockScreen() async {
-    if (kIsWeb || !Platform.isLinux) {
+    if (isWebPlatform() || !isLinuxPlatform()) {
       await WakelockPlus.enable();
     }
   }
 
   @protected
   Future<void> unlockScreen() async {
-    if (kIsWeb || !Platform.isLinux) {
+    if (isWebPlatform() || !isLinuxPlatform()) {
       await WakelockPlus.disable();
     }
   }
@@ -453,7 +451,6 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Top Details Label Bar
                 Align(
                   alignment: Alignment.topLeft,
                   child: Text(
@@ -465,7 +462,6 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
                     ),
                   ),
                 ),
-
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: () {
@@ -623,7 +619,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
                       color: Colors.white, size: 36),
                   onPressed: () {
                     _stopErrorTimer();
-                    back(context);
+                    quit(context);
                   },
                 ),
                 const SizedBox(width: 32),
@@ -667,18 +663,17 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
   void startThumbnailGeneration(String cameraName, String locationName);
 
   @protected
-  @protected
   void toggleFullScreen(BuildContext context);
 
-  @protected
   @protected
   void back(BuildContext context);
 
   @protected
+  void quit(BuildContext context);
+
   @protected
   void next(BuildContext context);
 
-  @protected
   @protected
   void previous(BuildContext context);
 

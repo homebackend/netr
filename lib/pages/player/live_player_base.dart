@@ -57,6 +57,9 @@ abstract class LivePlayerBaseState<T extends LivePlayerBase>
   void back(BuildContext context) => context.read<LiveViewCubit>().back();
 
   @override
+  void quit(BuildContext context) => context.read<LiveViewCubit>().quit();
+
+  @override
   void next(BuildContext context) => context.read<LiveViewCubit>().next();
 
   @override

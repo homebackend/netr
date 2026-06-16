@@ -26,7 +26,7 @@ abstract class ArchivePlayerBase extends PlayerBase {
       DateTime archiveDateTime, String playerTitle, String dialogText,
       {super.key})
       : archiveIndex = state.selectedCamera!.archiveIndex,
-        startDateTime = archiveDateTime!,
+        startDateTime = archiveDateTime,
         super(
           maxWidth,
           maxHeight,
@@ -53,6 +53,9 @@ abstract class ArchivePlayerBaseState<T extends ArchivePlayerBase>
     extends PlayerBaseState<T> {
   @override
   void back(BuildContext context) => context.read<ArchiveViewCubit>().back();
+
+  @override
+  void quit(BuildContext context) => context.read<ArchiveViewCubit>().quit();
 
   @override
   void getStreamUrl(BuildContext context) => context

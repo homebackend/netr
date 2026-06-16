@@ -7,25 +7,26 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'application_life_cycle.dart';
 import 'cubit/common.dart';
-import 'cubit/mainwindow/location_cubit.dart';
 import 'cubit/mainwindow/navigation_cubit.dart';
 import 'cubit/mainwindow/run_config_cubit.dart';
 import 'cubit/viewer/archive_view_cubit.dart';
 import 'cubit/viewer/live_view_cubit.dart';
+import 'cubit/viewer/view_state.dart';
 import 'dialog/about_dialog.dart';
 import 'mixin/fields_common.dart';
 import 'pages/archive_page.dart';
 import 'constants.dart' as constants;
 import 'cubit/settings/theme_cubit.dart';
 import 'pages/live_page.dart';
-import 'pages/location_page.dart';
 import 'pages/settings/settings_page.dart';
 import 'widgets/internet_status.dart';
 
-class AppHome extends StatelessWidget with FieldsCommon {
+class AppHome extends StatelessWidget with FieldsCommon, ApplicationLifeCycle {
   const AppHome({super.key});
 
   @override
@@ -33,7 +34,7 @@ class AppHome extends StatelessWidget with FieldsCommon {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => NavigationCubit()),
-        BlocProvider(create: (_) => LocationCubit()..determinePosition()),
+        //BlocProvider(create: (_) => LocationCubit()..determinePosition()),
         BlocProvider(create: (_) => RunConfigCubit()),
         BlocProvider(create: (_) => LiveViewCubit()),
         BlocProvider(
@@ -41,20 +42,46 @@ class AppHome extends StatelessWidget with FieldsCommon {
         ),
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(
-        builder: (_, themeState) => MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: themeState.data,
-          home: BlocBuilder<NavigationCubit, NavigationState>(
-            builder: (context, navState) => CubitCommon.cameraViewBlocBuilder(
-              () => Scaffold(
-                backgroundColor: Colors.black,
-                body: LiveViewPage(),
+        builder: (context, themeState) => PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) async {
+            if (didPop) return;
+
+            for (var cubit in [
+              context.read<LiveViewCubit>(),
+              context.read<ArchiveViewCubit>()
+            ]) {
+              ViewState s = cubit.state;
+              if (s is ViewUpdatedState &&
+                  s.selectedCamera != null &&
+                  s.selectedLocation != null) {
+                cubit.back();
+                return;
+              }
+            }
+
+            final shouldPop = await shouldQuit(context);
+            if (shouldPop) {
+              if (context.mounted) {
+                SystemNavigator.pop();
+              }
+            }
+          },
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: themeState.data,
+            home: BlocBuilder<NavigationCubit, NavigationState>(
+              builder: (context, navState) => CubitCommon.cameraViewBlocBuilder(
+                () => Scaffold(
+                  backgroundColor: Colors.black,
+                  body: LiveViewPage(),
+                ),
+                () => Scaffold(
+                  backgroundColor: Colors.black,
+                  body: ArchiveViewPage(),
+                ),
+                () => _buildNavigationPage(context, navState),
               ),
-              () => Scaffold(
-                backgroundColor: Colors.black,
-                body: ArchiveViewPage(),
-              ),
-              () => _buildNavigationPage(context, navState),
             ),
           ),
         ),
@@ -94,8 +121,8 @@ class AppHome extends StatelessWidget with FieldsCommon {
           body: switch (navState.index) {
             0 => LiveViewPage(),
             1 => ArchiveViewPage(),
-            2 => LocationPage(),
-            3 => SettingsPage(),
+            //2 => LocationPage(),
+            2 => SettingsPage(),
             int() => Container(),
           },
           bottomNavigationBar: NavigationBar(
@@ -114,11 +141,11 @@ class AppHome extends StatelessWidget with FieldsCommon {
                 selectedIcon: Icon(Icons.archive),
                 label: 'Archive View',
               ),
-              NavigationDestination(
+              /*NavigationDestination(
                 icon: Icon(Icons.location_city_outlined),
                 selectedIcon: Icon(Icons.location_city),
                 label: 'Location',
-              ),
+              ),*/
               NavigationDestination(
                 icon: Icon(Icons.settings_outlined),
                 selectedIcon: Icon(Icons.settings),

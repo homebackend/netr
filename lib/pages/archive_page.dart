@@ -7,7 +7,6 @@
  */
 
 import 'dart:developer';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -143,7 +142,7 @@ class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewPage>
     String playerTitle,
     String dialogText,
   ) =>
-      Platform.isAndroid
+      isAndroidPlatform()
           ? AndroidArchivePlayer(
               maxWidth,
               maxHeight,

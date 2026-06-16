@@ -1,6 +1,5 @@
 import 'dart:core';
 import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:netr/tool.dart';
@@ -60,13 +59,13 @@ abstract class BaseViewerState<T extends BaseViewer> extends State<T> {
   Future<void> togglePlay() async {}
 
   Future<void> lockScreen() async {
-    if (kIsWeb || !Platform.isLinux) {
+    if (isWebPlatform() || !Platform.isLinux) {
       await WakelockPlus.enable();
     }
   }
 
   Future<void> unlockScreen() async {
-    if (kIsWeb || !Platform.isLinux) {
+    if (isWebPlatform() || !Platform.isLinux) {
       await WakelockPlus.disable();
     }
   }

@@ -44,5 +44,6 @@ abstract class ViewCubit extends Cubit<ViewState> {
   void previous();
 
   void back();
+  void quit();
   void toggleFullScreen();
 }
