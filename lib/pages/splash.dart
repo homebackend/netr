@@ -19,10 +19,12 @@ class SplashScreen extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Center(
-            child: Image(
-              fit: BoxFit.fitHeight,
-              image: AssetImage(constants.appIcon),
+          Expanded(
+            child: Center(
+              child: Image(
+                fit: BoxFit.contain,
+                image: AssetImage(constants.appIcon),
+              ),
             ),
           ),
           SizedBox(height: 20),
