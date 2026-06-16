@@ -103,17 +103,26 @@ mixin ViewCubitMixin on Cubit<ViewState> implements ViewCubit {
     _adjCamera(-1, criteria);
   }
 
-  @override
-  void back() {
+  void _exit(bool quit) {
     if (state is ViewUpdatedState) {
       ViewUpdatedState state = this.state as ViewUpdatedState;
       if (state.fullScreen) {
         FullScreenController.exit();
-        emit(state.copyWith(fullScreen: false));
-      } else {
-        emit(state.copyWith(listView: true, fullScreen: false));
       }
+
+      emit(state.copyWith(
+          listView: quit || !state.fullScreen, fullScreen: false));
     }
+  }
+
+  @override
+  void back() {
+    _exit(false);
+  }
+
+  @override
+  void quit() {
+    _exit(true);
   }
 
   @override

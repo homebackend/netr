@@ -12,7 +12,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'application_life_cycle.dart';
 import 'cubit/common.dart';
-import 'cubit/mainwindow/location_cubit.dart';
 import 'cubit/mainwindow/navigation_cubit.dart';
 import 'cubit/mainwindow/run_config_cubit.dart';
 import 'cubit/viewer/archive_view_cubit.dart';
@@ -24,7 +23,6 @@ import 'pages/archive_page.dart';
 import 'constants.dart' as constants;
 import 'cubit/settings/theme_cubit.dart';
 import 'pages/live_page.dart';
-import 'pages/location_page.dart';
 import 'pages/settings/settings_page.dart';
 import 'widgets/internet_status.dart';
 

@@ -623,7 +623,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
                       color: Colors.white, size: 36),
                   onPressed: () {
                     _stopErrorTimer();
-                    back(context);
+                    quit(context);
                   },
                 ),
                 const SizedBox(width: 32),
@@ -671,6 +671,9 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
 
   @protected
   void back(BuildContext context);
+
+  @protected
+  void quit(BuildContext context);
 
   @protected
   void next(BuildContext context);

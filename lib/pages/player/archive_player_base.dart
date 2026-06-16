@@ -55,6 +55,9 @@ abstract class ArchivePlayerBaseState<T extends ArchivePlayerBase>
   void back(BuildContext context) => context.read<ArchiveViewCubit>().back();
 
   @override
+  void quit(BuildContext context) => context.read<ArchiveViewCubit>().quit();
+
+  @override
   void getStreamUrl(BuildContext context) => context
       .read<ArchiveCameraViewCubit>()
       .getStreamUrl(cameraName: widget.cameraName);
