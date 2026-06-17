@@ -15,6 +15,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 import '../../cubit/mixin/camera_view_cubit_mixin.dart';
 import '../../cubit/viewer/video_player_cubit.dart';
 import '../../helpers/thumbnail_manager.dart';
+import '../../widgets/camera_status_wheel.dart';
 import 'lib_helper.dart';
 
 class CameraPlayerStreamMediaKit extends CameraPlayerStream {
@@ -112,6 +113,8 @@ mixin PlayerMediaKit implements LibHelper {
       );
     } else {
       initCamera(context);
+      return SshStatusProgressWheel();
+      /*
       return SizedBox(
         width: 48,
         height: 48,
@@ -121,6 +124,7 @@ mixin PlayerMediaKit implements LibHelper {
           ),
         ),
       );
+      */
     }
   }
 }

@@ -14,67 +14,93 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 part 'ssh_state.dart';
 
-class SshCubit extends Cubit<SshState> {
+class SshConfig {
   final String host;
   final int port;
   final String username;
-  final String privateKeyPem;
+  final String keyPem;
+  SshConfig(this.host, this.port, this.username, this.keyPem);
+}
 
-  SSHClient? _client;
-  ServerSocket? _localServer;
-  final List<StreamSubscription> _socketSubscriptions = [];
+class SshCubit extends Cubit<SshState> {
+  final Map<String, SshConfig> _configRegistry = {};
+  final Map<String, SSHClient> _activeClients = {};
 
-  SshCubit({
-    required this.host,
-    required this.port,
-    required this.username,
-    required this.privateKeyPem,
-  }) : super(SshState.initial());
+  ServerSocket? _currentLocalServer;
+  final List<StreamSubscription> _activeSubscriptions = [];
 
-  Future<void> connect() async {
-    emit(state.copyWith(status: SshStatus.connecting));
-    try {
-      await _cleanupSession();
+  SshCubit() : super(SshState.initial());
 
-      final keyPair = SSHKeyPair.fromPem(privateKeyPem);
-      _client = SSHClient(
-        await SSHSocket.connect(host, port),
-        username: username,
-        identities: keyPair,
-      );
-
-      await _client!.authenticated;
-      emit(state.copyWith(status: SshStatus.connected));
-    } catch (e) {
-      emit(state.copyWith(
-          status: SshStatus.failure, errorMessage: e.toString()));
-    }
+  void register(String locationName, String sshHost, int sshPort,
+      String sshUser, String sshKey) {
+    if (_configRegistry.containsKey(locationName)) return;
+    _configRegistry[locationName] =
+        SshConfig(sshHost, sshPort, sshUser, sshKey);
   }
 
-  Future<void> forwardPort({
-    required String remoteHost,
-    required int remotePort,
-    required int localPort,
-    String localHost = 'localhost',
-  }) async {
-    if (_client == null) {
+  Future<void> getLocalPort(
+      String locationName, String cameraHost, int cameraPort) async {
+    if (!_configRegistry.containsKey(locationName)) {
       emit(state.copyWith(
-          status: SshStatus.failure, errorMessage: 'No active SSH session.'));
+        status: SshStatus.noSshConnectionConfigured,
+        errorMessage: 'No SSH configuration found for: $locationName',
+      ));
       return;
     }
 
+    await _clearActiveForwarderOnly();
+
+    final config = _configRegistry[locationName]!;
+    SSHClient? client = _activeClients[locationName];
+    bool isReused = false;
+
+    emit(state.copyWith(
+        status: SshStatus.sshConnecting, locationName: locationName));
+
+    if (client != null) {
+      try {
+        await client.ping();
+        isReused = true;
+      } catch (_) {
+        _activeClients.remove(locationName);
+        client = null;
+      }
+    }
+
+    if (client == null) {
+      try {
+        final keyPair = SSHKeyPair.fromPem(config.keyPem);
+        client = SSHClient(
+          await SSHSocket.connect(config.host, config.port),
+          username: config.username,
+          identities: keyPair,
+        );
+        await client.authenticated;
+        _activeClients[locationName] = client;
+        isReused = false;
+      } catch (e) {
+        emit(state.copyWith(
+            status: SshStatus.failure,
+            errorMessage: 'SSH Connection Failed: $e'));
+        return;
+      }
+    }
+
+    emit(state.copyWith(
+        status: SshStatus.sshConnected, isReusedConnection: isReused));
     emit(state.copyWith(status: SshStatus.forwardingPort));
 
     try {
-      await _closeActiveForwarder();
-      _localServer = await ServerSocket.bind(localHost, localPort);
-      _localServer!.listen((Socket localSocket) async {
+      _currentLocalServer = await ServerSocket.bind('localhost', 0);
+      final int allocatedLocalPort = _currentLocalServer!.port;
+
+      _currentLocalServer!.listen((Socket localSocket) async {
         try {
-          final SSHForwardChannel forwardChannel = await _client!.forwardLocal(
-            remoteHost,
-            remotePort,
-            localHost: localHost,
-            localPort: localPort,
+          final SSHForwardChannel forwardChannel = await client!.forwardLocal(
+            cameraHost,
+            cameraPort,
+            localHost: 'localhost',
+            localPort: allocatedLocalPort,
           );
 
           final sub1 = localSocket.listen(
@@ -89,61 +115,40 @@ class SshCubit extends Cubit<SshState> {
             onError: (_) => localSocket.close(),
           );
 
-          _socketSubscriptions.addAll([sub1, sub2]);
-        } catch (e) {
+          _activeSubscriptions.addAll([sub1, sub2]);
+        } catch (_) {
           localSocket.close();
         }
       });
 
       emit(state.copyWith(
         status: SshStatus.portForwarded,
-        localPort: _localServer!.port,
-        remotePort: remotePort,
-        forwardedHost: remoteHost,
+        localPort: allocatedLocalPort,
       ));
     } catch (e) {
       emit(state.copyWith(
-        status: SshStatus.failure,
-        errorMessage: 'Port Forwarding Failed: $e',
-      ));
+          status: SshStatus.failure, errorMessage: 'Forwarding Error: $e'));
     }
   }
 
-  Future<void> _closeActiveForwarder() async {
-    for (var sub in _socketSubscriptions) {
+  Future<void> _clearActiveForwarderOnly() async {
+    for (var sub in _activeSubscriptions) {
       await sub.cancel();
     }
-    _socketSubscriptions.clear();
-
-    if (_localServer != null) {
-      await _localServer!.close();
-      _localServer = null;
-    }
-  }
-
-  Future<void> closeActiveWithUiUpdate() async {
-    await _closeActiveForwarder();
-    emit(state.copyWith(status: SshStatus.connected));
-  }
-
-  Future<void> disconnect() async {
-    emit(state.copyWith(status: SshStatus.disconnecting));
-    await _cleanupSession();
-    emit(state.copyWith(status: SshStatus.disconnected));
-  }
-
-  Future<void> _cleanupSession() async {
-    await _closeActiveForwarder();
-    if (_client != null) {
-      _client!.close();
-      await _client!.done;
-      _client = null;
+    _activeSubscriptions.clear();
+    if (_currentLocalServer != null) {
+      await _currentLocalServer!.close();
+      _currentLocalServer = null;
     }
   }
 
   @override
   Future<void> close() async {
-    await _cleanupSession();
+    await _clearActiveForwarderOnly();
+    for (var client in _activeClients.values) {
+      client.close();
+    }
+    _activeClients.clear();
     return super.close();
   }
 }

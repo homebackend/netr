@@ -10,9 +10,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubit/mixin/camera_view_cubit_mixin.dart';
+import '../../cubit/settings/app_settings_cubit.dart';
 import '../../cubit/viewer/camera_view_state.dart';
 import '../../cubit/viewer/live_camera_view_cubit.dart';
 import '../../cubit/viewer/live_view_cubit.dart';
+import '../../cubit/viewer/ssh_cubit.dart';
 import '../../cubit/viewer/view_state.dart';
 import '../../models/camera.dart';
 import '../../models/location.dart';
@@ -86,15 +88,23 @@ abstract class LivePlayerBaseState<T extends LivePlayerBase>
       context.read<LiveCameraViewCubit>().updateCamera(state);
 
   @override
+  void emitSshUrl(BuildContext bc, int port) {
+    bc.read<LiveCameraViewCubit>().emitUrlState(host: 'localhost', port: port);
+  }
+
+  @override
   BlocProvider<LiveCameraViewCubit> createViewBlocProvider(
           BuildContext context, CameraPlayerStream playerStream) =>
       BlocProvider(
         create: (context) => LiveCameraViewCubit(
           playerStream,
           CameraViewData(
+            context.read<SshCubit>(),
             widget.location,
             widget.camera,
             widget.credential,
+            physicalLocationName:
+                context.read<AppSettingsCubit>().state.selectedLocation,
             quality: widget.streamQuality,
             width: widget.maxWidth,
             height: widget.maxHeight,

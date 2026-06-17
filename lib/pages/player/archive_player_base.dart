@@ -10,9 +10,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubit/mixin/camera_view_cubit_mixin.dart';
+import '../../cubit/settings/app_settings_cubit.dart';
 import '../../cubit/viewer/archive_camera_view_cubit.dart';
 import '../../cubit/viewer/archive_view_cubit.dart';
 import '../../cubit/viewer/camera_view_state.dart';
+import '../../cubit/viewer/ssh_cubit.dart';
 import '../../cubit/viewer/view_state.dart';
 import '../../models/camera.dart';
 import '../../models/location.dart';
@@ -78,6 +80,13 @@ abstract class ArchivePlayerBaseState<T extends ArchivePlayerBase>
       context.read<ArchiveCameraViewCubit>().updateCamera(state);
 
   @override
+  void emitSshUrl(BuildContext bc, int port) {
+    bc
+        .read<ArchiveCameraViewCubit>()
+        .emitUrlState(host: 'localhost', port: port);
+  }
+
+  @override
   void updateSelectedCameraAndLocation(BuildContext context, Camera camera,
           Location location, bool isFreshState) =>
       context
@@ -104,9 +113,12 @@ abstract class ArchivePlayerBaseState<T extends ArchivePlayerBase>
         create: (context) => ArchiveCameraViewCubit(
           playerStream,
           CameraViewData(
+            context.read<SshCubit>(),
             widget.location,
             widget.camera,
             widget.credential,
+            physicalLocationName:
+                context.read<AppSettingsCubit>().state.selectedLocation,
             quality: StreamQuality.high,
             width: widget.maxWidth,
             height: widget.maxHeight,

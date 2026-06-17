@@ -30,6 +30,9 @@ abstract class CameraViewCubit extends Cubit<CameraViewState> {
   Future<void> updateCamera(ViewUpdatedState vuState,
       {DateTime? startDateTime});
 
+  void emitUrlState(
+      {String? cameraName, String? locationName, String? host, int? port});
+
   /* This function is used to emit the url corresponding to the
    * state stored in the cubit. */
   Future<void> getStreamUrl({String? cameraName, String? locationName});

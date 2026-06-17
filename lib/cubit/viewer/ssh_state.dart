@@ -10,12 +10,11 @@ part of 'ssh_cubit.dart';
 
 enum SshStatus {
   initial,
-  connecting,
-  connected,
+  sshConnecting,
+  sshConnected,
   forwardingPort,
   portForwarded,
-  disconnecting,
-  disconnected,
+  noSshConnectionConfigured,
   failure
 }
 
@@ -23,42 +22,54 @@ class SshState extends Equatable {
   final SshStatus status;
   final String? errorMessage;
   final int? localPort;
-  final int? remotePort;
-  final String? forwardedHost;
+  final String? locationName;
+  final bool isReusedConnection;
 
   const SshState({
     required this.status,
     this.errorMessage,
     this.localPort,
-    this.remotePort,
-    this.forwardedHost,
+    this.locationName,
+    this.isReusedConnection = false,
   });
 
-  factory SshState.initial() => const SshState(status: SshStatus.initial);
+  factory SshState.initial() {
+    return const SshState(
+      status: SshStatus.initial,
+      errorMessage: null,
+      localPort: null,
+      locationName: null,
+      isReusedConnection: false,
+    );
+  }
 
   SshState copyWith({
     required SshStatus status,
     String? errorMessage,
     int? localPort,
-    int? remotePort,
-    String? forwardedHost,
+    String? locationName,
+    bool? isReusedConnection,
   }) {
     return SshState(
       status: status,
-      errorMessage: errorMessage,
+      errorMessage: (status == SshStatus.failure ||
+              status == SshStatus.noSshConnectionConfigured)
+          ? (errorMessage ?? this.errorMessage)
+          : null,
+      locationName: locationName ?? this.locationName,
+      isReusedConnection: isReusedConnection ?? false,
       localPort: (status == SshStatus.portForwarded)
           ? (localPort ?? this.localPort)
-          : null,
-      remotePort: (status == SshStatus.portForwarded)
-          ? (remotePort ?? this.remotePort)
-          : null,
-      forwardedHost: (status == SshStatus.portForwarded)
-          ? (forwardedHost ?? this.forwardedHost)
           : null,
     );
   }
 
   @override
-  List<Object?> get props =>
-      [status, errorMessage, localPort, remotePort, forwardedHost];
+  List<Object?> get props => [
+        status,
+        errorMessage,
+        localPort,
+        locationName,
+        isReusedConnection,
+      ];
 }

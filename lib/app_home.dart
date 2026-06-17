@@ -16,6 +16,7 @@ import 'cubit/mainwindow/navigation_cubit.dart';
 import 'cubit/mainwindow/run_config_cubit.dart';
 import 'cubit/viewer/archive_view_cubit.dart';
 import 'cubit/viewer/live_view_cubit.dart';
+import 'cubit/viewer/ssh_cubit.dart';
 import 'cubit/viewer/view_state.dart';
 import 'dialog/about_dialog.dart';
 import 'mixin/fields_common.dart';
@@ -36,6 +37,7 @@ class AppHome extends StatelessWidget with FieldsCommon, ApplicationLifeCycle {
         BlocProvider(create: (_) => NavigationCubit()),
         //BlocProvider(create: (_) => LocationCubit()..determinePosition()),
         BlocProvider(create: (_) => RunConfigCubit()),
+        BlocProvider(create: (_) => SshCubit()),
         BlocProvider(create: (_) => LiveViewCubit()),
         BlocProvider(
           create: (_) => ArchiveViewCubit(BlocProvider.of<LiveViewCubit>(_)),
