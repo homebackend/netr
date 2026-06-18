@@ -137,3 +137,4 @@ msix_config:
   logo_path: windows/runner/resources/app_icon.ico 
   architecture: x64
   capabilities: internetClient, internetClientServer, privateNetworkClientServer
+  install_certificate: false
