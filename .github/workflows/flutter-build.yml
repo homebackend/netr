@@ -73,6 +73,14 @@ jobs:
             --dart-define=GH_OWNER=$GITHUB_REPOSITORY_OWNER \
             --dart-define=GH_REPO=${GITHUB_REPOSITORY#*/}
 
+      - name: Build Android App Bundle
+        if: matrix.target == 'apk'
+        run: flutter build appbundle --release
+        
+      - name: Compile Windows MSIX Installer
+        if: matrix.target == 'windows'
+        run: flutter pub run msix:create
+
       - name: Sign Android APK
         if: matrix.target == 'apk'
         uses: r0adkll/sign-android-release@v1
@@ -122,9 +130,11 @@ jobs:
           name: base-${{ matrix.target }}-artifacts
           path: |
             ${{ matrix.target == 'apk' && 'build/app/outputs/flutter-apk/app-release.apk' || '' }}
+            ${{ matrix.target == 'apk' && 'build/app/outputs/bundle/release/app-release.aab' || '' }}
             ${{ matrix.target == 'web' && 'netr-web.zip' || '' }}
             ${{ matrix.target == 'linux' && 'netr-linux-x64.tar.gz' || '' }}
             ${{ matrix.target == 'windows' && 'netr-windows-x64.zip' || '' }}
+            ${{ matrix.target == 'windows' && 'build/windows/runner/Release/*.msix' || '' }}
 
   build-linux-packages:
     name: Build Downstream Package (${{ matrix.target }})
@@ -132,10 +142,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [arch]
+        target: [arch, debian]
         include:
           - target: arch
             container_image: "archlinux:latest"
+          - target: debian
+            container_image: "ubuntu:latest"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -179,7 +191,7 @@ jobs:
           }
           EOF
 
-      - name: Setup Compiler Dependencies
+      - name: Setup Arch Compiler Dependencies
         if: matrix.target == 'arch'
         run: |
           pacman -Sy --noconfirm
@@ -188,7 +200,7 @@ jobs:
           echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
           chown -R builder:builder $GITHUB_WORKSPACE
 
-      - name: Compile Package
+      - name: Compile Arch Package
         if: matrix.target == 'arch'
         run: |
           su builder -c "makepkg -s --noconfirm"
@@ -198,22 +210,70 @@ jobs:
         run: |
           mv netr-${{ needs.build-apps.outputs.app_version }}-1-x86_64.pkg.tar.zst netr-linux-x64.pkg.tar.zst
 
+      - name: Setup Debian/Ubuntu Dependencies
+        if: matrix.target == 'debian'
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends dpkg-dev debhelper binutils gnupg debsigs ca-certificates
+          chmod +x build/linux/x64/release/bundle/netr
+          chmod +x build/linux/x64/release/bundle/lib/libflutter_linux_gtk.so
+
+      - name: Generate Debian Package Hierarchy
+        if: matrix.target == 'debian'
+        run: |
+          VERSION="${{ needs.build-apps.outputs.app_version }}"
+          PKG_DIR="netr_${VERSION}-1_amd64"
+          
+          mkdir -p "${PKG_DIR}/DEBIAN"
+          mkdir -p "${PKG_DIR}/opt/netr"
+          mkdir -p "${PKG_DIR}/usr/bin"
+          mkdir -p "${PKG_DIR}/usr/share/applications"
+          mkdir -p "${PKG_DIR}/usr/share/pixmaps"
+          mkdir -p "${PKG_DIR}/usr/share/doc/netr"
+
+          cat <<EOF > "${PKG_DIR}/DEBIAN/control"
+          Package: netr
+          Version: ${VERSION}-1
+          Section: utils
+          Priority: optional
+          Architecture: amd64
+          Depends: libgtk-3-0, xz-utils, mpv
+          Maintainer: Neeraj J <neerajcd@gmail.com>
+          Description: CCTV camera monitor supporting intranet and remote SSH connections
+          EOF
+
+          cp -r build/linux/x64/release/bundle/. "${PKG_DIR}/opt/netr/"
+          ln -s /opt/netr/netr "${PKG_DIR}/usr/bin/netr"
+          cp linux/netr.desktop "${PKG_DIR}/usr/share/applications/netr.desktop"
+          cp icons/netr.png "${PKG_DIR}/usr/share/pixmaps/netr.png"
+          cp LICENSE "${PKG_DIR}/usr/share/doc/netr/copyright"
+
+          dpkg-deb --build --root-owner-group "${PKG_DIR}"
+          mv "${PKG_DIR}.deb" netr-linux-x64.deb
+
       - name: Sign Package File
-        if: matrix.target == 'arch'
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
         run: |
           echo "$GPG_PRIVATE_KEY" | gpg --batch --import
 
-          gpg --batch --detach-sign --output netr-linux-x64.pkg.tar.zst.sig netr-linux-x64.pkg.tar.zst
-
-      - name: Upload Arch Artifacts
+          if [ "${{ matrix.target }}" = "arch" ]; then
+            gpg --batch --detach-sign --output netr-linux-x64.pkg.tar.zst.sig netr-linux-x64.pkg.tar.zst
+          elif [ "${{ matrix.target }}" = "debian" ]; then
+            gpg --batch --detach-sign --output netr-linux-x64.deb.sig netr-linux-x64.deb
+          fi
+      - name: Upload Package Artifacts
         uses: actions/upload-artifact@v6
         with:
           name: base-${{ matrix.target }}-artifacts
           path: |
             netr-linux-x64.pkg.tar.zst
             netr-linux-x64.pkg.tar.zst.sig
+            netr-linux-x64.deb
+            netr-linux-x64.deb.sig
+          if-no-files-found: ignore
 
   create-release:
     name: Publish Production GitHub Release
@@ -256,12 +316,17 @@ jobs:
       - name: Organize Files for Upload
         run: |
           mkdir -p ./release-assets
-          find ./artifacts -name "app-release.apk" -exec cp {} ./release-assets/netr-android.apk \;
-          find ./artifacts -name "netr-web.zip" -exec cp {} ./release-assets/ \;
-          find ./artifacts -name "netr-linux-x64.tar.gz" -exec cp {} ./release-assets/ \;
-          find ./artifacts -name "netr-linux-x64.pkg.tar.zst" -exec cp {} ./release-assets/ \;
-          find ./artifacts -name "netr-linux-x64.pkg.tar.zst.sig" -exec cp {} ./release-assets/ \;
-          find ./artifacts -name "netr-windows-x64.zip" -exec cp {} ./release-assets/ \;
+          find ./artifacts \( -name "app-release.apk" -o \
+                              -name "app-release.aab" -o \
+                              -name "netr-web.zip" -o \
+                              -name "netr-linux-x64.tar.gz" -o \ 
+                              -name "netr-linux-x64.pkg.tar.zst" -o \
+                              -name "netr-linux-x64.pkg.tar.zst.sig" -o \
+                              -name "netr-linux-x64.deb" -o \
+                              -name "netr-linux-x64.deb.sig" -o \
+                              -name "netr-windows-x64.zip" -o \
+                              -name "*.msix" \) \
+                              -exec cp {} ./release-assets/ \;
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

@@ -70,6 +70,7 @@ dependencies:
   url_launcher: ^6.3.2
   flutter_vlc_player_16kb: ^7.4.7
   equatable: ^2.0.8
+  msix: ^3.17.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -128,8 +129,12 @@ flutter:
 
 msix_config:
   display_name: *appName
-  publisher_display_name: Jakhar
+  publisher_display_name: Homebackend
+  title: netr
+  description: CCTV camera monitor supporting intranet and remote SSH connections
   identity_name: jakhar.neeraj.netr
-  msix_version: 1.0.0.0
-  logo_path: icons\eye.png
-  capabilities: internetClient
+  publisher: CN=NetrDevelopment, O=NetrSecurity, C=US
+  logo_path: windows/runner/resources/app_icon.ico 
+  architecture: x64
+  capabilities: internetClient, internetClientServer, privateNetworkClientServer
+  install_certificate: false
