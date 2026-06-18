@@ -15,6 +15,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../cubit/mixin/camera_view_cubit_mixin.dart';
 import '../../cubit/viewer/camera_view_state.dart';
+import '../../cubit/viewer/ssh_cubit.dart';
 import '../../cubit/viewer/thumbnail_cubit.dart';
 import '../../cubit/viewer/video_player_cubit.dart';
 import '../../cubit/viewer/view_state.dart';
@@ -191,6 +192,12 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
                 }
               },
             ),
+            BlocListener<SshCubit, SshState>(listener: (context, state) {
+              if (state.status == SshStatus.portForwarded &&
+                  state.localPort != null) {
+                emitSshUrl(context, state.localPort!);
+              }
+            }),
           ],
           child: Focus(
             autofocus: true,
@@ -354,7 +361,7 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
 
   @protected
   Future<void> close(BuildContext context) async {
-    back(context);
+    quit(context);
     await backButtonCleanup(context);
   }
 
@@ -680,6 +687,9 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
   @override
   @protected
   Future<void> stop(BuildContext context);
+
+  @protected
+  void emitSshUrl(BuildContext bc, int port);
 
   @override
   @protected

@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import '../../models/camera.dart';
 import '../../models/credential.dart';
 import '../../models/location.dart';
+import 'ssh_cubit.dart';
 
 @immutable
 abstract class CameraViewState {
@@ -18,6 +19,8 @@ abstract class CameraViewState {
 }
 
 class CameraViewData {
+  final SshCubit sshCubit;
+  final String? physicalLocationName;
   final String cameraName;
   final String locationName;
   final int count;
@@ -32,9 +35,11 @@ class CameraViewData {
   final DateTime? startDateTime;
 
   CameraViewData(
+    this.sshCubit,
     this.location,
     this.camera,
     this.credential, {
+    this.physicalLocationName,
     this.count = 0,
     this.quality = StreamQuality.high,
     this.cameraIndex = -1,
@@ -61,6 +66,7 @@ class CameraViewData {
       };
 
   CameraViewData copyWith({
+    String? physicalLocationName,
     String? cameraName,
     String? locationName,
     Location? location,
@@ -73,11 +79,13 @@ class CameraViewData {
     DateTime? startDateTime,
   }) {
     return CameraViewData(
+      sshCubit,
+      location ?? this.location,
+      camera ?? this.camera,
+      physicalLocationName: physicalLocationName ?? this.physicalLocationName,
       cameraName: cameraName ?? (camera ?? this.camera).name,
       locationName: locationName ?? (location ?? this.location).name,
       count: count + 1,
-      location ?? this.location,
-      camera ?? this.camera,
       credential ?? this.credential,
       quality: quality ?? this.quality,
       cameraIndex: cameraIndex ?? this.cameraIndex,
@@ -95,6 +103,7 @@ final class CameraViewInitialState extends CameraViewState {
 
   @override
   CameraViewState copyWith({
+    String? physicalLocationName,
     String? cameraName,
     String? locationName,
     Location? location,
@@ -107,6 +116,7 @@ final class CameraViewInitialState extends CameraViewState {
     DateTime? startDateTime,
   }) {
     CameraViewData d = state.copyWith(
+      physicalLocationName: physicalLocationName,
       cameraName: cameraName,
       locationName: locationName,
       location: location,

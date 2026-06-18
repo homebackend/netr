@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Neeraj Jakhar
+ * Copyright (c) 2024-26 Neeraj Jakhar
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -150,8 +150,9 @@ mixin SettingsCommon on FieldsCommon {
     T item,
     C cubit,
     Widget Function(GlobalKey<FormState>, BuildContext) form,
-    List<Widget> Function(T) getSubTitle,
-  ) {
+    List<Widget> Function(T) getSubTitle, {
+    List<Widget> Function(T item)? customItems,
+  }) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: BlocProvider(
@@ -188,6 +189,7 @@ mixin SettingsCommon on FieldsCommon {
               (cubit) => cubit.editData,
               (cubit) => cubit.copyData,
               (cubit) => cubit.removeLocation,
+              customItems: customItems,
             )
           ],
         ),
@@ -268,8 +270,9 @@ mixin SettingsCommon on FieldsCommon {
     List<Widget> Function(T) getTileSubTitle,
     void Function(int, T) Function(ItemCubit) editItem,
     void Function(int, T) Function(ItemCubit) copyItem,
-    void Function(int) Function(ViewCubit) removeItem,
-  ) {
+    void Function(int) Function(ViewCubit) removeItem, {
+    List<Widget> Function(T item)? customItems,
+  }) {
     return BlocBuilder<ViewCubit, SettingsCommonState>(
       builder: (context, state) {
         if (state is SettingsCommonInitialState) {
@@ -284,6 +287,7 @@ mixin SettingsCommon on FieldsCommon {
             editItem(context.read<ItemCubit>()),
             copyItem(context.read<ItemCubit>()),
             removeItem(context.read<ViewCubit>()),
+            customItems: customItems,
           );
         }
 
@@ -304,8 +308,9 @@ mixin SettingsCommon on FieldsCommon {
     List<Widget> Function(T) getSubTitle,
     void Function(int, T) editItem,
     void Function(int, T) copyItem,
-    void Function(int) removeItem,
-  ) {
+    void Function(int) removeItem, {
+    List<Widget> Function(T item)? customItems,
+  }) {
     return ListView.builder(
       shrinkWrap: true,
       itemCount: items.length,
@@ -327,6 +332,7 @@ mixin SettingsCommon on FieldsCommon {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              if (customItems != null) ...customItems(item),
               Tooltip(
                 message: 'Copy Item',
                 child: IconButton(

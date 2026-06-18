@@ -14,6 +14,7 @@ import '../cubit/settings/app_settings_cubit.dart';
 import '../cubit/viewer/view_state.dart';
 import '../models/camera.dart';
 import '../models/location.dart';
+import '../widgets/location_dropdown_button.dart';
 import '../widgets/thumbnail.dart';
 import 'player/player_base.dart';
 
@@ -55,16 +56,28 @@ abstract class CameraViewPageState<T extends CameraViewPage> extends State<T> {
   });
 
   @protected
-  int getCameraCount(List<Camera> cameras);
+  bool filterCamera(Camera camera);
 
   @protected
-  Iterable<Camera> getCameras(List<Camera> cameras);
+  bool hasSSHAccess(Camera camera);
+
+  @protected
+  List<String> getLocations();
 
   @protected
   void cameraTapHandler(BuildContext bc, Location l, Camera c, bool fs);
 
   @protected
-  List<Widget> getAppBarActions();
+  List<Widget> getAppBarActions(BuildContext bc, AppSettingsState appSettings) {
+    return [
+      LocationDropdownButton(
+        locations: [...getLocations(), 'Any Other Location'],
+        onLocationSelected: (String location) =>
+            context.read<AppSettingsCubit>().setSelectedLocation(location),
+        initialLocation: appSettings.selectedLocation ?? '',
+      ),
+    ];
+  }
 
   @protected
   void updateCubit(
@@ -85,30 +98,42 @@ abstract class CameraViewPageState<T extends CameraViewPage> extends State<T> {
   @protected
   bool isPlayerReady() => true;
 
-  Widget _buildCameraView(ViewState state) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.viewName,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: getAppBarActions(),
-      ),
-      body: (() {
-        if (state is ViewInitialState) {
-          return _noCameraView();
-        } else if (state is ViewUpdatedState) {
-          if (state.selectedCamera != null && state.selectedLocation != null) {
-            return _videoViewer(state);
-          } else {
-            return _listCamerasByLocation(state);
-          }
-        }
+  @protected
+  Iterable<Camera> getCameras(List<Camera> cameras) sync* {
+    yield* cameras.where(filterCamera);
+  }
 
-        return _noCameraView();
-      }()),
+  @protected
+  int getCameraCount(List<Camera> cameras) =>
+      cameras.where(filterCamera).length;
+
+  Widget _buildCameraView(ViewState state) {
+    return BlocBuilder<AppSettingsCubit, AppSettingsState>(
+      builder: (context, appSettings) => Scaffold(
+        appBar: AppBar(
+          title: Text(
+            widget.viewName,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          actions: getAppBarActions(context, appSettings),
+        ),
+        body: (() {
+          if (state is ViewInitialState) {
+            return _noCameraView();
+          } else if (state is ViewUpdatedState) {
+            if (state.selectedCamera != null &&
+                state.selectedLocation != null) {
+              return _videoViewer(state);
+            } else {
+              return _listCamerasByLocation(state);
+            }
+          }
+
+          return _noCameraView();
+        }()),
+      ),
     );
   }
 
@@ -138,7 +163,7 @@ abstract class CameraViewPageState<T extends CameraViewPage> extends State<T> {
           ? SizedBox.expand(child: _videoplayer(state))
           : Column(
               children: [
-                _getCameraHeader(state.selectedCamera!.name),
+                _getCameraHeader(state.selectedCamera!),
                 SizedBox(height: 8),
                 Expanded(
                   child: _videoplayer(state),
@@ -151,7 +176,7 @@ abstract class CameraViewPageState<T extends CameraViewPage> extends State<T> {
   Widget _listCamerasByLocation(ViewUpdatedState state) {
     _horizontalControllers.clear();
     List<Location> locations = state.locations
-        .where((location) => state.locationCamera(location).isNotEmpty)
+        .where((location) => state.locationCameras(location).isNotEmpty)
         .toList();
     for (int i = 0; i < locations.length; i++) {
       _horizontalControllers.add(ScrollController());
@@ -207,7 +232,7 @@ abstract class CameraViewPageState<T extends CameraViewPage> extends State<T> {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         controller: _horizontalControllers[locationIndex],
-        itemCount: getCameraCount(state.locationCamera(location)),
+        itemCount: getCameraCount(state.locationCameras(location)),
         separatorBuilder: (
           BuildContext context,
           int index,
@@ -215,7 +240,7 @@ abstract class CameraViewPageState<T extends CameraViewPage> extends State<T> {
           return SizedBox(width: 16);
         },
         itemBuilder: (context, index) {
-          Camera camera = state.locationCamera(location)[index];
+          Camera camera = state.locationCameras(location)[index];
 
           return BlocBuilder<AppSettingsCubit, AppSettingsState>(
             builder: (context, appState) => Card(
@@ -236,7 +261,7 @@ abstract class CameraViewPageState<T extends CameraViewPage> extends State<T> {
                       child: ThumbnailWidget(location.name, camera.name),
                     ),
                     SizedBox(height: 8),
-                    _getCameraHeader(camera.name),
+                    _getCameraHeader(camera),
                   ],
                 ),
               ),
@@ -247,19 +272,33 @@ abstract class CameraViewPageState<T extends CameraViewPage> extends State<T> {
     );
   }
 
-  Widget _getCameraHeader(String title) {
+  Widget _getCameraHeader(Camera camera) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Icon(widget.iconData),
         SizedBox(width: 8),
         Text(
-          title,
+          camera.name,
           style: TextStyle(
             fontSize: 20.0,
             fontWeight: FontWeight.w600,
           ),
         ),
+        if (filterCamera(camera)) ...[
+          SizedBox(width: 8),
+          Tooltip(
+            message: 'Camera is locally available at the current location',
+            child: Icon(Icons.my_location),
+          ),
+        ],
+        if (hasSSHAccess(camera)) ...[
+          SizedBox(width: 8),
+          Tooltip(
+            message: 'Camera is accessible through SSH',
+            child: Icon(Icons.security_rounded),
+          ),
+        ],
       ],
     );
   }

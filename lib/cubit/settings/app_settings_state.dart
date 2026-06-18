@@ -13,11 +13,13 @@ sealed class AppSettingsState {
   final bool startAppMaximized;
   final bool playVideoFullscreen;
   final bool enableAutoScreenCapture;
+  final String? selectedLocation;
 
   const AppSettingsState({
     this.startAppMaximized = false,
     this.playVideoFullscreen = false,
     this.enableAutoScreenCapture = true,
+    this.selectedLocation,
   });
 }
 
@@ -28,18 +30,21 @@ final class AppSettingsUpdateState extends AppSettingsState {
     super.startAppMaximized = false,
     super.playVideoFullscreen = false,
     super.enableAutoScreenCapture = true,
+    super.selectedLocation,
   });
 
   AppSettingsState copyWith({
     bool? startAppMaximized,
     bool? playVideoFullscreen,
     bool? enableAutoScreenCapture,
+    String? selectedLocation,
   }) {
     return AppSettingsUpdateState(
       startAppMaximized: startAppMaximized ?? this.startAppMaximized,
       playVideoFullscreen: playVideoFullscreen ?? this.playVideoFullscreen,
       enableAutoScreenCapture:
           enableAutoScreenCapture ?? this.enableAutoScreenCapture,
+      selectedLocation: selectedLocation ?? this.selectedLocation,
     );
   }
 }

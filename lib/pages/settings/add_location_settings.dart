@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Neeraj Jakhar
+ * Copyright (c) 2024-26 Neeraj Jakhar
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -69,6 +69,7 @@ class _AddLocationSettingsState extends State<AddLocationSettings> {
       AddLocationCubit(),
       _form,
       _getSubTitle,
+      customItems: _getCustomItems,
     );
   }
 
@@ -284,7 +285,6 @@ class _AddLocationSettingsState extends State<AddLocationSettings> {
     BuildContext context,
     AddLocationState state,
   ) {
-    List<Widget> rows = [];
     if (_sshKeyController.text != state.sshPrivateKey) {
       _sshKeyController.value = TextEditingValue(
         text: state.sshPrivateKey,
@@ -292,173 +292,163 @@ class _AddLocationSettingsState extends State<AddLocationSettings> {
       );
     }
 
-    rows.add(
-      Row(
-        children: [
-          Switch(
-            value: state.useSshForNonLocal,
-            onChanged: (value) {
-              context.read<AddLocationCubit>().updateUseSshForNonLocal(value);
-            },
-          ),
-          widget.horizontalSpacing(),
-          const Text('Use SSH when not on local network')
-        ],
-      ),
-    );
-
-    if (state.useSshForNonLocal) {
-      rows.addAll([
-        widget.verticalSpacing(),
-        TextFormField(
-          controller: _sshHostController,
-          validator: widget.validateHost,
-          onChanged: context.read<AddLocationCubit>().updateSshHost,
-          onSaved: (value) {
-            location.sshHost = value!;
-          },
-          decoration: widget.textFieldDecoration(
-            'SSH Host',
-            'Host or IP address',
-            Icons.computer,
-          ),
-        ),
-        widget.verticalSpacing(),
-        TextFormField(
-          controller: _sshPortController,
-          validator: widget.validatePort,
-          onChanged: context.read<AddLocationCubit>().updateSshPort,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-          ],
-          keyboardType: const TextInputType.numberWithOptions(),
-          onSaved: (value) {
-            if (value != null && value.isNotEmpty) {
-              location.sshPort = int.parse(value);
-            }
-          },
-          decoration: widget.textFieldDecoration(
-            'SSH Port',
-            'Port for e.g. 22',
-            Icons.power_input,
-          ),
-        ),
-        widget.verticalSpacing(),
-        TextFormField(
-          controller: _sshUserController,
-          validator: widget.validateSshUser,
-          onChanged: context.read<AddLocationCubit>().updateSshUser,
-          onSaved: (value) {
-            location.sshUser = value!;
-          },
-          decoration: widget.textFieldDecoration(
-            'SSH User',
-            'SSH User name',
-            Icons.person,
-          ),
-        ),
-        widget.verticalSpacing(),
-        TextFormField(
-          controller: _sshKeyController,
-          maxLines: 6,
-          minLines: 3,
-          keyboardType: TextInputType.multiline,
-          onChanged: context.read<AddLocationCubit>().updateSshPrivateKey,
-          onSaved: (value) {
-            location.sshPrivateKey = value ?? '';
-          },
-          decoration: InputDecoration(
-            labelText: 'SSH Private Key',
-            hintText:
-                'Paste your private key text here or pick a file below...',
-            alignLabelWithHint: true,
-            prefixIcon: const Padding(
-              padding: EdgeInsets.only(bottom: 40.0),
-              child: Icon(Icons.vpn_key),
+    return Column(
+      children: [
+        Row(
+          children: [
+            Switch(
+              value: state.useSshForNonLocal,
+              onChanged: (value) {
+                context.read<AddLocationCubit>().updateUseSshForNonLocal(value);
+              },
             ),
-            border: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(8.0)),
-            ),
-          ),
-        ),
-        widget.verticalSpacing(),
-        ElevatedButton(
-          onPressed: () {
-            context.read<AddLocationCubit>().addSshPrivateKey();
-          },
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.file_open),
-              widget.horizontalSpacing(),
-              Text(
-                state.sshPrivateKey.isEmpty
-                    ? 'Import Key from File'
-                    : 'Change Key File',
-              ),
-            ],
-          ),
-        ),
-      ]);
-
-      if (state.sshHost.isNotEmpty &&
-          state.sshPort.isNotEmpty &&
-          state.sshUser.isNotEmpty &&
-          state.sshPrivateKey.isNotEmpty) {
-        rows.add(widget.verticalSpacing());
-        if (state.testingSshConnection) {
-          rows.add(
-            const Center(child: CircularProgressIndicator()),
-          ); // Centered to fix layout crash
-        } else {
-          List<Widget> children = [
-            const Icon(Icons.private_connectivity),
             widget.horizontalSpacing(),
-            const Text('Test Connection'),
-          ];
-
-          switch (state.sshConnectionStatus) {
-            case SshConnectionStatus.untested:
-              break;
-            case SshConnectionStatus.successful:
-              children.addAll([
+            const Text('Use SSH when not on local network')
+          ],
+        ),
+        if (state.useSshForNonLocal) ...[
+          widget.verticalSpacing(),
+          TextFormField(
+            controller: _sshHostController,
+            validator: widget.validateHost,
+            onChanged: context.read<AddLocationCubit>().updateSshHost,
+            onSaved: (value) {
+              location.sshHost = value!;
+            },
+            decoration: widget.textFieldDecoration(
+              'SSH Host',
+              'Host or IP address',
+              Icons.computer,
+            ),
+          ),
+          widget.verticalSpacing(),
+          TextFormField(
+            controller: _sshPortController,
+            validator: widget.validatePort,
+            onChanged: context.read<AddLocationCubit>().updateSshPort,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+            ],
+            keyboardType: const TextInputType.numberWithOptions(),
+            onSaved: (value) {
+              if (value != null && value.isNotEmpty) {
+                location.sshPort = int.parse(value);
+              }
+            },
+            decoration: widget.textFieldDecoration(
+              'SSH Port',
+              'Port for e.g. 22',
+              Icons.power_input,
+            ),
+          ),
+          widget.verticalSpacing(),
+          TextFormField(
+            controller: _sshUserController,
+            validator: widget.validateSshUser,
+            onChanged: context.read<AddLocationCubit>().updateSshUser,
+            onSaved: (value) {
+              location.sshUser = value!;
+            },
+            decoration: widget.textFieldDecoration(
+              'SSH User',
+              'SSH User name',
+              Icons.person,
+            ),
+          ),
+          widget.verticalSpacing(),
+          TextFormField(
+            controller: _sshKeyController,
+            maxLines: 6,
+            minLines: 3,
+            keyboardType: TextInputType.multiline,
+            onChanged: context.read<AddLocationCubit>().updateSshPrivateKey,
+            onSaved: (value) {
+              location.sshPrivateKey = value ?? '';
+            },
+            decoration: InputDecoration(
+              labelText: 'SSH Private Key',
+              hintText:
+                  'Paste your private key text here or pick a file below...',
+              alignLabelWithHint: true,
+              prefixIcon: const Padding(
+                padding: EdgeInsets.only(bottom: 40.0),
+                child: Icon(Icons.vpn_key),
+              ),
+              border: const OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+              ),
+            ),
+          ),
+          widget.verticalSpacing(),
+          ElevatedButton(
+            onPressed: () {
+              context.read<AddLocationCubit>().addSshPrivateKey();
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.file_open),
                 widget.horizontalSpacing(),
-                const Icon(
-                  Icons.check_box,
-                  color: Colors.green,
+                Text(
+                  state.sshPrivateKey.isEmpty
+                      ? 'Import Key from File'
+                      : 'Change Key File',
                 ),
-              ]);
-              break;
-            case SshConnectionStatus.failed:
-              children.addAll([
-                widget.horizontalSpacing(),
-                const Icon(
-                  Icons.error,
-                  color: Colors.red,
-                ),
-              ]);
-              break;
-          }
+              ],
+            ),
+          ),
+          if (state.sshHost.isNotEmpty &&
+              state.sshPort.isNotEmpty &&
+              state.sshUser.isNotEmpty &&
+              state.sshPrivateKey.isNotEmpty)
+            ..._locationTester(context, state),
+        ],
+      ],
+    );
+  }
 
-          rows.add(
+  List<Widget> _locationTester(BuildContext context, AddLocationState state,
+          {bool compact = false}) =>
+      [
+        if (state.useSshForNonLocal) ...[
+          widget.verticalSpacing(),
+          if (state.testingSshConnection)
+            const Center(child: CircularProgressIndicator()),
+          if (!state.testingSshConnection)
             ElevatedButton(
               onPressed: () {
                 context.read<AddLocationCubit>().testSshConnection();
               },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: children,
+                children: [
+                  const Icon(Icons.private_connectivity),
+                  if (!compact) ...[
+                    widget.horizontalSpacing(),
+                    const Text('Test Connection'),
+                  ],
+                  ...switch (state.sshConnectionStatus) {
+                    SshConnectionStatus.untested => [],
+                    SshConnectionStatus.successful => [
+                        widget.horizontalSpacing(),
+                        const Icon(
+                          Icons.check_box,
+                          color: Colors.green,
+                        ),
+                      ],
+                    SshConnectionStatus.failed => [
+                        widget.horizontalSpacing(),
+                        const Icon(
+                          Icons.error,
+                          color: Colors.red,
+                        ),
+                      ],
+                  },
+                ],
               ),
             ),
-          );
-        }
-      }
-    }
-
-    return Column(
-      children: rows,
-    );
-  }
+        ],
+      ];
 
   List<Widget> _getSubTitle(Location location) {
     return [
@@ -503,4 +493,18 @@ class _AddLocationSettingsState extends State<AddLocationSettings> {
             )
     ];
   }
+
+  List<Widget> _getCustomItems(Location location) => [
+        BlocProvider<AddLocationCubit>(
+          create: (context) => AddLocationCubit.from(location),
+          child: BlocBuilder<AddLocationCubit, AddLocationState>(
+            builder: (context, state) => Tooltip(
+              message: 'Test Connection',
+              child: Row(
+                children: _locationTester(context, state, compact: true),
+              ),
+            ),
+          ),
+        ),
+      ];
 }

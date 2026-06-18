@@ -184,14 +184,31 @@ mixin CameraViewCubitMixin on Cubit<CameraViewState>
   }
 
   @override
-  Future<void> getStreamUrl({String? cameraName, String? locationName}) async {
+  void emitUrlState(
+      {String? cameraName, String? locationName, String? host, int? port}) {
     if (state is CameraViewInitialState) {
-      String url =
-          '${_getProtocol()}://${_getCredential()}${_getHost()}:${_getPort()}${getUrlPath()}';
-      log('Url: $url');
       CameraViewInitialState s = state as CameraViewInitialState;
+      String url =
+          '${_getProtocol()}://${_getCredential()}${host ?? _getHost()}:${port ?? _getPort()}${getUrlPath()}';
+      log('Url: $url');
       emit(CameraViewUpdatedState(url, cameraName ?? s.state.cameraName,
           locationName ?? s.state.locationName, s.state));
+    }
+  }
+
+  @override
+  Future<void> getStreamUrl({String? cameraName, String? locationName}) async {
+    if (state is CameraViewInitialState) {
+      CameraViewInitialState s = state as CameraViewInitialState;
+      Camera c = s.state.camera;
+      // Handle the case where camera is available locally
+      if (c.locationName == s.state.physicalLocationName ||
+          c.ipLocationNames.any((l) => l == s.state.physicalLocationName)) {
+        emitUrlState(cameraName: cameraName, locationName: locationName);
+      } else {
+        // Handle the case where camera is accessed via SSH
+        s.state.sshCubit.getLocalPort(c);
+      }
     }
   }
 }

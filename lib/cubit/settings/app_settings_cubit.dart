@@ -17,6 +17,7 @@ class AppSettingsCubit extends Cubit<AppSettingsState> with Preferences {
   static final String _keyStartAppMaximized = 'startAppMaximized';
   static final String _keyPlayVideoFullscreen = 'playVideoFullscreen';
   static final String _keyEnableAutoScreenCapture = 'enableAutoScreenCapture';
+  static final String _keySelectedLocation = 'selectedLocation';
 
   AppSettingsCubit() : super(AppSettingsInitialState());
 
@@ -25,10 +26,12 @@ class AppSettingsCubit extends Cubit<AppSettingsState> with Preferences {
     bool playVideoFullScreen = await loadBool(_keyPlayVideoFullscreen) ?? false;
     bool enableAutoScreenCapture =
         await loadBool(_keyEnableAutoScreenCapture) ?? true;
+    String? selectedLocation = await loadString(_keySelectedLocation);
     emit(AppSettingsUpdateState(
       startAppMaximized: startAppMaximized,
       playVideoFullscreen: playVideoFullScreen,
       enableAutoScreenCapture: enableAutoScreenCapture,
+      selectedLocation: selectedLocation,
     ));
   }
 
@@ -53,6 +56,14 @@ class AppSettingsCubit extends Cubit<AppSettingsState> with Preferences {
       await saveBool(_keyEnableAutoScreenCapture, value);
       emit((state as AppSettingsUpdateState)
           .copyWith(enableAutoScreenCapture: value));
+    }
+  }
+
+  void setSelectedLocation(String selectedLocation) async {
+    if (state is AppSettingsUpdateState) {
+      await saveString(_keySelectedLocation, selectedLocation);
+      emit((state as AppSettingsUpdateState)
+          .copyWith(selectedLocation: selectedLocation));
     }
   }
 }

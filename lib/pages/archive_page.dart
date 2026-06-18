@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
+import '../cubit/settings/app_settings_cubit.dart';
 import '../cubit/viewer/archive_view_cubit.dart';
 import '../cubit/viewer/view_state.dart';
 import '../helpers/date_time_picker.dart';
@@ -25,7 +26,8 @@ import 'player/archive_players.dart';
 import 'player/archive_player_base.dart';
 
 class ArchiveViewPage extends CameraViewPage {
-  const ArchiveViewPage({super.key}) : super('Archive View', Icons.history);
+  const ArchiveViewPage({super.key})
+      : super('Archive View', Icons.video_library);
 
   @override
   State<ArchiveViewPage> createState() => _ArchiveViewPageState();
@@ -61,8 +63,45 @@ class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewPage>
     }
   }
 
-  bool _filterCamera(Camera camera) =>
-      camera.archiveName.isNotEmpty && camera.archiveIndex >= 0;
+  @override
+  bool filterCamera(Camera camera) {
+    if (camera.archiveName.isEmpty || camera.archiveIndex < 0) {
+      return false;
+    }
+
+    if (hasSSHAccess(camera)) {
+      return true;
+    }
+
+    String expectedName = camera.locationName;
+    AppSettingsState s = context.read<AppSettingsCubit>().state;
+    if (s is AppSettingsUpdateState && s.selectedLocation != null) {
+      expectedName = s.selectedLocation!;
+    }
+
+    ViewState vs = context.read<ArchiveViewCubit>().state;
+    if (vs is ViewUpdatedState) {
+      Camera? nvr = vs.cameraNvr(camera);
+      if (nvr != null) {
+        return nvr.ipLocationNames.any((l) => l == expectedName);
+      }
+    }
+
+    return false;
+  }
+
+  @override
+  bool hasSSHAccess(Camera camera) {
+    ViewState s = context.read<ArchiveViewCubit>().state;
+    if (s is ViewUpdatedState) {
+      Camera? nvr = s.cameraNvr(camera);
+      if (nvr != null) {
+        return s.cameraIpLocations(nvr).any((l) => l.useSshForNonLocal);
+      }
+    }
+
+    return false;
+  }
 
   @override
   void updateCubit(
@@ -71,15 +110,6 @@ class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewPage>
                   {DateTime? startDateTime})
               updator) =>
       updator(state, startDateTime: _archiveDateTime);
-
-  @override
-  Iterable<Camera> getCameras(List<Camera> cameras) sync* {
-    yield* cameras.where(_filterCamera);
-  }
-
-  @override
-  int getCameraCount(List<Camera> cameras) =>
-      cameras.where(_filterCamera).length;
 
   @override
   void cameraTapHandler(BuildContext bc, Location l, Camera c, bool fs) async {
@@ -99,8 +129,9 @@ class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewPage>
   }
 
   @override
-  List<Widget> getAppBarActions() {
+  List<Widget> getAppBarActions(BuildContext bc, AppSettingsState appSettings) {
     return [
+      ...super.getAppBarActions(bc, appSettings),
       createIconButton(
         Icons.edit_calendar,
         () => _showDateTimePicker(context),
@@ -159,4 +190,12 @@ class _ArchiveViewPageState extends CameraViewPageState<ArchiveViewPage>
               playerTitle,
               dialogText,
             );
+
+  @override
+  List<String> getLocations() {
+    ViewState s = context.read<ArchiveViewCubit>().state;
+    return s is ViewUpdatedState
+        ? s.locations.map((location) => location.name).toList()
+        : [];
+  }
 }

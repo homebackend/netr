@@ -16,6 +16,7 @@ import 'cubit/mainwindow/navigation_cubit.dart';
 import 'cubit/mainwindow/run_config_cubit.dart';
 import 'cubit/viewer/archive_view_cubit.dart';
 import 'cubit/viewer/live_view_cubit.dart';
+import 'cubit/viewer/ssh_cubit.dart';
 import 'cubit/viewer/view_state.dart';
 import 'dialog/about_dialog.dart';
 import 'mixin/fields_common.dart';
@@ -38,8 +39,12 @@ class AppHome extends StatelessWidget with FieldsCommon, ApplicationLifeCycle {
         BlocProvider(create: (_) => RunConfigCubit()),
         BlocProvider(create: (_) => LiveViewCubit()),
         BlocProvider(
-          create: (_) => ArchiveViewCubit(BlocProvider.of<LiveViewCubit>(_)),
+          create: (context) =>
+              ArchiveViewCubit(BlocProvider.of<LiveViewCubit>(context)),
         ),
+        BlocProvider(
+            create: (context) =>
+                SshCubit(BlocProvider.of<LiveViewCubit>(context))),
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(
         builder: (context, themeState) => PopScope(
