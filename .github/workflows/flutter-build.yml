@@ -230,7 +230,7 @@ jobs:
           Priority: optional
           Architecture: amd64
           Depends: libgtk-3-0, xz-utils, mpv
-          Maintainer: Developer <developer@example.com>
+          Maintainer: Neeraj J <neerajcd@gmail.com>
           Description: CCTV camera monitor supporting intranet and remote SSH connections
           EOF
 
