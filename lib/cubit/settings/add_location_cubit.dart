@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Neeraj Jakhar
+ * Copyright (c) 2024-26 Neeraj Jakhar
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -25,6 +25,16 @@ class AddLocationCubit
   AddLocationCubit() : super(AddLocationUpdateState()) {
     loadStateDefaults();
   }
+
+  AddLocationCubit.from(Location location)
+      : super(AddLocationUpdateState(
+          name: location.name,
+          useSshForNonLocal: location.useSshForNonLocal,
+          sshHost: location.sshHost ?? '',
+          sshPort: location.sshPort.toString(),
+          sshUser: location.sshUser ?? '',
+          sshPrivateKey: location.sshPrivateKey ?? '',
+        ));
 
   @override
   void editData(int index, Location item) {
