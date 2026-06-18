@@ -9,15 +9,18 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../cubit/mixin/camera_view_cubit_mixin.dart';
+import '../../cubit/viewer/camera_view_cubit.dart';
 import '../../cubit/viewer/camera_view_state.dart';
 import '../../cubit/viewer/ssh_cubit.dart';
 import '../../cubit/viewer/thumbnail_cubit.dart';
 import '../../cubit/viewer/video_player_cubit.dart';
+import '../../cubit/viewer/view_cubit.dart';
 import '../../cubit/viewer/view_state.dart';
 import '../../cubit/viewer/viewer_keyboard_cubit.dart';
 import '../../models/camera.dart';
@@ -52,7 +55,8 @@ abstract class PlayerBase extends StatefulWidget {
   });
 }
 
-abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
+abstract class PlayerBaseState<T extends PlayerBase, VC extends ViewCubit,
+        CVC extends CameraViewCubit> extends State<T>
     with WidgetsBindingObserver
     implements LibHelper {
   final TransformationController _controller = TransformationController();
@@ -208,8 +212,8 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
                 ? KeyEventResult.handled
                 : KeyEventResult.ignored,
             child: BlocBuilder<ViewerKeyboardCubit, ViewerKeyboardState>(
-              builder: (context, state) => createCameraErrorViewBlocBuilder(
-                (context, errState) => Stack(
+              builder: (context, state) => BlocBuilder<CVC, CameraViewState>(
+                builder: (context, errState) => Stack(
                   alignment: Alignment.center,
                   children: [
                     Positioned.fill(
@@ -518,8 +522,8 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
       ],
       child: MultiBlocListener(
         listeners: [
-          createCameraViewBlocListener(
-            (context, state) {
+          BlocListener<CVC, CameraViewState>(
+            listener: (context, state) {
               if (state is! CameraViewErrorState) {
                 // If any state comes stop the error countdown timer.
                 // Not this can happen if any camera gives a temporary
@@ -569,8 +573,8 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
               }
             },
           ),
-          createViewBlocListener(
-            (context, state) {
+          BlocListener<VC, ViewState>(
+            listener: (context, state) {
               if (state is ViewUpdatedState &&
                   !state.isFreshState &&
                   state.selectedCamera != null &&
@@ -670,59 +674,59 @@ abstract class PlayerBaseState<T extends PlayerBase> extends State<T>
   void startThumbnailGeneration(String cameraName, String locationName);
 
   @protected
-  void toggleFullScreen(BuildContext context);
+  @nonVirtual
+  void toggleFullScreen(BuildContext context) =>
+      context.read<VC>().toggleFullScreen();
 
   @protected
-  void back(BuildContext context);
+  @nonVirtual
+  void back(BuildContext context) => context.read<VC>().back();
 
   @protected
-  void quit(BuildContext context);
+  @nonVirtual
+  void quit(BuildContext context) => context.read<VC>().quit();
 
   @protected
-  void next(BuildContext context);
+  @nonVirtual
+  void next(BuildContext context) => context.read<VC>().next();
 
   @protected
-  void previous(BuildContext context);
+  @nonVirtual
+  void previous(BuildContext context) => context.read<VC>().previous();
 
   @override
   @protected
   Future<void> stop(BuildContext context);
 
   @protected
-  void emitSshUrl(BuildContext bc, int port);
+  @nonVirtual
+  void emitSshUrl(BuildContext bc, int port) =>
+      bc.read<CVC>().emitUrlState(host: 'localhost', port: port);
 
   @override
   @protected
   Widget createVideoWidget(BuildContext context, VideoPlayerState state);
 
   @protected
+  @nonVirtual
   void updateSelectedCameraAndLocation(BuildContext context, Camera camera,
-      Location location, bool isFreshState);
+          Location location, bool isFreshState) =>
+      context
+          .read<VC>()
+          .updateSelectedCameraAndLocation(camera, location, isFreshState);
 
   @protected
-  void getStreamUrl(BuildContext context);
+  @nonVirtual
+  void getStreamUrl(BuildContext context) => context.read<CVC>().getStreamUrl();
 
   @protected
-  void updateCamera(BuildContext context, ViewUpdatedState state);
+  @nonVirtual
+  void updateCamera(BuildContext context, ViewUpdatedState state) =>
+      context.read<CVC>().updateCamera(state);
 
   @protected
   BlocProvider createViewBlocProvider(
     BuildContext context,
     CameraPlayerStream playerStream,
-  );
-
-  @protected
-  BlocListener createViewBlocListener(
-    void Function(BuildContext context, ViewState state) listener,
-  );
-
-  @protected
-  BlocListener createCameraViewBlocListener(
-    void Function(BuildContext context, CameraViewState state) listener,
-  );
-
-  @protected
-  BlocBuilder createCameraErrorViewBlocBuilder(
-    Widget Function(BuildContext context, CameraViewState state) builder,
   );
 }

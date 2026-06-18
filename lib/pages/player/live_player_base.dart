@@ -17,7 +17,6 @@ import '../../cubit/viewer/live_view_cubit.dart';
 import '../../cubit/viewer/ssh_cubit.dart';
 import '../../cubit/viewer/view_state.dart';
 import '../../models/camera.dart';
-import '../../models/location.dart';
 import 'player_base.dart';
 
 abstract class LivePlayerBase extends PlayerBase {
@@ -50,48 +49,7 @@ abstract class LivePlayerBase extends PlayerBase {
 }
 
 abstract class LivePlayerBaseState<T extends LivePlayerBase>
-    extends PlayerBaseState<T> {
-  @override
-  void toggleFullScreen(BuildContext context) =>
-      context.read<LiveViewCubit>().toggleFullScreen();
-
-  @override
-  void back(BuildContext context) => context.read<LiveViewCubit>().back();
-
-  @override
-  void quit(BuildContext context) => context.read<LiveViewCubit>().quit();
-
-  @override
-  void next(BuildContext context) => context.read<LiveViewCubit>().next();
-
-  @override
-  void previous(BuildContext context) =>
-      context.read<LiveViewCubit>().previous();
-
-  @override
-  void updateSelectedCameraAndLocation(
-    BuildContext context,
-    Camera camera,
-    Location location,
-    bool isFreshState,
-  ) =>
-      context
-          .read<LiveViewCubit>()
-          .updateSelectedCameraAndLocation(camera, location, isFreshState);
-
-  @override
-  void getStreamUrl(BuildContext context) =>
-      context.read<LiveCameraViewCubit>().getStreamUrl();
-
-  @override
-  void updateCamera(BuildContext context, ViewUpdatedState state) =>
-      context.read<LiveCameraViewCubit>().updateCamera(state);
-
-  @override
-  void emitSshUrl(BuildContext bc, int port) {
-    bc.read<LiveCameraViewCubit>().emitUrlState(host: 'localhost', port: port);
-  }
-
+    extends PlayerBaseState<T, LiveViewCubit, LiveCameraViewCubit> {
   @override
   BlocProvider<LiveCameraViewCubit> createViewBlocProvider(
           BuildContext context, CameraPlayerStream playerStream) =>
@@ -111,26 +69,4 @@ abstract class LivePlayerBaseState<T extends LivePlayerBase>
           ),
         ),
       );
-
-  @override
-  BlocListener<LiveViewCubit, ViewState> createViewBlocListener(
-          void Function(BuildContext context, ViewState state) listener) =>
-      BlocListener<LiveViewCubit, ViewState>(listener: listener);
-
-  @override
-  BlocListener<LiveCameraViewCubit, CameraViewState>
-      createCameraViewBlocListener(
-              void Function(BuildContext context, CameraViewState state)
-                  listener) =>
-          BlocListener<LiveCameraViewCubit, CameraViewState>(
-              listener: listener);
-
-  @override
-  BlocBuilder<LiveCameraViewCubit, CameraViewState>
-      createCameraErrorViewBlocBuilder(
-              Widget Function(BuildContext context, CameraViewState state)
-                  builder) =>
-          BlocBuilder<LiveCameraViewCubit, CameraViewState>(
-            builder: builder,
-          );
 }

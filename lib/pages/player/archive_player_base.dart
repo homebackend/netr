@@ -17,7 +17,6 @@ import '../../cubit/viewer/camera_view_state.dart';
 import '../../cubit/viewer/ssh_cubit.dart';
 import '../../cubit/viewer/view_state.dart';
 import '../../models/camera.dart';
-import '../../models/location.dart';
 import 'player_base.dart';
 
 abstract class ArchivePlayerBase extends PlayerBase {
@@ -52,60 +51,7 @@ abstract class ArchivePlayerBase extends PlayerBase {
 }
 
 abstract class ArchivePlayerBaseState<T extends ArchivePlayerBase>
-    extends PlayerBaseState<T> {
-  @override
-  void back(BuildContext context) => context.read<ArchiveViewCubit>().back();
-
-  @override
-  void quit(BuildContext context) => context.read<ArchiveViewCubit>().quit();
-
-  @override
-  void getStreamUrl(BuildContext context) => context
-      .read<ArchiveCameraViewCubit>()
-      .getStreamUrl(cameraName: widget.cameraName);
-
-  @override
-  void next(BuildContext context) => context.read<ArchiveViewCubit>().next();
-
-  @override
-  void previous(BuildContext context) =>
-      context.read<ArchiveViewCubit>().previous();
-
-  @override
-  void toggleFullScreen(BuildContext context) =>
-      context.read<ArchiveViewCubit>().toggleFullScreen();
-
-  @override
-  void updateCamera(BuildContext context, ViewUpdatedState state) =>
-      context.read<ArchiveCameraViewCubit>().updateCamera(state);
-
-  @override
-  void emitSshUrl(BuildContext bc, int port) {
-    bc
-        .read<ArchiveCameraViewCubit>()
-        .emitUrlState(host: 'localhost', port: port);
-  }
-
-  @override
-  void updateSelectedCameraAndLocation(BuildContext context, Camera camera,
-          Location location, bool isFreshState) =>
-      context
-          .read<ArchiveViewCubit>()
-          .updateSelectedCameraAndLocation(camera, location, isFreshState);
-
-  @override
-  BlocListener<ArchiveCameraViewCubit, CameraViewState>
-      createCameraViewBlocListener(
-              void Function(BuildContext context, CameraViewState state)
-                  listener) =>
-          BlocListener<ArchiveCameraViewCubit, CameraViewState>(
-              listener: listener);
-
-  @override
-  BlocListener<ArchiveViewCubit, ViewState> createViewBlocListener(
-          void Function(BuildContext context, ViewState state) listener) =>
-      BlocListener<ArchiveViewCubit, ViewState>(listener: listener);
-
+    extends PlayerBaseState<T, ArchiveViewCubit, ArchiveCameraViewCubit> {
   @override
   BlocProvider<ArchiveCameraViewCubit> createViewBlocProvider(
           BuildContext context, CameraPlayerStream playerStream) =>
@@ -127,13 +73,4 @@ abstract class ArchivePlayerBaseState<T extends ArchivePlayerBase>
           ),
         ),
       );
-
-  @override
-  BlocBuilder<ArchiveCameraViewCubit, CameraViewState>
-      createCameraErrorViewBlocBuilder(
-              Widget Function(BuildContext context, CameraViewState state)
-                  builder) =>
-          BlocBuilder<ArchiveCameraViewCubit, CameraViewState>(
-            builder: builder,
-          );
 }
