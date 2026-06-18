@@ -12,6 +12,9 @@ import 'package:dartssh2_plus/dartssh2.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'live_view_cubit.dart';
+import 'view_state.dart';
+
 part 'ssh_state.dart';
 
 class SshConfig {
@@ -27,9 +30,27 @@ class SshCubit extends Cubit<SshState> {
   final Map<String, SSHClient> _activeClients = {};
 
   ServerSocket? _currentLocalServer;
+  late final StreamSubscription _liveViewSubscription;
   final List<StreamSubscription> _activeSubscriptions = [];
 
-  SshCubit() : super(SshState.initial());
+  SshCubit(LiveViewCubit cubit) : super(SshState.initial()) {
+    if (cubit.state is ViewUpdatedState) {
+      _registerState(cubit.state as ViewUpdatedState);
+    }
+
+    _liveViewSubscription = cubit.stream.listen((state) {
+      if (state is ViewUpdatedState) {
+        _registerState(state);
+      }
+    });
+  }
+
+  void _registerState(ViewUpdatedState state) {
+    for (var location in state.locations.where((l) => l.useSshForNonLocal)) {
+      register(location.name, location.sshHost!, location.sshPort!,
+          location.sshUser!, location.sshPrivateKey!);
+    }
+  }
 
   void register(String locationName, String sshHost, int sshPort,
       String sshUser, String sshKey) {
@@ -144,6 +165,7 @@ class SshCubit extends Cubit<SshState> {
 
   @override
   Future<void> close() async {
+    _liveViewSubscription.cancel();
     await _clearActiveForwarderOnly();
     for (var client in _activeClients.values) {
       client.close();

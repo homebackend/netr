@@ -37,11 +37,14 @@ class AppHome extends StatelessWidget with FieldsCommon, ApplicationLifeCycle {
         BlocProvider(create: (_) => NavigationCubit()),
         //BlocProvider(create: (_) => LocationCubit()..determinePosition()),
         BlocProvider(create: (_) => RunConfigCubit()),
-        BlocProvider(create: (_) => SshCubit()),
         BlocProvider(create: (_) => LiveViewCubit()),
         BlocProvider(
-          create: (_) => ArchiveViewCubit(BlocProvider.of<LiveViewCubit>(_)),
+          create: (context) =>
+              ArchiveViewCubit(BlocProvider.of<LiveViewCubit>(context)),
         ),
+        BlocProvider(
+            create: (context) =>
+                SshCubit(BlocProvider.of<LiveViewCubit>(context))),
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(
         builder: (context, themeState) => PopScope(

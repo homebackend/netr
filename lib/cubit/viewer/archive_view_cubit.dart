@@ -25,7 +25,9 @@ class ArchiveViewCubit extends Cubit<ViewState> with ViewCubitMixin {
     }
 
     _liveViewSubscription = cubit.stream.listen((state) {
-      _emitState(state);
+      if (state is ViewUpdatedState) {
+        _emitState(state);
+      }
     });
   }
 
