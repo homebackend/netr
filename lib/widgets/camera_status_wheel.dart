@@ -88,7 +88,7 @@ class SshStatusProgressWheel extends StatelessWidget {
       case SshStatus.portForwarded:
         return 'Tunnel Connected & Streaming Live Media Feeds!';
       case SshStatus.noSshConnectionConfigured:
-        return 'Error: Unregistered Location Environment Pointer.';
+        return 'Error: Camera location not supported.';
       case SshStatus.failure:
         return state.errorMessage ??
             'Network Pipeline Tunnel Dropped Exception.';

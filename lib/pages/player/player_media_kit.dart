@@ -114,17 +114,6 @@ mixin PlayerMediaKit implements LibHelper {
     } else {
       initCamera(context);
       return SshStatusProgressWheel();
-      /*
-      return SizedBox(
-        width: 48,
-        height: 48,
-        child: Center(
-          child: CircularProgressIndicator(
-            semanticsLabel: 'Waiting for video',
-          ),
-        ),
-      );
-      */
     }
   }
 }
