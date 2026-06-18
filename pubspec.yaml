@@ -97,7 +97,6 @@ flutter:
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
   assets:
-    - images/vlc_icon.png
     - icons/netr.png
     - icons/eye.png
 

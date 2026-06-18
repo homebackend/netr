@@ -9,9 +9,9 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:netr/models/credential.dart';
 
 import '../../models/camera.dart';
+import '../../models/credential.dart';
 import '../mixin/camera_view_cubit_mixin.dart';
 import 'camera_view_state.dart';
 import 'view_state.dart';

@@ -10,10 +10,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_vlc_player_16kb/flutter_vlc_player.dart';
-import 'package:netr/helpers/thumbnail_manager.dart';
 
 import '../../cubit/mixin/camera_view_cubit_mixin.dart';
 import '../../cubit/viewer/video_player_cubit.dart';
+import '../../helpers/thumbnail_manager.dart';
 import 'lib_helper.dart';
 
 class CameraPlayerStreamVlcPlayer extends CameraPlayerStream {

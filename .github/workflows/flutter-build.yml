@@ -319,7 +319,7 @@ jobs:
           find ./artifacts \( -name "app-release.apk" -o \
                               -name "app-release.aab" -o \
                               -name "netr-web.zip" -o \
-                              -name "netr-linux-x64.tar.gz" -o \ 
+                              -name "netr-linux-x64.tar.gz" -o \
                               -name "netr-linux-x64.pkg.tar.zst" -o \
                               -name "netr-linux-x64.pkg.tar.zst.sig" -o \
                               -name "netr-linux-x64.deb" -o \
