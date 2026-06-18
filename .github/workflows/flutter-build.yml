@@ -26,12 +26,21 @@ jobs:
         include:
           - target: apk
             os: ubuntu-latest
+            upload_paths: |
+              build/app/outputs/flutter-apk/app-release.apk
+              build/app/outputs/bundle/release/app-release.aab
           - target: web
             os: ubuntu-latest
+            upload_paths: "netr-web.zip"
           - target: linux
             os: ubuntu-latest
+            upload_paths: "netr-linux-x64.tar.gz"
           - target: windows
             os: windows-latest
+            upload_paths: |
+              netr-windows-x64.zip
+              build/windows/x64/runner/Release/netr-windows-x64.msix
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -133,13 +142,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: base-${{ matrix.target }}-artifacts
-          path: |
-            ${{ matrix.target == 'apk' && 'build/app/outputs/flutter-apk/app-release.apk' || '' }}
-            ${{ matrix.target == 'apk' && 'build/app/outputs/bundle/release/app-release.aab' || '' }}
-            ${{ matrix.target == 'web' && 'netr-web.zip' || '' }}
-            ${{ matrix.target == 'linux' && 'netr-linux-x64.tar.gz' || '' }}
-            ${{ matrix.target == 'windows' && 'netr-windows-x64.zip' || '' }}
-            ${{ matrix.target == 'windows' && 'build/windows/x64/runner/Release/netr-windows-x64.msix' || '' }}
+          path: ${{ matrix.upload_paths }}
 
   build-linux-packages:
     name: Build Downstream Package (${{ matrix.target }})
