@@ -207,11 +207,7 @@ mixin CameraViewCubitMixin on Cubit<CameraViewState>
         emitUrlState(cameraName: cameraName, locationName: locationName);
       } else {
         // Handle the case where camera is accessed via SSH
-        s.state.sshCubit.getLocalPort(
-          s.state.camera.locationName,
-          s.state.camera.host,
-          s.state.camera.port,
-        );
+        s.state.sshCubit.getLocalPort(c);
       }
     }
   }

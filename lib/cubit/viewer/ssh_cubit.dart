@@ -7,11 +7,13 @@
  */
 
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 import 'package:dartssh2_plus/dartssh2.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../models/camera.dart';
 import 'live_view_cubit.dart';
 import 'view_state.dart';
 
@@ -59,97 +61,120 @@ class SshCubit extends Cubit<SshState> {
         SshConfig(sshHost, sshPort, sshUser, sshKey);
   }
 
-  Future<void> getLocalPort(
-      String locationName, String cameraHost, int cameraPort) async {
-    if (!_configRegistry.containsKey(locationName)) {
+  Future<void> getLocalPort(Camera camera) async {
+    for (var locationName in [camera.locationName, ...camera.ipLocationNames]) {
+      if (!_configRegistry.containsKey(locationName)) {
+        continue;
+      }
+
+      await _clearActiveForwarderOnly();
+
+      final config = _configRegistry[locationName]!;
+      SSHClient? client = _activeClients[locationName];
+      bool isReused = false;
+
       emit(state.copyWith(
-        status: SshStatus.noSshConnectionConfigured,
-        errorMessage: 'No SSH configuration found for: $locationName',
-      ));
+          status: SshStatus.sshConnecting, locationName: locationName));
+
+      if (client != null) {
+        try {
+          await client.ping();
+          isReused = true;
+        } catch (_) {
+          _activeClients.remove(locationName);
+          client = null;
+        }
+      }
+
+      if (client == null) {
+        try {
+          final keyPair = SSHKeyPair.fromPem(config.keyPem);
+          client = SSHClient(
+            await SSHSocket.connect(config.host, config.port),
+            username: config.username,
+            identities: keyPair,
+          );
+          await client.authenticated;
+          _activeClients[locationName] = client;
+          isReused = false;
+        } catch (e) {
+          emit(state.copyWith(
+              status: SshStatus.failure,
+              errorMessage: 'SSH Connection Failed: $e'));
+          return;
+        }
+      }
+
+      emit(state.copyWith(
+          status: SshStatus.sshConnected, isReusedConnection: isReused));
+      emit(state.copyWith(status: SshStatus.forwardingPort));
+
+      try {
+        _currentLocalServer = await ServerSocket.bind('localhost', 0);
+        final int allocatedLocalPort = _currentLocalServer!.port;
+
+        _currentLocalServer!.listen((Socket localSocket) async {
+          try {
+            final SSHForwardChannel forwardChannel = await client!.forwardLocal(
+              camera.host,
+              camera.port,
+              localHost: 'localhost',
+              localPort: allocatedLocalPort,
+            );
+
+            final sub1 = localSocket.listen(
+              (data) {
+                try {
+                  forwardChannel.sink.add(data);
+                } catch (_) {}
+              },
+              onDone: () => forwardChannel.sink.close(),
+              onError: (error) {
+                log('forwardChannel.sink.add error: $error');
+                forwardChannel.sink.close();
+                localSocket.destroy();
+              },
+              cancelOnError: true,
+            );
+
+            final sub2 = forwardChannel.stream.listen(
+              (data) {
+                try {
+                  localSocket.add(data);
+                } catch (_) {}
+              },
+              onDone: () => localSocket.close(),
+              onError: (error) {
+                log('localSocket.add error: $error');
+                localSocket.close();
+                localSocket.destroy();
+              },
+              cancelOnError: true,
+            );
+
+            _activeSubscriptions.addAll([sub1, sub2]);
+          } catch (_) {
+            localSocket.close();
+            localSocket.destroy();
+          }
+        });
+
+        emit(state.copyWith(
+          status: SshStatus.portForwarded,
+          localPort: allocatedLocalPort,
+        ));
+      } catch (e) {
+        emit(state.copyWith(
+            status: SshStatus.failure, errorMessage: 'Forwarding Error: $e'));
+      }
+
       return;
     }
 
-    await _clearActiveForwarderOnly();
-
-    final config = _configRegistry[locationName]!;
-    SSHClient? client = _activeClients[locationName];
-    bool isReused = false;
-
     emit(state.copyWith(
-        status: SshStatus.sshConnecting, locationName: locationName));
-
-    if (client != null) {
-      try {
-        await client.ping();
-        isReused = true;
-      } catch (_) {
-        _activeClients.remove(locationName);
-        client = null;
-      }
-    }
-
-    if (client == null) {
-      try {
-        final keyPair = SSHKeyPair.fromPem(config.keyPem);
-        client = SSHClient(
-          await SSHSocket.connect(config.host, config.port),
-          username: config.username,
-          identities: keyPair,
-        );
-        await client.authenticated;
-        _activeClients[locationName] = client;
-        isReused = false;
-      } catch (e) {
-        emit(state.copyWith(
-            status: SshStatus.failure,
-            errorMessage: 'SSH Connection Failed: $e'));
-        return;
-      }
-    }
-
-    emit(state.copyWith(
-        status: SshStatus.sshConnected, isReusedConnection: isReused));
-    emit(state.copyWith(status: SshStatus.forwardingPort));
-
-    try {
-      _currentLocalServer = await ServerSocket.bind('localhost', 0);
-      final int allocatedLocalPort = _currentLocalServer!.port;
-
-      _currentLocalServer!.listen((Socket localSocket) async {
-        try {
-          final SSHForwardChannel forwardChannel = await client!.forwardLocal(
-            cameraHost,
-            cameraPort,
-            localHost: 'localhost',
-            localPort: allocatedLocalPort,
-          );
-
-          final sub1 = localSocket.listen(
-            (data) => forwardChannel.sink.add(data),
-            onDone: () => forwardChannel.sink.close(),
-            onError: (_) => forwardChannel.sink.close(),
-          );
-
-          final sub2 = forwardChannel.stream.listen(
-            (data) => localSocket.add(data),
-            onDone: () => localSocket.close(),
-            onError: (_) => localSocket.close(),
-          );
-
-          _activeSubscriptions.addAll([sub1, sub2]);
-        } catch (_) {
-          localSocket.close();
-        }
-      });
-
-      emit(state.copyWith(
-        status: SshStatus.portForwarded,
-        localPort: allocatedLocalPort,
-      ));
-    } catch (e) {
-      emit(state.copyWith(
-          status: SshStatus.failure, errorMessage: 'Forwarding Error: $e'));
-    }
+      status: SshStatus.noSshConnectionConfigured,
+      errorMessage: 'No SSH configuration found for: ${camera.name}',
+    ));
   }
 
   Future<void> _clearActiveForwarderOnly() async {
