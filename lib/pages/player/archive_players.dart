@@ -7,10 +7,10 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:netr/pages/player/player_vlc_player.dart';
 
 import 'archive_player_base.dart';
 import 'player_media_kit.dart';
+import 'player_vlc_player.dart';
 
 class DesktopArchivePlayer extends ArchivePlayerBase {
   DesktopArchivePlayer(super.maxWidth, super.maxHeight, super.state,

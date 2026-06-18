@@ -7,9 +7,10 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:netr/pages/player/live_player_base.dart';
-import 'package:netr/pages/player/player_media_kit.dart';
-import 'package:netr/pages/player/player_vlc_player.dart';
+
+import 'live_player_base.dart';
+import 'player_media_kit.dart';
+import 'player_vlc_player.dart';
 
 class DesktopLivePlayer extends LivePlayerBase {
   DesktopLivePlayer(super.maxWidth, super.maxHeight, super.state,

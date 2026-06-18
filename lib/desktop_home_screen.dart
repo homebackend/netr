@@ -9,9 +9,10 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:netr/application_life_cycle.dart';
-import 'package:netr/main_app.dart';
 import 'package:window_manager/window_manager.dart';
+
+import 'application_life_cycle.dart';
+import 'main_app.dart';
 
 class DesktopHomeScreen extends StatefulWidget {
   const DesktopHomeScreen({super.key});
