@@ -81,6 +81,11 @@ jobs:
         if: matrix.target == 'windows'
         run: flutter pub run msix:create
 
+      - name: Rename msix file to contain architecture
+        if: matrix.target == 'windows'
+        run: |
+          mv "build/windows/x64/runner/Release/netr.msix" "build/windows/x64/runner/Release/netr-windows-x64.msix"
+
       - name: Sign Android APK
         if: matrix.target == 'apk'
         uses: r0adkll/sign-android-release@v1
@@ -134,7 +139,7 @@ jobs:
             ${{ matrix.target == 'web' && 'netr-web.zip' || '' }}
             ${{ matrix.target == 'linux' && 'netr-linux-x64.tar.gz' || '' }}
             ${{ matrix.target == 'windows' && 'netr-windows-x64.zip' || '' }}
-            ${{ matrix.target == 'windows' && 'build/windows/runner/Release/*.msix' || '' }}
+            ${{ matrix.target == 'windows' && 'build/windows/x64/runner/Release/netr-windows-x64.msix' || '' }}
 
   build-linux-packages:
     name: Build Downstream Package (${{ matrix.target }})
@@ -325,7 +330,7 @@ jobs:
                               -name "netr-linux-x64.deb" -o \
                               -name "netr-linux-x64.deb.sig" -o \
                               -name "netr-windows-x64.zip" -o \
-                              -name "*.msix" \) \
+                              -name "netr-windows-x64.msix" \) \
                               -exec cp {} ./release-assets/ \;
 
       - name: Create GitHub Release
