@@ -73,6 +73,14 @@ jobs:
             --dart-define=GH_OWNER=$GITHUB_REPOSITORY_OWNER \
             --dart-define=GH_REPO=${GITHUB_REPOSITORY#*/}
 
+      - name: Build Android App Bundle
+        if: matrix.target == 'apk'
+        run: flutter build appbundle --release
+        
+      - name: Compile Windows MSIX Installer
+        if: matrix.target == 'windows'
+        run: flutter pub run msix:create
+
       - name: Sign Android APK
         if: matrix.target == 'apk'
         uses: r0adkll/sign-android-release@v1
@@ -122,9 +130,11 @@ jobs:
           name: base-${{ matrix.target }}-artifacts
           path: |
             ${{ matrix.target == 'apk' && 'build/app/outputs/flutter-apk/app-release.apk' || '' }}
+            ${{ matrix.target == 'apk' && 'build/app/outputs/bundle/release/app-release.aab' || '' }}
             ${{ matrix.target == 'web' && 'netr-web.zip' || '' }}
             ${{ matrix.target == 'linux' && 'netr-linux-x64.tar.gz' || '' }}
             ${{ matrix.target == 'windows' && 'netr-windows-x64.zip' || '' }}
+            ${{ matrix.target == 'windows' && 'build/windows/runner/Release/*.msix' || '' }}
 
   build-linux-packages:
     name: Build Downstream Package (${{ matrix.target }})
@@ -306,14 +316,17 @@ jobs:
       - name: Organize Files for Upload
         run: |
           mkdir -p ./release-assets
-          find ./artifacts -name "app-release.apk" -exec cp {} ./release-assets/netr-android.apk \;
-          find ./artifacts -name "netr-web.zip" -exec cp {} ./release-assets/ \;
-          find ./artifacts -name "netr-linux-x64.tar.gz" -exec cp {} ./release-assets/ \;
-          find ./artifacts -name "netr-linux-x64.pkg.tar.zst" -exec cp {} ./release-assets/ \;
-          find ./artifacts -name "netr-linux-x64.pkg.tar.zst.sig" -exec cp {} ./release-assets/ \;
-          find ./artifacts -name "netr-linux-x64.deb" -exec cp {} ./release-assets/ \;
-          find ./artifacts -name "netr-linux-x64.deb.sig" -exec cp {} ./release-assets/ \;
-          find ./artifacts -name "netr-windows-x64.zip" -exec cp {} ./release-assets/ \;
+          find ./artifacts \( -name "app-release.apk" -o \
+                              -name "app-release.aab" -o \
+                              -name "netr-web.zip" -o \
+                              -name "netr-linux-x64.tar.gz" -o \ 
+                              -name "netr-linux-x64.pkg.tar.zst" -o \
+                              -name "netr-linux-x64.pkg.tar.zst.sig" -o \
+                              -name "netr-linux-x64.deb" -o \
+                              -name "netr-linux-x64.deb.sig" -o \
+                              -name "netr-windows-x64.zip" -o \
+                              -name "*.msix" \) \
+                              -exec cp {} ./release-assets/ \;
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
