@@ -27,8 +27,8 @@ jobs:
           - target: apk
             os: ubuntu-latest
             upload_paths: |
-              build/app/outputs/flutter-apk/app-release.apk
-              build/app/outputs/bundle/release/app-release.aab
+              build/app/outputs/flutter-apk/netr-release.apk
+              build/app/outputs/bundle/release/netr-release.aab
           - target: web
             os: ubuntu-latest
             upload_paths: "netr-web.zip"
@@ -78,14 +78,22 @@ jobs:
       - name: Build Flutter Target (${{ matrix.target }})
         shell: bash
         run: |
-          flutter build ${{ matrix.target }} --release \
+          flutter build ${{ matrix.target }} --release --no-pub \
             --dart-define=GH_OWNER=$GITHUB_REPOSITORY_OWNER \
             --dart-define=GH_REPO=${GITHUB_REPOSITORY#*/}
 
       - name: Build Android App Bundle
         if: matrix.target == 'apk'
         run: flutter build appbundle --release
-        
+
+      - name: Rename apk/aab (android)
+        if: matrix.target == 'apk'
+        run: |
+          mv "build/app/outputs/flutter-apk/app-release.apk" \
+             "build/app/outputs/flutter-apk/netr-android.apk"
+          mv "build/app/outputs/bundle/release/app-release.aab" \
+             "build/app/outputs/bundle/release/netr-android.aab"
+
       - name: Compile Windows MSIX Installer
         if: matrix.target == 'windows'
         run: flutter pub run msix:create
@@ -111,7 +119,7 @@ jobs:
       - name: Overwrite Unsigned APK with Signed APK
         if: matrix.target == 'apk'
         run: |
-          mv "${{ steps.sign_android_apk.outputs.signedReleaseFile }}" build/app/outputs/flutter-apk/app-release.apk
+          mv "${{ steps.sign_android_apk.outputs.signedReleaseFile }}" build/app/outputs/flutter-apk/netr-android.apk
 
       - name: Package Linux Target
         if: matrix.target == 'linux'
@@ -324,8 +332,8 @@ jobs:
       - name: Organize Files for Upload
         run: |
           mkdir -p ./release-assets
-          find ./artifacts \( -name "app-release.apk" -o \
-                              -name "app-release.aab" -o \
+          find ./artifacts \( -name "netr-android.apk" -o \
+                              -name "netr-android.aab" -o \
                               -name "netr-web.zip" -o \
                               -name "netr-linux-x64.tar.gz" -o \
                               -name "netr-linux-x64.pkg.tar.zst" -o \
