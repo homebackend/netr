@@ -27,8 +27,8 @@ jobs:
           - target: apk
             os: ubuntu-latest
             upload_paths: |
-              build/app/outputs/flutter-apk/netr-release.apk
-              build/app/outputs/bundle/release/netr-release.aab
+              build/app/outputs/flutter-apk/netr-android.apk
+              build/app/outputs/bundle/release/netr-android.aab
           - target: web
             os: ubuntu-latest
             upload_paths: "netr-web.zip"
