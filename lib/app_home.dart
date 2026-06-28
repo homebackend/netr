@@ -9,6 +9,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_common/cubit/settings/theme_cubit.dart';
 
 import 'application_life_cycle.dart';
 import 'cubit/common.dart';
@@ -22,7 +23,6 @@ import 'dialog/about_dialog.dart';
 import 'mixin/fields_common.dart';
 import 'pages/archive_page.dart';
 import 'constants.dart' as constants;
-import 'cubit/settings/theme_cubit.dart';
 import 'pages/live_page.dart';
 import 'pages/settings/settings_page.dart';
 import 'widgets/internet_status.dart';

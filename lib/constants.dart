@@ -13,4 +13,5 @@ const String githubOrganization =
     String.fromEnvironment('GH_OWNER', defaultValue: 'homebackend');
 const String githubRepo =
     String.fromEnvironment('GH_REPO', defaultValue: 'netr');
+const String baseAssetName = 'netr';
 const String upgradeFileName = 'netr-release.apk';

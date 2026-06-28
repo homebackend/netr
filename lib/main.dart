@@ -8,16 +8,15 @@
 
 import 'package:encrypt/encrypt.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_common/flutter_common.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'constants.dart' as constants;
-import 'desktop_home_screen.dart';
-import 'main_app.dart';
+import 'main_app_wrapper.dart';
 import 'mixin/encrypter.dart' as encrypter;
-import 'tool.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,7 +43,5 @@ void main() async {
     );
   }
 
-  return isDesktopPlatform()
-      ? runApp(const MaterialApp(home: DesktopHomeScreen()))
-      : runApp(const MainApp());
+  return MainAppWrapper.runAppWrapper();
 }
