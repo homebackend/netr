@@ -8,6 +8,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_common/tool.dart';
 
 import '../cubit/settings/app_settings_cubit.dart';
 import '../cubit/viewer/live_view_cubit.dart';
@@ -15,7 +16,6 @@ import '../cubit/viewer/view_state.dart';
 import '../mixin/fields_common.dart';
 import '../models/camera.dart';
 import '../models/location.dart';
-import '../tool.dart';
 import '../widgets/stream_quality_selector.dart';
 import 'camera_view_page.dart';
 import 'player/live_players.dart';

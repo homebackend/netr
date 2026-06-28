@@ -11,8 +11,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'app_home.dart';
 import 'application_life_cycle.dart';
-import 'main_app.dart';
 
 class DesktopHomeScreen extends StatefulWidget {
   const DesktopHomeScreen({super.key});
@@ -48,5 +48,5 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen>
   }
 
   @override
-  Widget build(BuildContext context) => MainApp();
+  Widget build(BuildContext context) => AppHome();
 }

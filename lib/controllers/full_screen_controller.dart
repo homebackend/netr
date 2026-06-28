@@ -8,9 +8,8 @@
 
 import 'dart:developer';
 import 'package:flutter/services.dart';
+import 'package:flutter_common/tool.dart';
 import 'package:window_manager/window_manager.dart';
-
-import '../tool.dart';
 
 class FullScreenController {
   static Future<void> enter() async {

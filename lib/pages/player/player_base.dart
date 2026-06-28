@@ -12,6 +12,7 @@ import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_common/tool.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../cubit/mixin/camera_view_cubit_mixin.dart';
